@@ -141,57 +141,63 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
     }
 
     // ── Blotter Cases ─────────────────────────────────────────────────────────
-    let blotterRef: admin.firestore.Query = db()
-      .collection('blotter')
-      .where('isArchived', '==', false)
-      .where('updatedAt', '>=', cutoff);
-    if (beforeTs) blotterRef = blotterRef.where('updatedAt', '<', beforeTs);
-    const blotterSnap = await blotterRef
-      .orderBy('updatedAt', 'desc')
-      .limit(PAGE_LIMIT + 1)
-      .get();
+    // Wrapped in its own try-catch: if the composite index is missing this query
+    // will throw, but requests and appointments are already collected above.
+    try {
+      let blotterRef: admin.firestore.Query = db()
+        .collection('blotter')
+        .where('isArchived', '==', false)
+        .where('updatedAt', '>=', cutoff);
+      if (beforeTs) blotterRef = blotterRef.where('updatedAt', '<', beforeTs);
+      const blotterSnap = await blotterRef
+        .orderBy('updatedAt', 'desc')
+        .limit(PAGE_LIMIT + 1)
+        .get();
 
-    for (const doc of blotterSnap.docs) {
-      const d = doc.data();
-      const status: string = d.status || 'OPEN';
-      const complainantName = `${d.complainant?.firstName || ''} ${d.complainant?.lastName || ''}`.trim();
-      const respondentName = `${d.respondent?.firstName || ''} ${d.respondent?.lastName || ''}`.trim();
-      const updatedAt = toISO(d.updatedAt);
-      const createdAt = toISO(d.createdAt);
-      const isNew = status === 'OPEN' && d.statusHistory?.length <= 1;
+      for (const doc of blotterSnap.docs) {
+        const d = doc.data();
+        const status: string = d.status || 'OPEN';
+        const complainantName = `${d.complainant?.firstName || ''} ${d.complainant?.lastName || ''}`.trim();
+        const respondentName = `${d.respondent?.firstName || ''} ${d.respondent?.lastName || ''}`.trim();
+        const updatedAt = toISO(d.updatedAt);
+        const createdAt = toISO(d.createdAt);
+        const isNew = status === 'OPEN' && (d.statusHistory?.length ?? 0) <= 1;
 
-      if (isNew) {
-        notifications.push({
-          id: `blotter_${doc.id}_OPEN`,
-          type: 'blotter',
-          event: 'new_blotter',
-          title: 'New Blotter Case Filed',
-          message: `Case ${d.caseNumber}: ${complainantName} vs ${respondentName}`,
-          timestamp: createdAt,
-          docId: doc.id,
-          status,
-          caseNumber: d.caseNumber || null,
-        });
-      } else {
-        const labelMap: Record<string, string> = {
-          UNDER_MEDIATION: 'Blotter case under mediation',
-          SETTLED: 'Blotter case settled',
-          ESCALATED: 'Blotter case escalated',
-          ESCALATED_RETURNED: 'Blotter case returned from escalation',
-          DISMISSED: 'Blotter case dismissed',
-        };
-        notifications.push({
-          id: `blotter_${doc.id}_${status}`,
-          type: 'blotter',
-          event: 'blotter_update',
-          title: labelMap[status] || 'Blotter Case Updated',
-          message: `Case ${d.caseNumber}: ${complainantName} vs ${respondentName}`,
-          timestamp: updatedAt,
-          docId: doc.id,
-          status,
-          caseNumber: d.caseNumber || null,
-        });
+        if (isNew) {
+          notifications.push({
+            id: `blotter_${doc.id}_OPEN`,
+            type: 'blotter',
+            event: 'new_blotter',
+            title: 'New Blotter Case Filed',
+            message: `Case ${d.caseNumber}: ${complainantName} vs ${respondentName}`,
+            timestamp: createdAt,
+            docId: doc.id,
+            status,
+            caseNumber: d.caseNumber || null,
+          });
+        } else {
+          const labelMap: Record<string, string> = {
+            UNDER_MEDIATION: 'Blotter case under mediation',
+            SETTLED: 'Blotter case settled',
+            ESCALATED: 'Blotter case escalated',
+            ESCALATED_RETURNED: 'Blotter case returned from escalation',
+            DISMISSED: 'Blotter case dismissed',
+          };
+          notifications.push({
+            id: `blotter_${doc.id}_${status}`,
+            type: 'blotter',
+            event: 'blotter_update',
+            title: labelMap[status] || 'Blotter Case Updated',
+            message: `Case ${d.caseNumber}: ${complainantName} vs ${respondentName}`,
+            timestamp: updatedAt,
+            docId: doc.id,
+            status,
+            caseNumber: d.caseNumber || null,
+          });
+        }
       }
+    } catch (blotterErr: any) {
+      console.error('Blotter notifications query failed (composite index may be missing):', blotterErr?.message || blotterErr);
     }
 
     // Sort all notifications by timestamp descending
@@ -205,6 +211,96 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
     console.error('Error fetching notifications:', err?.message || err);
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
+});
+
+// GET /api/notifications/stream — SSE endpoint for real-time push notifications
+router.get('/stream', requireAuth, (req: AuthRequest, res: Response): void => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx proxy buffering
+  res.flushHeaders();
+
+  function send(data: object) {
+    try {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch (_) {}
+  }
+
+  // Confirm connection to client
+  send({ type: 'connected' });
+
+  const startTime = admin.firestore.Timestamp.now();
+  const unsubscribers: (() => void)[] = [];
+
+  // ── Watch requests ───────────────────────────────────────────────────────────
+  try {
+    const reqUnsub = db()
+      .collection('requests')
+      .where('updatedAt', '>=', startTime)
+      .onSnapshot(
+        snap => {
+          snap.docChanges().forEach(change => {
+            if (change.type === 'added' || change.type === 'modified') {
+              send({ type: 'update', collection: 'requests', docId: change.doc.id });
+            }
+          });
+        },
+        err => console.error('[SSE] requests snapshot error:', err?.message),
+      );
+    unsubscribers.push(reqUnsub);
+  } catch (_) {}
+
+  // ── Watch appointment requests ───────────────────────────────────────────────
+  try {
+    const aptUnsub = db()
+      .collection('appointmentRequests')
+      .where('createdAt', '>=', startTime)
+      .onSnapshot(
+        snap => {
+          snap.docChanges().forEach(change => {
+            if (change.type === 'added' || change.type === 'modified') {
+              send({ type: 'update', collection: 'appointments', docId: change.doc.id });
+            }
+          });
+        },
+        err => console.error('[SSE] appointmentRequests snapshot error:', err?.message),
+      );
+    unsubscribers.push(aptUnsub);
+  } catch (_) {}
+
+  // ── Watch blotter ────────────────────────────────────────────────────────────
+  try {
+    const blotterUnsub = db()
+      .collection('blotter')
+      .where('updatedAt', '>=', startTime)
+      .onSnapshot(
+        snap => {
+          snap.docChanges().forEach(change => {
+            if (change.type === 'added' || change.type === 'modified') {
+              send({ type: 'update', collection: 'blotter', docId: change.doc.id });
+            }
+          });
+        },
+        err => console.error('[SSE] blotter snapshot error:', err?.message),
+      );
+    unsubscribers.push(blotterUnsub);
+  } catch (_) {}
+
+  // Heartbeat every 25 s to prevent proxy/load-balancer timeouts
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(': heartbeat\n\n');
+    } catch (_) {
+      clearInterval(heartbeat);
+    }
+  }, 25_000);
+
+  // Cleanup when client disconnects
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    unsubscribers.forEach(fn => { try { fn(); } catch (_) {} });
+  });
 });
 
 export default router;

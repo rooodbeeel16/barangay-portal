@@ -1,6 +1,6 @@
 /**
  * notifications.js — Global admin notifications
- * Polls /api/notifications every 30 seconds, renders a bell icon with badge
+ * Polls /api/notifications every 60 seconds, renders a bell icon with badge
  * in the top header bar, and opens a dropdown panel. Click navigates to the
  * related request-detail page or appointments page.
  */
@@ -84,6 +84,7 @@
     if (event === 'new_blotter') return '#dbeafe';
     if (event === 'status_update') return '#fef3c7';
     if (event === 'appointment_update') return '#ffe4e6';
+    if (event === 'blotter_update') return '#fef3c7';
     return '#f3f4f6';
   }
 
@@ -93,6 +94,7 @@
     if (event === 'new_blotter') return '#2563eb';
     if (event === 'status_update') return '#d97706';
     if (event === 'appointment_update') return '#dc2626';
+    if (event === 'blotter_update') return '#d97706';
     return '#6b7280';
   }
 
@@ -619,7 +621,7 @@
       .replace(/'/g, '&#39;');
   }
 
-  // ── Polling ──────────────────────────────────────────────────────────────────
+  // ── Fetch notifications ───────────────────────────────────────────────────────
 
   let previousUnreadCount = 0;
 
@@ -643,7 +645,7 @@
       renderNotifications(notifications);
       updateBadge(unreadCount);
 
-      // Ring bell animation if new unread notifications appeared since last poll
+      // Ring bell animation if new unread notifications appeared
       if (unreadCount > previousUnreadCount && previousUnreadCount !== -1) {
         const bell = document.getElementById('notifBell');
         if (bell) {
@@ -655,8 +657,129 @@
       }
       previousUnreadCount = unreadCount;
     } catch (err) {
-      // Silently ignore fetch errors during polling
+      // Silently ignore fetch errors
     }
+  }
+
+  // ── SSE real-time connection ──────────────────────────────────────────────────
+
+  let _sseAbort = null;
+  let _sseReconnectTimer = null;
+  let _sseReconnectDelay = 3000;
+
+  function _sseSend(data, isFetch) {
+    try {
+      if (isFetch) { res.write('data: ' + JSON.stringify(data) + '\n\n'); }
+    } catch (_) {}
+  }
+
+  async function connectSSE() {
+    // Clear any pending reconnect
+    clearTimeout(_sseReconnectTimer);
+
+    // Abort any previous connection
+    if (_sseAbort) { try { _sseAbort.abort(); } catch (_) {} }
+    _sseAbort = new AbortController();
+
+    // Refresh token before connecting (handles re-connects after token expiry)
+    let token = localStorage.getItem('authToken');
+    try {
+      if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+        token = await firebase.auth().currentUser.getIdToken();
+        localStorage.setItem('authToken', token);
+      }
+    } catch (_) {}
+    if (!token) return;
+
+    let response;
+    try {
+      response = await fetch('/api/notifications/stream', {
+        headers: { 'Authorization': 'Bearer ' + token },
+        signal: _sseAbort.signal,
+      });
+    } catch (err) {
+      if (err && err.name !== 'AbortError') { _sseScheduleReconnect(); }
+      return;
+    }
+
+    if (!response.ok) { _sseScheduleReconnect(); return; }
+
+    // Reset delay on successful connection
+    _sseReconnectDelay = 3000;
+
+    // Set live indicator
+    _sseSetLive(true);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop(); // keep incomplete line in buffer
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const payload = line.slice(6).trim();
+            if (!payload) continue;
+            try {
+              const msg = JSON.parse(payload);
+              if (msg.type === 'update') {
+                fetchNotifications();
+                document.dispatchEvent(new CustomEvent('notif:update', { detail: msg }));
+              }
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    } finally {
+      _sseSetLive(false);
+    }
+
+    _sseScheduleReconnect();
+  }
+
+  function _sseScheduleReconnect() {
+    _sseSetLive(false);
+    _sseReconnectTimer = setTimeout(() => {
+      connectSSE();
+    }, _sseReconnectDelay);
+    // Exponential back-off, capped at 30 s
+    _sseReconnectDelay = Math.min(_sseReconnectDelay * 2, 30_000);
+  }
+
+  function _sseSetLive(live) {
+    const dot = document.getElementById('notifLiveDot');
+    if (!dot) return;
+    dot.style.background = live ? '#10b981' : '#9ca3af';
+    dot.title = live ? 'Real-time updates active' : 'Reconnecting…';
+  }
+
+  // Inject live indicator dot next to bell after panel is built
+  function _injectLiveDot() {
+    const container = document.getElementById(NOTIF_CONTAINER_ID);
+    if (!container || document.getElementById('notifLiveDot')) return;
+    const dot = document.createElement('span');
+    dot.id = 'notifLiveDot';
+    dot.title = 'Connecting…';
+    Object.assign(dot.style, {
+      position: 'absolute',
+      bottom: '0px',
+      left: '0px',
+      width: '8px',
+      height: '8px',
+      borderRadius: '50%',
+      background: '#9ca3af',
+      border: '1.5px solid #fff',
+      pointerEvents: 'none',
+    });
+    container.style.position = 'relative';
+    container.appendChild(dot);
   }
 
   // ── History Modal ────────────────────────────────────────────────────────────
@@ -677,7 +800,7 @@
   function _hMatchFilter(n) {
     const readIds = getReadIds();
     if (_hFilter === 'unread') return !readIds.has(n.id);
-    if (_hFilter === 'request' || _hFilter === 'appointment') return n.type === _hFilter;
+    if (_hFilter === 'request' || _hFilter === 'appointment' || _hFilter === 'blotter') return n.type === _hFilter;
     return true;
   }
 
@@ -809,6 +932,7 @@
           '<button class="nht-tab" data-f="unread">Unread</button>' +
           '<button class="nht-tab" data-f="request">Requests</button>' +
           '<button class="nht-tab" data-f="appointment">Appointments</button>' +
+          '<button class="nht-tab" data-f="blotter">Blotter</button>' +
         '</div>' +
         '<div id="notifHistList">' +
           '<div id="notifHistEmpty"><i class="fa-solid fa-bell-slash"></i>No notifications found</div>' +
@@ -870,13 +994,17 @@
     if (!document.getElementById(NOTIF_CONTAINER_ID)) return;
     buildStyles();
     buildPanel();
+    _injectLiveDot();
 
-    // Initial load
-    previousUnreadCount = -1; // suppress ring on first load
-    fetchNotifications().then(() => { previousUnreadCount = 0; });
+    // Initial load — set to -1 so the ring check is suppressed on first fetch.
+    previousUnreadCount = -1;
+    fetchNotifications();
 
-    // Poll every 30 seconds
-    setInterval(fetchNotifications, POLL_INTERVAL);
+    // Start SSE real-time stream
+    connectSSE();
+
+    // Fallback polling every 5 min in case SSE misses anything
+    setInterval(fetchNotifications, 5 * 60_000);
   }
 
   if (document.readyState === 'loading') {

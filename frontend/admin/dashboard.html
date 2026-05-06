@@ -696,6 +696,56 @@
       document.getElementById('profileChevron').style.transform = '';
     }
   });
+
+  // ── Real-time dashboard refresh (driven by SSE events from notifications.js) ─
+  var _dashRefreshTimer = null;
+
+  document.addEventListener('notif:update', function (e) {
+    // Debounce: wait 1.2 s before refreshing so rapid bursts merge into one call
+    clearTimeout(_dashRefreshTimer);
+    _dashRefreshTimer = setTimeout(function () {
+      loadDashboard();
+      loadBlotterStats();
+      _showRefreshToast();
+    }, 1200);
+  });
+
+  function _showRefreshToast() {
+    var existing = document.getElementById('dashLiveToast');
+    if (existing) { clearTimeout(existing._timer); existing.remove(); }
+    var toast = document.createElement('div');
+    toast.id = 'dashLiveToast';
+    toast.textContent = '⟳ Dashboard updated';
+    Object.assign(toast.style, {
+      position: 'fixed',
+      bottom: '24px',
+      right: '24px',
+      background: '#1e3a5f',
+      color: '#fff',
+      fontSize: '12px',
+      fontWeight: '600',
+      padding: '8px 16px',
+      borderRadius: '20px',
+      boxShadow: '0 4px 14px rgba(0,0,0,.18)',
+      zIndex: '99999',
+      opacity: '0',
+      transform: 'translateY(8px)',
+      transition: 'opacity 0.2s, transform 0.2s',
+      pointerEvents: 'none',
+    });
+    document.body.appendChild(toast);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+      });
+    });
+    toast._timer = setTimeout(function () {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 250);
+    }, 2500);
+  }
 </script>
 </body>
 </html>
