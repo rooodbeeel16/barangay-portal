@@ -141,33 +141,61 @@
 <body class="bg-gray-200 min-h-screen">
 
 <!-- ── Toolbar (no-print) ──────────────────────────── -->
-<div class="no-print sticky top-0 z-50 bg-[#0b1929] text-white shadow-lg">
-  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
+<div class="no-print sticky top-0 z-50 bg-[#0b1929] text-white shadow-lg border-b border-white/10">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4 flex-wrap">
+
+    <!-- Back Button -->
     <a id="backBtn" href="/admin/requests.html"
-       class="flex items-center gap-2 text-blue-200 hover:text-white text-sm transition">
-      <i class="fa-solid fa-arrow-left"></i> Back
+      class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-blue-200 hover:text-white text-xs font-bold transition-all duration-200">
+      <i class="fa-solid fa-arrow-left text-[12px]"></i>
+      Back
     </a>
-    <div class="w-px h-5 bg-white/20"></div>
-    <div class="flex-1 min-w-0">
-      <div class="font-bold text-sm truncate" id="toolbarTitle">Document Preview</div>
-      <div class="text-xs text-blue-300 font-mono" id="toolbarTracking"></div>
+
+    <!-- Divider -->
+    <div class="hidden sm:block w-px h-6 bg-white/15"></div>
+
+    <!-- Title / Tracking -->
+    <div class="flex-1 min-w-[200px]">
+      <div class="flex items-center gap-2">
+        <h1 class="font-bold text-sm sm:text-base truncate" id="toolbarTitle">
+          Document Preview
+        </h1>
+
+        <!-- Status badge -->
+        <span id="statusBadge"
+          class="hidden px-3 py-1 rounded-full text-[11px] font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">
+        </span>
+      </div>
+
+      <div class="text-[11px] sm:text-xs text-blue-300 font-mono truncate" id="toolbarTracking"></div>
     </div>
-    <div class="flex items-center gap-2 ml-auto flex-shrink-0">
-      <!-- Status badge -->
-      <span id="statusBadge" class="hidden px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700"></span>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-2 sm:gap-3 ml-auto flex-wrap justify-end">
+
+      <!-- Print -->
       <button onclick="handlePrint()"
-              class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-        <i class="fa-solid fa-print"></i> Print
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-white/10 text-white hover:bg-white/20 transition-all duration-200 shadow-sm active:scale-95">
+        <i class="fa-solid fa-print text-[12px]"></i>
+        Print
       </button>
+
+      <!-- Edit -->
       <button id="editBtn" onclick="toggleEditMode()"
-              class="bg-yellow-500 hover:bg-yellow-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-        <i class="fa-solid fa-pen"></i> Edit
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-yellow-500 text-white hover:bg-yellow-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">
+        <i class="fa-solid fa-pen text-[12px]"></i>
+        Edit
       </button>
+
+      <!-- Download -->
       <button onclick="handleDownload()"
-              class="bg-green-500 hover:bg-green-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-        <i class="fa-solid fa-download"></i> Download PDF
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">
+        <i class="fa-solid fa-download text-[12px]"></i>
+        Download
       </button>
+
     </div>
+
   </div>
 </div>
 

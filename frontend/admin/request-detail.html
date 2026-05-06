@@ -66,8 +66,6 @@
       </div>
       <div class="ml-auto flex items-center gap-2">
         <div id="notifContainer"></div>
-        <button onclick="previewDoc()" class="inline-flex items-center gap-2 bg-gray-600 text-white px-3.5 py-2 rounded-xl text-sm font-semibold hover:bg-gray-700 transition"><i class="fa-solid fa-eye"></i> Preview Document</button>
-        <button onclick="generateDoc()" class="inline-flex items-center gap-2 bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition"><i class="fa-solid fa-file-lines"></i> Download PDF</button>
         <div class="relative" id="profileDropdown">
           <button onclick="toggleProfileDropdown()" class="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-gray-100 transition-all duration-150">
             <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] text-white flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0" id="profileAvatar">?</div>
@@ -343,8 +341,13 @@
       ' style="width:794px;height:1123px;border:none;transform-origin:top left;display:block;" onload="fitPreviewFrame()"></iframe>' +
       '</div>' +
       '<div class="mt-3 flex gap-2">' +
-      '<button onclick="previewDoc()" class="flex-1 inline-flex items-center justify-center gap-1.5 bg-gray-100 text-gray-700 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-gray-200 transition"><i class="fa-solid fa-up-right-from-square text-[10px]"></i> Open Full</button>' +
-      '<button onclick="generateDoc()" class="flex-1 inline-flex items-center justify-center gap-1.5 bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-semibold hover:bg-emerald-700 transition"><i class="fa-solid fa-download text-[10px]"></i> Download</button>' +
+      '<button onclick="previewDoc()" class="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-2xl text-xs font-bold hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95">' +
+  '<i class="fa-solid fa-up-right-from-square text-[11px]"></i>' +
+  'Preview & Print</button>' +
+
+'<button onclick="generateDoc()" class="flex-1 inline-flex items-center justify-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2.5 rounded-2xl text-xs font-bold hover:bg-blue-100 hover:text-blue-800 transition-all duration-200 shadow-sm active:scale-95">' +
+  '<i class="fa-solid fa-download text-[11px]"></i>' +
+  'Download PDF</button>' +
       '</div>' +
       '</div>' +
       '</div>' + // end right
