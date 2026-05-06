@@ -3,6 +3,10 @@ import { requireAuth, AuthRequest } from '../middleware/auth.middleware';
 import { db } from '../config/firebase';
 import { logAudit } from '../services/audit.service';
 import { generateBlotterId } from '../services/blotterId.service';
+import {
+  sendBlotterCaseFiledEmail,
+  sendBlotterStatusUpdateEmail,
+} from '../services/email.service';
 import { BLOTTER_STATUS_FLOW } from '../config/constants';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
@@ -145,6 +149,20 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<v
     };
 
     const docRef = await db().collection('blotter').add(docData);
+
+    if (data.complainant.email) {
+      try {
+        await sendBlotterCaseFiledEmail(
+          data.complainant.email,
+          `${data.complainant.firstName} ${data.complainant.lastName}`,
+          caseNumber,
+          data.natureOfComplaint,
+          data.incidentDate,
+        );
+      } catch (emailErr) {
+        console.warn('Email notification failed:', emailErr);
+      }
+    }
 
     await logAudit({
       action: 'BLOTTER_CREATED',
@@ -306,6 +324,21 @@ router.patch('/:id/status', requireAuth, async (req: AuthRequest, res: Response)
     if (escalationReason !== undefined) updateData.escalationReason = escalationReason;
 
     await docRef.update(updateData);
+
+    const complainantEmail = data.complainant?.email;
+    if (complainantEmail) {
+      try {
+        await sendBlotterStatusUpdateEmail(
+          complainantEmail,
+          `${data.complainant.firstName} ${data.complainant.lastName}`,
+          data.caseNumber,
+          newStatus,
+          remarks,
+        );
+      } catch (emailErr) {
+        console.warn('Email notification failed:', emailErr);
+      }
+    }
 
     await logAudit({
       action: 'BLOTTER_STATUS_UPDATE',

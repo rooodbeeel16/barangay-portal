@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { db } from '../config/firebase';
 import { generateTrackingId } from '../services/trackingId.service';
 import { generateQRCodeDataURL } from '../services/qrcode.service';
+import { sendRequestSubmittedEmail } from '../services/email.service';
+import { DOCUMENT_TYPES } from '../config/constants';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import rateLimit from 'express-rate-limit';
@@ -94,6 +96,19 @@ router.post('/', submitLimiter, async (req: Request, res: Response): Promise<voi
     };
 
     const docRef = await db().collection('requests').add(requestData);
+
+    if (data.email) {
+      try {
+        await sendRequestSubmittedEmail(
+          data.email,
+          `${data.firstName} ${data.lastName}`,
+          trackingId,
+          DOCUMENT_TYPES[data.documentType as keyof typeof DOCUMENT_TYPES] || data.documentType,
+        );
+      } catch (emailErr) {
+        console.warn('Email notification failed:', emailErr);
+      }
+    }
 
     res.status(201).json({
       success: true,

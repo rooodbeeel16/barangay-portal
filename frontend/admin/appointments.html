@@ -13,9 +13,25 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
-    /* Page-specific modal overrides — appointments uses .open toggle pattern */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:60; align-items:center; justify-content:center; padding:1rem; }
-    .modal-overlay.open { display:flex; }
+    /* Page-specific modal overrides — appointments uses .open toggle pattern.
+       shared.css sets opacity:0 and pointer-events:none on .modal-overlay;
+       we must explicitly override both here so modals are visible and clickable. */
+    .modal-overlay {
+      display: none !important;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 60;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 1 !important;
+      pointer-events: none;
+    }
+    .modal-overlay.open {
+      display: flex !important;
+      pointer-events: all !important;
+    }
     @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
     .modal-box { animation: modalIn 0.2s ease forwards; }
   </style>
@@ -295,6 +311,10 @@
           <i class="fa-solid fa-calendar-check mr-1.5"></i>Appointment Requests
           <span id="tab1Badge" class="ml-1.5 bg-yellow-100 text-yellow-700 text-xs font-bold px-1.5 py-0.5 rounded-full"></span>
         </button>
+        <button id="tab2Btn" onclick="switchTab(2)"
+          class="px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px transition">
+          <i class="fa-solid fa-inbox mr-1.5"></i>Document Pickups
+        </button>
       </div>
 
       <!-- ════════════ TAB 1: Appointment Requests ════════════ -->
@@ -302,31 +322,31 @@
 
         <!-- Stats -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <div class="text-2xl font-bold text-[#1e3a5f]" id="r_statTotal">—</div>
-            <div class="text-xs text-gray-500 mt-0.5">Total</div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-[#1e3a5f]/10 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-calendar-days text-[#1e3a5f] text-sm"></i></div>
+            <div><div class="text-xl font-bold text-[#1e3a5f] leading-tight" id="r_statTotal">—</div><div class="text-xs text-gray-400 mt-0.5">Total</div></div>
           </div>
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <div class="text-2xl font-bold text-yellow-600" id="r_statPending">—</div>
-            <div class="text-xs text-gray-500 mt-0.5">Pending</div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-clock text-yellow-500 text-sm"></i></div>
+            <div><div class="text-xl font-bold text-yellow-600 leading-tight" id="r_statPending">—</div><div class="text-xs text-gray-400 mt-0.5">Pending</div></div>
           </div>
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <div class="text-2xl font-bold text-green-600" id="r_statApproved">—</div>
-            <div class="text-xs text-gray-500 mt-0.5">Approved</div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-circle-check text-green-500 text-sm"></i></div>
+            <div><div class="text-xl font-bold text-green-600 leading-tight" id="r_statApproved">—</div><div class="text-xs text-gray-400 mt-0.5">Approved</div></div>
           </div>
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <div class="text-2xl font-bold text-blue-600" id="r_statRescheduled">—</div>
-            <div class="text-xs text-gray-500 mt-0.5">Rescheduled</div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-calendar-xmark text-blue-500 text-sm"></i></div>
+            <div><div class="text-xl font-bold text-blue-600 leading-tight" id="r_statRescheduled">—</div><div class="text-xs text-gray-400 mt-0.5">Rescheduled</div></div>
           </div>
-          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <div class="text-2xl font-bold text-red-500" id="r_statDeclined">—</div>
-            <div class="text-xs text-gray-500 mt-0.5">Declined</div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-circle-xmark text-red-400 text-sm"></i></div>
+            <div><div class="text-xl font-bold text-red-500 leading-tight" id="r_statDeclined">—</div><div class="text-xs text-gray-400 mt-0.5">Declined</div></div>
           </div>
         </div>
 
         <!-- Filters -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <select id="r_filterStatus" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
               <option value="">All Statuses</option>
               <option value="PENDING">Pending</option>
@@ -335,10 +355,10 @@
               <option value="DECLINED">Declined</option>
             </select>
             <input type="text" id="r_filterSearch" placeholder="Search by name or email…"
-              class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
+              class="col-span-1 md:col-span-2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
             <div class="flex gap-2">
-              <button onclick="applyRequestFilters()" class="flex-1 bg-[#1e3a5f] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">Apply</button>
-              <button onclick="clearRequestFilters()" class="border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">Clear</button>
+              <button onclick="applyRequestFilters()" class="flex-1 bg-[#1e3a5f] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">Apply Filters</button>
+              <button onclick="clearRequestFilters()" title="Clear filters" class="border border-gray-200 text-gray-600 px-3 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
           </div>
         </div>
@@ -355,6 +375,7 @@
             <table class="w-full text-sm">
               <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
                 <tr>
+                  <th class="px-4 py-3 text-left">Ref. ID</th>
                   <th class="px-4 py-3 text-left">Resident</th>
                   <th class="px-4 py-3 text-left">Contact / Email</th>
                   <th class="px-4 py-3 text-left">Purpose</th>
@@ -364,7 +385,7 @@
                 </tr>
               </thead>
               <tbody id="r_table">
-                <tr><td colspan="6" class="px-5 py-4">
+                <tr><td colspan="7" class="px-5 py-4">
                   <div class="space-y-2.5">
                     <div class="skeleton h-4 rounded"></div>
                     <div class="skeleton h-4 rounded w-11/12"></div>
@@ -606,7 +627,7 @@
     renderPagination('r_pagination', r_currentPage, totalPages, 'r_goToPage');
 
     if (!total) {
-      document.getElementById('r_table').innerHTML = '<tr><td colspan="6" class="text-center py-12 text-gray-400"><i class="fa-solid fa-calendar-xmark text-2xl mb-2 opacity-30 block"></i>No appointment requests found.</td></tr>';
+      document.getElementById('r_table').innerHTML = '<tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fa-solid fa-calendar-xmark text-2xl mb-2 opacity-30 block"></i>No appointment requests found.</td></tr>';
       return;
     }
 
@@ -619,6 +640,7 @@
 
     document.getElementById('r_table').innerHTML = items.map(function(a) {
       var id      = a.id || '';
+      var refId   = id ? id.substring(0, 8).toUpperCase() : '—';
       var purpose = a.purpose || '—';
       var purposeShort = purpose.length > 70 ? purpose.substring(0, 70) + '…' : purpose;
       var aptDate = a.date || '—';
@@ -655,6 +677,7 @@
         ? '<div class="text-xs text-blue-500 mt-0.5 italic">' + esc(a.rescheduleNote) + '</div>' : '';
 
       return '<tr class="border-t border-gray-50 hover:bg-blue-50/40 cursor-pointer transition" onclick="openDetails(\'' + id + '\')">' +
+        '<td class="px-4 py-3 font-mono text-xs text-[#1e3a5f] font-semibold whitespace-nowrap">' + esc(refId) + '</td>' +
         '<td class="px-4 py-3"><div class="font-semibold text-xs text-gray-800">' + esc(a.name || '—') + '</div></td>' +
         '<td class="px-4 py-3"><div class="text-xs text-gray-700">' + esc(a.contact || '—') + '</div><div class="text-xs text-gray-400 truncate max-w-[160px]">' + esc(a.email || '—') + '</div></td>' +
         '<td class="px-4 py-3 max-w-[180px]"><div class="text-xs text-gray-600 leading-relaxed" title="' + esc(purpose) + '">' + esc(purposeShort) + '</div></td>' +
@@ -673,7 +696,7 @@
       allRequests = Array.isArray(data) ? data : (data.appointments || []);
       renderRequests(allRequests);
     } catch(e) {
-      document.getElementById('r_table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load appointment requests.</td></tr>';
+      document.getElementById('r_table').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load appointment requests.</td></tr>';
     }
   }
 
@@ -796,7 +819,8 @@
   }
   function closeModal(which) {
     document.getElementById(which + 'Modal').classList.remove('open');
-    pendingId = null;
+    // Don't clear pendingId when closing details — it chains to an action modal
+    if (which !== 'details') pendingId = null;
   }
   async function confirmDecline() {
     var reason = document.getElementById('declineReason').value.trim();
@@ -843,6 +867,19 @@
   document.getElementById('rescheduleModal').addEventListener('click', function(e) { if (e.target === this) closeModal('reschedule'); });
   document.getElementById('pickupConfirmModal').addEventListener('click', function(e) { if (e.target === this) closeModal('pickupConfirm'); });
   document.getElementById('detailsModal').addEventListener('click', function(e) { if (e.target === this) closeModal('details'); });
+
+  // Enter key for search
+  document.getElementById('r_filterSearch').addEventListener('keydown', function(e) { if (e.key === 'Enter') applyRequestFilters(); });
+
+  // Escape key closes any open modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      ['approve','delete','archive','decline','reschedule','pickupConfirm','details'].forEach(function(m) {
+        document.getElementById(m + 'Modal').classList.remove('open');
+      });
+      pendingId = null;
+    }
+  });
 
   // ══════════════════ TAB 2: Document Pickups ══════════════════════════
   async function loadAllAppointments() {

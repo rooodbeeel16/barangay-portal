@@ -24,8 +24,10 @@ router.get('/:trackingId', trackingLimiter, async (req: Request, res: Response):
       return;
     }
 
-    const data = snapshot.docs[0].data();
+    const doc = snapshot.docs[0];
+    const data = doc.data();
     res.json({
+      id: doc.id,
       trackingId: data.trackingId,
       documentType: data.documentType,
       firstName: data.firstName,

@@ -124,8 +124,19 @@
       @page { size: A4; margin: 0; }
     }
 
+    /* ── Embed mode (iframe preview) ─────────────────── */
+    html.embed-mode body { background: white !important; }
+    html.embed-mode .no-print { display: none !important; }
+    html.embed-mode #loadingOverlay { display: none !important; }
+    html.embed-mode .print-wrapper { padding: 0 !important; background: white !important; }
+    html.embed-mode .paper { box-shadow: none !important; margin: 0 !important; }
 
   </style>
+  <script>(function(){
+    if(new URLSearchParams(location.search).get('embed')==='1'){
+      document.documentElement.classList.add('embed-mode');
+    }
+  })();</script>
 </head>
 <body class="bg-gray-200 min-h-screen">
 
@@ -236,12 +247,17 @@
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
 <script>
+  var isEmbed = new URLSearchParams(location.search).get('embed') === '1';
+
   firebase.auth().onAuthStateChanged(async function(fbUser) {
-    if (!fbUser) { window.location.href = '/admin/login.html'; return; }
+    if (!fbUser) {
+      if (!isEmbed) window.location.href = '/admin/login.html';
+      return;
+    }
     try {
       var freshToken = await fbUser.getIdToken(true);
       localStorage.setItem('authToken', freshToken);
-    } catch(e) { window.location.href = '/admin/login.html'; }
+    } catch(e) { if (!isEmbed) window.location.href = '/admin/login.html'; }
   });
 
   var requestId = new URLSearchParams(window.location.search).get('id');

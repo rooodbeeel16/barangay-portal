@@ -40,7 +40,9 @@ async function apiRequest(endpoint, options = {}, _retried = false) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || data.message || 'Request failed');
+    const err = new Error(data.error || data.message || 'Request failed');
+    if (data.details) err.details = data.details;
+    throw err;
   }
   return data;
 }

@@ -461,7 +461,7 @@ async function loadCase() {
     return;
   }
   try {
-    var data = await get('/admin/blotter/' + caseId);
+    var data = await get('/blotter/' + caseId);
     window.caseData = data;
     window.caseNumber = data.caseNumber || data.id || caseId;
     document.getElementById('pageCaseNumber').textContent = window.caseNumber;
@@ -553,8 +553,8 @@ function buildOverviewTab(data) {
     infoRow('Date of Incident', formatDate(data.incidentDate)) +
     infoRow('Time of Incident', data.incidentTime ? formatTime(data.incidentTime) : 'N/A') +
     infoRow('Location', data.incidentLocation || 'N/A') +
-    infoRow('Nature of Complaint', data.nature || data.natureOfComplaint || 'N/A') +
-    infoRow('Book / Page No.', data.bookPage || 'N/A') +
+    infoRow('Nature of Complaint', data.natureOfComplaint || 'N/A') +
+    infoRow('Book / Page No.', data.blotterBookPage || 'N/A') +
     '</div>' +
     '<div class="mt-4">' +
     '<div class="text-xs font-bold text-gray-400 uppercase mb-1.5">Narrative</div>' +
@@ -572,8 +572,8 @@ function buildOverviewTab(data) {
     '<div><label class="f-label">Time</label><input type="time" id="editIncidentTime" class="f-input" value="'+escHtml(data.incidentTime||'')+'"></div>' +
     '</div>' +
     '<div class="mb-4"><label class="f-label">Location <span class="f-req">*</span></label><input type="text" id="editIncidentLocation" class="f-input" value="'+escHtml(data.incidentLocation||'')+'"></div>' +
-    '<div class="mb-4"><label class="f-label">Nature of Complaint <span class="f-req">*</span></label><input type="text" id="editNature" class="f-input" value="'+escHtml(data.nature||data.natureOfComplaint||'')+'"></div>' +
-    '<div class="mb-4"><label class="f-label">Book / Page No.</label><input type="text" id="editBookPage" class="f-input" value="'+escHtml(data.bookPage||'')+'"></div>' +
+    '<div class="mb-4"><label class="f-label">Nature of Complaint <span class="f-req">*</span></label><input type="text" id="editNature" class="f-input" value="'+escHtml(data.natureOfComplaint||'')+'"></div>' +
+    '<div class="mb-4"><label class="f-label">Book / Page No.</label><input type="text" id="editBookPage" class="f-input" value="'+escHtml(data.blotterBookPage||'')+'"></div>' +
     '<div class="mb-4"><label class="f-label">Narrative <span class="f-req">*</span></label><textarea id="editNarrative" rows="5" class="f-input resize-none">' + escHtml(data.narrative||data.incidentNarrative||'') + '</textarea></div>' +
     '<div class="flex gap-3">' +
     '<button onclick="cancelEdit()" class="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancel</button>' +
@@ -601,7 +601,7 @@ function buildPartyCard(role, party) {
   return (
     '<div class="border border-gray-100 rounded-xl p-4" style="background:#f8fafc">' +
     '<div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-3">'+escHtml(role)+'</div>' +
-    '<div class="font-bold text-sm text-gray-900 mb-2">'+escHtml(party.name||party.fullName||'—')+'</div>' +
+    '<div class="font-bold text-sm text-gray-900 mb-2">'+escHtml([party.firstName,party.middleName,party.lastName].filter(Boolean).join(' ')||'—')+'</div>' +
     '<div class="space-y-1 text-xs text-gray-600">' +
     (party.address ? '<div><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> '+escHtml(party.address)+'</div>' : '') +
     (party.contact||party.contactNumber ? '<div><i class="fa-solid fa-phone w-4 text-gray-400"></i> '+escHtml(party.contact||party.contactNumber)+'</div>' : '') +
@@ -684,11 +684,11 @@ function buildKpTab(data) {
     '<div class="kp-progress-bar"><div class="kp-progress-fill" id="kpProgressFill" style="width:0%"></div></div>' +
     '</div>' +
     '<div class="space-y-3" id="kpChecklistItems">' +
-    kpCheckboxHtml('kpSummonsComplainant','summons_complainant','Summons Issued to Complainant') +
-    kpCheckboxHtml('kpSummonsRespondent','summons_respondent','Summons Issued to Respondent') +
-    kpCheckboxHtml('kpHearing1','hearing_1','First Hearing Conducted') +
-    kpCheckboxHtml('kpHearing2','hearing_2','Second Hearing Conducted') +
-    kpCheckboxHtml('kpHearing3','hearing_3','Third Hearing Conducted') +
+    kpCheckboxHtml('kpSummonsComplainant','summonsIssuedToComplainant','Summons Issued to Complainant') +
+    kpCheckboxHtml('kpSummonsRespondent','summonsIssuedToRespondent','Summons Issued to Respondent') +
+    kpCheckboxHtml('kpHearing1','firstHearingConducted','First Hearing Conducted') +
+    kpCheckboxHtml('kpHearing2','secondHearingConducted','Second Hearing Conducted') +
+    kpCheckboxHtml('kpHearing3','thirdHearingConducted','Third Hearing Conducted') +
     '</div>'
   );
 }
@@ -704,7 +704,7 @@ function kpCheckboxHtml(id, field, label) {
 
 function renderKpChecklist(data) {
   var kp = data.kpChecklist || {};
-  var fields = ['summons_complainant','summons_respondent','hearing_1','hearing_2','hearing_3'];
+  var fields = ['summonsIssuedToComplainant','summonsIssuedToRespondent','firstHearingConducted','secondHearingConducted','thirdHearingConducted'];
   var ids = ['kpSummonsComplainant','kpSummonsRespondent','kpHearing1','kpHearing2','kpHearing3'];
   var checked = 0;
   fields.forEach(function(f, i) {
@@ -727,7 +727,7 @@ function updateKpProgress(checked) {
 async function toggleKpItem(field, value) {
   try {
     var payload = {}; payload[field] = value;
-    await patch('/admin/blotter/'+caseId+'/kp-checklist', payload);
+    await patch('/blotter/'+caseId+'/kp-checklist', payload);
     var checked = 0;
     ['kpSummonsComplainant','kpSummonsRespondent','kpHearing1','kpHearing2','kpHearing3'].forEach(function(id) {
       var el = document.getElementById(id); if (el && el.checked) checked++;
@@ -737,7 +737,7 @@ async function toggleKpItem(field, value) {
   } catch(e) {
     toastr.error('Failed to update checklist: '+(e&&e.message?e.message:'Error'));
     // Revert checkbox
-    var fieldToId = { summons_complainant:'kpSummonsComplainant', summons_respondent:'kpSummonsRespondent', hearing_1:'kpHearing1', hearing_2:'kpHearing2', hearing_3:'kpHearing3' };
+    var fieldToId = { summonsIssuedToComplainant:'kpSummonsComplainant', summonsIssuedToRespondent:'kpSummonsRespondent', firstHearingConducted:'kpHearing1', secondHearingConducted:'kpHearing2', thirdHearingConducted:'kpHearing3' };
     var el = document.getElementById(fieldToId[field]);
     if (el) el.checked = !value;
   }
@@ -759,7 +759,7 @@ function buildNotesTab(data) {
 }
 
 function renderCaseNotes(data) {
-  var notes = (data.notes || []).slice().reverse();
+  var notes = (data.caseNotes || []).slice().reverse();
   var el = document.getElementById('notesList');
   if (!el) return;
   if (!notes.length) {
@@ -783,10 +783,10 @@ async function addNote() {
   var text = (document.getElementById('newNoteText').value || '').trim();
   if (!text) { toastr.warning('Please enter a note.'); return; }
   try {
-    await post('/admin/blotter/'+caseId+'/notes', { text: text });
+    await post('/blotter/'+caseId+'/notes', { note: text });
     document.getElementById('newNoteText').value = '';
     toastr.success('Note added');
-    var data = await get('/admin/blotter/'+caseId);
+    var data = await get('/blotter/'+caseId);
     window.caseData = data;
     renderCaseNotes(data);
   } catch(e) { toastr.error('Failed to add note: '+(e&&e.message?e.message:'Error')); }
@@ -800,9 +800,9 @@ function buildCaseInfoCard(data) {
     '<div class="space-y-3 text-sm">' +
     cInfoRow('Case Number', escHtml(data.caseNumber||data.id||caseId)) +
     cInfoRow('Status', getStatusBadgeHtml(data.status)) +
-    cInfoRow('Filed By', escHtml(data.filedBy||data.staffName||'—')) +
+    cInfoRow('Filed By', escHtml(data.filedByName||data.filedBy||'—')) +
     cInfoRow('Filed Date', escHtml(formatDate(data.createdAt||data.filedDate))) +
-    cInfoRow('Book / Page', escHtml(data.bookPage||'—')) +
+    cInfoRow('Book / Page', escHtml(data.blotterBookPage||'—')) +
     cInfoRow('Last Updated', escHtml(formatDateTime(data.updatedAt||data.lastUpdated))) +
     '</div>' +
     '</div>'
@@ -901,7 +901,7 @@ async function updateStatus() {
   var btn = document.getElementById('updateStatusBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
   try {
-    await patch('/admin/blotter/'+caseId+'/status', payload);
+    await patch('/blotter/'+caseId+'/status', payload);
     toastr.success('Status updated to <strong>'+(STATUS_LABELS[newStatus]||newStatus)+'</strong>', 'Status Updated');
     setTimeout(function() { loadCase(); }, 1200);
   } catch(e) {
@@ -993,10 +993,10 @@ async function saveEdit() {
   var btn = document.getElementById('saveEditBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
   try {
-    await patch('/admin/blotter/'+caseId, {
+    await patch('/blotter/'+caseId, {
       incidentDate: date, incidentTime: time,
-      incidentLocation: location, nature: nature,
-      bookPage: bookPage, narrative: narrative
+      incidentLocation: location, natureOfComplaint: nature,
+      blotterBookPage: bookPage, narrative: narrative
     });
     toastr.success('Incident details updated');
     setTimeout(function() { loadCase(); }, 800);
@@ -1050,7 +1050,7 @@ function addAttendeeRowWithData(partyType, name, attended) {
   tr.innerHTML =
     '<td><select class="f-input py-1 text-xs att-party-type"><option value="COMPLAINANT"'+(partyType==='COMPLAINANT'?' selected':'')+'>Complainant</option><option value="RESPONDENT"'+(partyType==='RESPONDENT'?' selected':'')+'>Respondent</option><option value="WITNESS"'+(partyType==='WITNESS'?' selected':'')+'>Witness</option><option value="OTHER"'+(partyType==='OTHER'?' selected':'')+'>Other</option></select></td>' +
     '<td><input type="text" class="f-input py-1 text-xs att-name" value="'+escHtml(name)+'" placeholder="Full name"></td>' +
-    '<td class="text-center"><input type="checkbox" class="w-4 h-4 accent-[#1e3a5f] att-attended"'+(attended?' checked':')+'></td>' +
+    '<td class="text-center"><input type="checkbox" class="w-4 h-4 accent-[#1e3a5f] att-attended"'+(attended?' checked':'')+'></td>' +
     '<td><button type="button" onclick="removeAttendeeRow(this)" class="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 mx-auto"><i class="fa-solid fa-xmark text-xs"></i></button></td>';
   tbody.appendChild(tr);
 }
@@ -1080,14 +1080,14 @@ async function submitAddHearing() {
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
   try {
     if (editId) {
-      await patch('/admin/blotter/'+caseId+'/hearings/'+editId, { hearingDate:date, hearingTime:time, venue:venue, notes:notes, attendance:attendance });
+      await patch('/blotter/'+caseId+'/hearings/'+editId, { date:date, time:time, venue:venue, notes:notes, attendance:attendance });
       toastr.success('Hearing updated');
     } else {
-      await post('/admin/blotter/'+caseId+'/hearings', { hearingDate:date, hearingTime:time, venue:venue, notes:notes, attendance:attendance });
+      await post('/blotter/'+caseId+'/hearings', { date:date, time:time, venue:venue, notes:notes, attendance:attendance });
       toastr.success('Hearing added');
     }
     closeHearingModal();
-    var data = await get('/admin/blotter/'+caseId);
+    var data = await get('/blotter/'+caseId);
     window.caseData = data;
     renderHearings(data);
     populateSummonsSelect(data.hearings||[]);
@@ -1112,10 +1112,10 @@ async function confirmDeleteHearing() {
   var btn = document.getElementById('confirmDeleteBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
   try {
-    await del('/admin/blotter/'+caseId+'/hearings/'+_pendingDeleteHearingId);
+    await del('/blotter/'+caseId+'/hearings/'+_pendingDeleteHearingId);
     toastr.success('Hearing deleted');
     closeDeleteModal();
-    var data = await get('/admin/blotter/'+caseId);
+    var data = await get('/blotter/'+caseId);
     window.caseData = data;
     renderHearings(data);
     populateSummonsSelect(data.hearings||[]);

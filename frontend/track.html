@@ -126,15 +126,15 @@
         <div><div class="text-xs font-bold text-slate-400 uppercase mb-1">Document Type</div><div class="font-semibold text-slate-800 text-sm" id="resultDocType"></div></div>
         <div><div class="text-xs font-bold text-slate-400 uppercase mb-1">Date Submitted</div><div class="font-semibold text-slate-800 text-sm" id="resultDate"></div></div>
       </div>
-      <div class="mb-2">
+      <!-- <div class="mb-2">
         <div class="text-xs font-bold text-slate-400 uppercase mb-1">Purpose</div>
         <div class="text-sm text-slate-700" id="resultPurpose"></div>
-      </div>
+      </div> -->
     </div>
 
     <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
       <h3 class="font-bold text-slate-800 mb-6">Request Status</h3>
-      <div class="flex items-center justify-between mb-8 overflow-x-auto pb-2" id="progressBar">
+      <div class="flex items-center justify-between mb-8" id="progressBar">
       </div>
       <div id="currentStatusBadge" class="text-center"></div>
     </div>
@@ -230,8 +230,8 @@
   </div>
 </footer>
 
-<script src="/js/utils.js"></script>
-<script src="/js/api.js"></script>
+<script src="/js/utils.js?v=2"></script>
+<script src="/js/api.js?v=2"></script>
 <script>
   /* ── Nav scroll effect ── */
   (function () {
@@ -254,9 +254,9 @@
   var currentRequestId = null;
   var html5QrCode = null;
 
-  var STATUS_STEPS = ['PENDING', 'READY_FOR_RELEASE', 'RELEASED'];
-  var STATUS_LABELS = { PENDING:'Pending', READY_FOR_RELEASE:'Ready for Release', RELEASED:'Released' };
-  var STATUS_ICONS = { PENDING:'<i class="fa-solid fa-hourglass-half"></i>', READY_FOR_RELEASE:'<i class="fa-solid fa-box"></i>', RELEASED:'<i class="fa-solid fa-circle-check"></i>' };
+  var STATUS_STEPS = ['PENDING','FOR_SIGNATURE','READY_FOR_RELEASE', 'RELEASED'];
+  var STATUS_LABELS = { PENDING:'Pending', FOR_SIGNATURE:'For Signature', READY_FOR_RELEASE:'Ready for Release', RELEASED:'Released' };
+  var STATUS_ICONS = { PENDING:'<i class="fa-solid fa-hourglass-half"></i>', FOR_SIGNATURE:'<i class="fa-solid fa-pen-to-square"></i>', READY_FOR_RELEASE:'<i class="fa-solid fa-box"></i>', RELEASED:'<i class="fa-solid fa-circle-check"></i>' };
 
   document.getElementById('trackingInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') trackRequest();
@@ -296,12 +296,25 @@
     return !s ? '' : s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  var DOC_TYPE_LABELS = {
+    BARANGAY_CLEARANCE: 'Barangay Clearance',
+    CERTIFICATE_OF_RESIDENCY: 'Certificate of Residency',
+    CERTIFICATE_OF_INDIGENCY: 'Certificate of Indigency',
+    BUSINESS_PERMIT_ENDORSEMENT: 'Business Permit Endorsement',
+    INCIDENT_REPORT: 'Incident Report',
+  };
+
+  function getDocTypeLabel(docType) {
+    if (Utils && typeof Utils.getDocTypeLabel === 'function') return Utils.getDocTypeLabel(docType);
+    return DOC_TYPE_LABELS[docType] || docType || 'N/A';
+  }
+
   function showResult(data) {
     document.getElementById('resultTrackingId').textContent = data.trackingId || '';
     document.getElementById('resultName').textContent = data.residentName || ((data.firstName || '') + ' ' + (data.lastName || '')).trim() || 'N/A';
-    document.getElementById('resultDocType').textContent = Utils.getDocTypeLabel(data.documentType) || data.documentType || 'N/A';
+    document.getElementById('resultDocType').textContent = getDocTypeLabel(data.documentType);
     document.getElementById('resultDate').textContent = Utils.formatDate(data.createdAt || data.submittedAt);
-    document.getElementById('resultPurpose').textContent = data.purpose || 'N/A';
+    // document.getElementById('resultPurpose').textContent = data.purpose || 'N/A';
 
     renderProgressBar(data.status);
 
@@ -324,30 +337,42 @@
   }
 
   function renderProgressBar(currentStatus) {
-    var isRejected = currentStatus === 'REJECTED';
+    var container = document.getElementById('progressBar');
+
+    if (currentStatus === 'REJECTED') {
+      container.innerHTML =
+        '<div class="flex flex-col items-center justify-center w-full py-2">' +
+          '<div class="w-14 h-14 rounded-full flex items-center justify-center text-xl bg-red-500 text-white shadow-lg ring-4 ring-red-100">' +
+            '<i class="fa-solid fa-xmark"></i>' +
+          '</div>' +
+          '<div class="text-sm mt-2 font-bold text-red-600 tracking-wide">Rejected</div>' +
+          '<div class="text-xs text-red-400 mt-0.5">This request has been rejected.</div>' +
+        '</div>';
+      return;
+    }
+
     var currentIdx = STATUS_STEPS.indexOf(currentStatus);
-    var html = '<div class="flex items-center w-full min-w-max gap-0">';
+    var html = '<div class="flex items-start w-full">';
     for (var i = 0; i < STATUS_STEPS.length; i++) {
       var step = STATUS_STEPS[i];
-      var isDone = !isRejected && currentIdx >= i;
+      var isDone = currentIdx >= i;
       var isCurrent = currentStatus === step;
       var bgClass = isDone ? 'bg-[#1e3a5f] text-white' : 'bg-gray-100 text-gray-400';
-      var borderClass = isCurrent ? 'ring-2 ring-offset-2 ring-[#1e3a5f]' : '';
-      html += '<div class="flex flex-col items-center" style="min-width:70px">';
-      html += '<div class="w-10 h-10 rounded-full flex items-center justify-center text-base ' + bgClass + ' ' + borderClass + '">';
-      html += isDone ? '✓' : (i + 1);
+      var ringClass = isCurrent ? ' ring-2 ring-offset-2 ring-[#1e3a5f]' : '';
+      html += '<div class="flex flex-col items-center flex-shrink-0" style="min-width:56px">';
+      html += '<div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ' + bgClass + ringClass + '">';
+      html += isDone ? '<i class="fa-solid fa-check text-xs"></i>' : (i + 1);
       html += '</div>';
-      html += '<div class="text-xs mt-1 text-center font-medium ' + (isCurrent ? 'text-[#1e3a5f] font-bold' : (isDone ? 'text-gray-600' : 'text-gray-400')) + '">' + STATUS_LABELS[step] + '</div>';
+      html += '<div class="text-[10px] mt-1.5 text-center leading-tight px-1 ' +
+        (isCurrent ? 'text-[#1e3a5f] font-bold' : (isDone ? 'text-gray-600 font-medium' : 'text-gray-400')) +
+        '">' + STATUS_LABELS[step] + '</div>';
       html += '</div>';
       if (i < STATUS_STEPS.length - 1) {
-        html += '<div class="flex-1 h-0.5 mb-5 ' + (isDone && currentIdx > i ? 'bg-[#1e3a5f]' : 'bg-gray-200') + '" style="min-width:12px"></div>';
+        html += '<div class="flex-1 h-0.5 mt-[18px] ' + (currentIdx > i ? 'bg-[#1e3a5f]' : 'bg-gray-200') + '"></div>';
       }
     }
-    if (isRejected) {
-      html += '<div class="flex flex-col items-center" style="min-width:70px"><div class="w-10 h-10 rounded-full flex items-center justify-center text-base bg-red-500 text-white ring-2 ring-offset-2 ring-red-500">✕</div><div class="text-xs mt-1 text-center font-bold text-red-600">Rejected</div></div>';
-    }
     html += '</div>';
-    document.getElementById('progressBar').innerHTML = html;
+    container.innerHTML = html;
   }
 
   function renderTimeline(history) {

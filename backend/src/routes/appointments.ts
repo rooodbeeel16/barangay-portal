@@ -2,6 +2,11 @@ import { Router, Response } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth.middleware';
 import { createAppointment, getAppointmentsByDate } from '../services/appointment.service';
 import { db } from '../config/firebase';
+import {
+  sendAppointmentRequestEmail,
+  sendAppointmentStatusEmail,
+  sendPickupAppointmentEmail,
+} from '../services/email.service';
 import * as admin from 'firebase-admin';
 import { z } from 'zod';
 
@@ -31,6 +36,19 @@ router.post('/general', async (req, res: Response): Promise<void> => {
       status: 'PENDING',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    try {
+      await sendAppointmentRequestEmail(
+        parsed.data.email,
+        parsed.data.name,
+        parsed.data.purpose,
+        parsed.data.date,
+        parsed.data.time,
+      );
+    } catch (emailErr) {
+      console.warn('Email notification failed:', emailErr);
+    }
+
     res.status(201).json({ success: true, id: ref.id });
   } catch {
     res.status(500).json({ error: 'Failed to create appointment request' });
@@ -124,6 +142,25 @@ router.patch('/general/:id', requireAuth, async (req: AuthRequest, res: Response
   }
   try {
     await db().collection('appointmentRequests').doc(req.params.id).update(update);
+
+    try {
+      const snap = await db().collection('appointmentRequests').doc(req.params.id).get();
+      const apptData = snap.data();
+      if (apptData?.email) {
+        await sendAppointmentStatusEmail(
+          apptData.email,
+          apptData.name,
+          apptData.purpose,
+          action,
+          action === 'RESCHEDULE' ? newDate : undefined,
+          action === 'RESCHEDULE' ? newTime : undefined,
+          reason,
+        );
+      }
+    } catch (emailErr) {
+      console.warn('Email notification failed:', emailErr);
+    }
+
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: 'Failed to update appointment request' });
@@ -191,6 +228,23 @@ router.post('/', async (req, res: Response): Promise<void> => {
     }
 
     const id = await createAppointment(parsed.data);
+
+    try {
+      const email = docSnap.data()?.email;
+      if (email) {
+        await sendPickupAppointmentEmail(
+          email,
+          parsed.data.residentName,
+          parsed.data.documentType,
+          parsed.data.trackingId,
+          parsed.data.appointmentDate,
+          parsed.data.appointmentTime,
+        );
+      }
+    } catch (emailErr) {
+      console.warn('Email notification failed:', emailErr);
+    }
+
     res.status(201).json({ success: true, appointmentId: id });
   } catch (err) {
     res.status(500).json({ error: 'Failed to create appointment' });

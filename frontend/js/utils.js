@@ -47,6 +47,17 @@ const Utils = {
     return labels[status] || status;
   },
 
+  getDocTypeLabel(docType) {
+    const labels = {
+      BARANGAY_CLEARANCE: 'Barangay Clearance',
+      CERTIFICATE_OF_RESIDENCY: 'Certificate of Residency',
+      CERTIFICATE_OF_INDIGENCY: 'Certificate of Indigency',
+      BUSINESS_PERMIT_ENDORSEMENT: 'Business Permit Endorsement',
+      INCIDENT_REPORT: 'Incident Report',
+    };
+    return labels[docType] || docType || 'N/A';
+  },
+
   showToast(message, type = 'success') {
     /* Use the global showToast from portal.js if available */
     if (typeof window.showToast === 'function') {

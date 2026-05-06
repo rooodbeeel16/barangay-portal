@@ -572,7 +572,7 @@
   // ══════════════════════════════════════════════════════
   async function loadStats() {
     try {
-      const data = await get('/api/blotter/stats');
+      const data = await get('/blotter/stats');
       document.getElementById('statTotal').textContent     = data.total      ?? 0;
       document.getElementById('statOpen').textContent      = data.OPEN        ?? 0;
       document.getElementById('statMediation').textContent = data.UNDER_MEDIATION ?? 0;
@@ -598,7 +598,7 @@
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo)   params.set('dateTo',   dateTo);
 
-    const endpoint = '/api/blotter' + (params.toString() ? '?' + params.toString() : '');
+    const endpoint = '/blotter' + (params.toString() ? '?' + params.toString() : '');
 
     try {
       const data = await get(endpoint);
@@ -777,6 +777,10 @@
         if (el) { el.classList.add('error'); el.focus(); }
         if (!hasError) toastr.warning(`"${label}" is required.`);
         hasError = true;
+      } else if (id === 'narrative' && val.length < 10) {
+        if (el) { el.classList.add('error'); el.focus(); }
+        if (!hasError) toastr.warning('Narrative must be at least 10 characters.');
+        hasError = true;
       } else {
         if (el) el.classList.remove('error');
       }
@@ -818,14 +822,19 @@
     };
 
     try {
-      const result = await post('/api/blotter', body);
+      const result = await post('/blotter', body);
       const caseNumber = result.caseNumber || result.data?.caseNumber || result.id || 'N/A';
       toastr.success(`Blotter case <strong>${caseNumber}</strong> has been filed successfully.`);
       closeCreateModal();
       await Promise.all([loadStats(), loadCases()]);
     } catch (err) {
       console.error('Submit failed:', err);
-      const msg = err?.message || err?.error || 'Failed to file blotter case. Please try again.';
+      let msg = err?.message || err?.error || 'Failed to file blotter case. Please try again.';
+      const fe = err?.details?.fieldErrors;
+      if (fe) {
+        const fields = Object.entries(fe).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
+        msg += ' — ' + fields;
+      }
       toastr.error(msg);
     } finally {
       btn.disabled = false;
@@ -864,7 +873,7 @@
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Deleting…';
 
     try {
-      await del(`/api/blotter/${_pendingDeleteId}`);
+      await del(`/blotter/${_pendingDeleteId}`);
       toastr.success(`Case ${_pendingDeleteCase} has been deleted.`);
       closeDeleteModal();
       await Promise.all([loadStats(), loadCases()]);
