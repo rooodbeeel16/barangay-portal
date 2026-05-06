@@ -23,15 +23,17 @@ export const REQUEST_STATUS = {
   FOR_SIGNATURE: 'For Signature',
   READY_FOR_RELEASE: 'Ready for Release',
   RELEASED: 'Released',
+  REJECTED: 'Rejected',
 } as const;
 
 export type RequestStatus = keyof typeof REQUEST_STATUS;
 
 export const STATUS_FLOW: Record<string, string[]> = {
-  PENDING: ['FOR_SIGNATURE', 'READY_FOR_RELEASE'],
-  FOR_SIGNATURE: ['READY_FOR_RELEASE'],
-  READY_FOR_RELEASE: ['RELEASED'],
+  PENDING: ['FOR_SIGNATURE', 'READY_FOR_RELEASE', 'REJECTED'],
+  FOR_SIGNATURE: ['READY_FOR_RELEASE', 'REJECTED'],
+  READY_FOR_RELEASE: ['RELEASED', 'REJECTED'],
   RELEASED: [],
+  REJECTED: [],
 };
 
 export const ROLES = {

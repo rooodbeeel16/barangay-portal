@@ -38,13 +38,13 @@
       <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
       <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
       <a href="/admin/requests.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
-      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/residents.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
       <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
       <a href="/admin/appointments.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
       <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
       <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
-      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
-      <a href="/admin/settings.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+      <a href="/admin/audit-logs.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
     </nav>
     <div class="px-4 py-3.5 border-t border-white/10">
       <div class="flex items-center gap-2.5 px-1">
@@ -80,7 +80,7 @@
               <div class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Signed in as</div>
               <div class="text-xs font-semibold text-gray-800 truncate mt-0.5" id="profileMenuEmail"></div>
             </div>
-            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
+            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition admin-only"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
             <a href="/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-house w-4 text-gray-400 text-xs"></i> Barangay Portal</a>
             <div class="border-t border-gray-50 my-1.5"></div>
             <button onclick="AuthService.logout()" class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><i class="fa-solid fa-right-from-bracket w-4 text-xs"></i> Sign Out</button>
@@ -97,6 +97,7 @@
             <option value="FOR_SIGNATURE">For Signature</option>
             <option value="READY_FOR_RELEASE">Ready for Release</option>
             <option value="RELEASED">Released</option>
+            <option value="REJECTED">Rejected</option>
           </select>
           <select id="filterDocType" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
             <option value="">All Document Types</option>
@@ -109,7 +110,7 @@
           <input type="text" id="filterSearch" placeholder="Search by name or tracking ID..." class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
           <button onclick="applyFilters()" class="bg-[#1e3a5f] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">Apply Filters</button>
         </div>
-        <div id="bulkBar" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-3">
+        <!-- <div id="bulkBar" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-3">
           <span class="text-sm font-semibold text-blue-700" id="bulkCount">0 selected</span>
           <span class="text-blue-300">|</span>
           <span class="text-sm text-blue-600">Move to:</span>
@@ -120,20 +121,18 @@
           </select>
           <button onclick="bulkUpdateStatus()" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Apply</button>
           <button onclick="clearSelection()" class="text-blue-500 text-sm hover:underline ml-auto">Clear</button>
-        </div>
+        </div> -->
       </div>
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
               <tr>
-                <th class="px-4 py-3 w-8"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" class="rounded"></th>
                 <th class="px-4 py-3 text-left">Tracking ID</th>
                 <th class="px-4 py-3 text-left">Resident Name</th>
                 <th class="px-4 py-3 text-left">Document Type</th>
                 <th class="px-4 py-3 text-left">Status</th>
                 <th class="px-4 py-3 text-left">Date Submitted</th>
-                <th class="px-4 py-3 text-left">Actions</th>
               </tr>
             </thead>
             <tbody id="requestsTableBody">
@@ -329,6 +328,7 @@
   function cap(str) { return str ? str.charAt(0).toUpperCase()+str.slice(1) : ''; }
 
   var allRequests = [];
+  var allRequestsMap = {};
   var selectedIds = new Set();
   var currentPage = 1;
   var pageSize = 20;
@@ -347,13 +347,23 @@
     if (docType) params.push('documentType=' + docType);
     if (search) params.push('search=' + encodeURIComponent(search));
     var url = '/admin/requests' + (params.length ? '?' + params.join('&') : '');
+    var tbody = document.getElementById('requestsTableBody');
     try {
       var data = await get(url);
       allRequests = Array.isArray(data) ? data : (data.requests || data.data || []);
+      allRequestsMap = {};
+      allRequests.forEach(function(r) { var id = r.id || r._id || ''; if (id) allRequestsMap[id] = r; });
       currentPage = 1;
+    } catch(e) {
+      console.error('loadRequests API error:', e);
+      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-red-400">Failed to load requests: ' + (e.message || 'Unknown error') + '</td></tr>';
+      return;
+    }
+    try {
       renderTable();
     } catch(e) {
-      document.getElementById('requestsTableBody').innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-red-400">Failed to load requests.</td></tr>';
+      console.error('renderTable error:', e);
+      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-red-400">Error rendering table: ' + (e.message || 'Unknown error') + '</td></tr>';
     }
   }
 
@@ -376,14 +386,12 @@
       var statusClass = Utils.getStatusBadgeClass(r.status || 'PENDING');
       var statusLabel = Utils.getStatusLabel(r.status || 'PENDING');
       var isChecked = selectedIds.has(id);
-      return '<tr class="border-t border-gray-50 hover:bg-gray-50 transition ' + (isChecked ? 'bg-blue-50' : '') + '">' +
-        '<td class="px-4 py-3"><input type="checkbox" class="row-check rounded" value="' + id + '" ' + (isChecked ? 'checked' : '') + ' onchange="toggleRowSelect(this)"></td>' +
+      return '<tr class="border-t border-gray-50 hover:bg-blue-50 transition cursor-pointer ' + (isChecked ? 'bg-blue-50' : '') + '" onclick="window.location.href=\'/admin/request-detail.html?id=' + id + '\'">' +
         '<td class="px-4 py-3 font-mono text-xs text-[#1e3a5f] font-semibold whitespace-nowrap">' + (r.trackingId || 'N/A') + '</td>' +
         '<td class="px-4 py-3 font-medium text-gray-800 text-xs">' + name + (r.isWalkIn ? ' <span class="text-xs bg-orange-100 text-orange-600 px-1.5 rounded">Walk-in</span>' : '') + '</td>' +
         '<td class="px-4 py-3 text-gray-600 text-xs">' + docLabel + '</td>' +
         '<td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ' + statusClass + '">' + statusLabel + '</span></td>' +
         '<td class="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">' + Utils.formatDate(r.createdAt || r.submittedAt) + '</td>' +
-        '<td class="px-4 py-3"><a href="/admin/request-detail.html?id=' + id + '" class="bg-[#1e3a5f] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-800 transition whitespace-nowrap">View Details</a></td>' +
         '</tr>';
     }).join('');
   }
@@ -442,6 +450,10 @@
 
   document.getElementById('filterSearch').addEventListener('keydown', function(e) { if (e.key === 'Enter') applyFilters(); });
 
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeWalkInDrawer();
+  });
+
   // ── Walk-in Drawer ──────────────────────────────────────────
   var wiSelectedDocType = null;
   var wiLastTrackingId = null;
@@ -458,7 +470,7 @@
     document.body.style.overflow = '';
   }
 
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeWalkInDrawer(); });
+  // Escape handled by consolidated listener above
 
   function selectWiDoc(el) {
     document.querySelectorAll('#wiDocCards .wi-doc').forEach(function(c) {

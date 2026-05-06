@@ -72,3 +72,15 @@ const AuthService = {
     return user;
   },
 };
+
+// Synchronously hide admin-only sidebar links for staff users (no flash)
+(function () {
+  try {
+    var user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (user && user.role !== 'admin') {
+      var s = document.createElement('style');
+      s.textContent = '.admin-only{display:none!important}';
+      (document.head || document.documentElement).appendChild(s);
+    }
+  } catch (e) {}
+})();

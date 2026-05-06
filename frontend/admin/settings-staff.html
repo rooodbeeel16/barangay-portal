@@ -21,6 +21,16 @@
     .btn-save:disabled { opacity:.6; cursor:not-allowed; }
     .anim-in { animation: fadeInUp 0.35s ease both; }
     @keyframes fadeInUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .badge-active { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; background:#dcfce7; color:#16a34a; }
+    .badge-inactive { display:inline-flex; align-items:center; gap:4px; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; background:#f1f5f9; color:#94a3b8; }
+    .btn-action { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; transition:background .15s; }
+    .btn-deactivate { background:#fef3c7; color:#d97706; }
+    .btn-deactivate:hover { background:#fde68a; }
+    .btn-activate { background:#d1fae5; color:#059669; }
+    .btn-activate:hover { background:#a7f3d0; }
+    .btn-delete { background:#fee2e2; color:#dc2626; }
+    .btn-delete:hover { background:#fecaca; }
+    .btn-action:disabled { opacity:.5; cursor:not-allowed; }
   </style>
 </head>
 <body>
@@ -42,13 +52,13 @@
       <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
       <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
       <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
-      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/residents.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
       <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
       <a href="/admin/appointments.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
       <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
       <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
-      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
-      <a href="/admin/settings.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+      <a href="/admin/audit-logs.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link active admin-only"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
     </nav>
     <div class="px-4 py-3.5 border-t border-white/10">
       <div class="flex items-center gap-2.5 px-1">
@@ -135,6 +145,35 @@
             <button onclick="createStaff()" id="createStaffBtn" class="btn-save"><i class="fa-solid fa-user-plus text-xs"></i> Create Staff Account</button>
           </div>
         </div>
+
+        <!-- Staff List Table -->
+        <div class="bg-white rounded-2xl border border-gray-100 mt-6" style="box-shadow:0 2px 12px rgba(30,58,95,.06)">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-bold text-gray-800">Staff Accounts</h2>
+            <button onclick="loadStaff()" id="refreshBtn" class="flex items-center gap-1.5 text-xs text-violet-600 font-semibold hover:text-violet-800 transition">
+              <i class="fa-solid fa-arrows-rotate text-xs"></i> Refresh
+            </button>
+          </div>
+          <div id="staffTableWrap" class="overflow-x-auto">
+            <div id="staffTableLoading" class="flex items-center justify-center py-12 text-gray-400 text-sm gap-2">
+              <i class="fa-solid fa-spinner fa-spin"></i> Loading staff accounts…
+            </div>
+            <table id="staffTable" class="hidden w-full text-sm">
+              <thead>
+                <tr class="bg-gray-50 text-left">
+                  <th class="px-5 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wide">Name</th>
+                  <th class="px-5 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wide">Email</th>
+                  <th class="px-5 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wide">Role</th>
+                  <th class="px-5 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wide">Status</th>
+                  <th class="px-5 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wide">Created</th>
+                  <th class="px-5 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wide text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staffTableBody" class="divide-y divide-gray-50"></tbody>
+            </table>
+            <div id="staffTableEmpty" class="hidden flex items-center justify-center py-12 text-gray-400 text-sm">No staff accounts found.</div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -191,9 +230,11 @@
       var idTokenResult = await fbUser.getIdTokenResult();
       var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       currentUser = { uid: fbUser.uid, email: fbUser.email, name: fbUser.displayName || storedUser.name || '', role: idTokenResult.claims.role || 'staff', photoUrl: fbUser.photoURL || storedUser.photoUrl || '' };
+      if (currentUser.role === 'staff') { window.location.href = '/admin/dashboard.html'; return; }
       localStorage.setItem('authToken', freshToken);
       localStorage.setItem('user', JSON.stringify(currentUser));
       renderProfileHeader(currentUser);
+      loadStaff();
     } catch(e) { window.location.href = '/admin/login.html'; }
   });
 
@@ -221,11 +262,80 @@
       document.getElementById('staffName').value = '';
       document.getElementById('staffEmail').value = '';
       document.getElementById('staffPassword').value = '';
+      await loadStaff();
     } catch(e) {
       document.getElementById('staffError').textContent = 'Failed: ' + e.message;
       document.getElementById('staffError').classList.remove('hidden');
     } finally {
       btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-user-plus text-xs"></i> Create Staff Account';
+    }
+  }
+
+  async function loadStaff() {
+    document.getElementById('staffTableLoading').classList.remove('hidden');
+    document.getElementById('staffTable').classList.add('hidden');
+    document.getElementById('staffTableEmpty').classList.add('hidden');
+    try {
+      var res = await get('/auth/staff');
+      var staff = res.staff || [];
+      var tbody = document.getElementById('staffTableBody');
+      tbody.innerHTML = '';
+      if (!staff.length) {
+        document.getElementById('staffTableLoading').classList.add('hidden');
+        document.getElementById('staffTableEmpty').classList.remove('hidden');
+        return;
+      }
+      staff.forEach(function(s) {
+        var isSelf = currentUser && currentUser.uid === s.uid;
+        var isActive = s.isActive !== false;
+        var date = s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'}) : '—';
+        var row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50/60 transition';
+        row.innerHTML =
+          '<td class="px-5 py-3.5 font-medium text-gray-800 whitespace-nowrap">' + escHtml(s.displayName || '—') + (isSelf ? ' <span class="ml-1 text-[10px] bg-violet-100 text-violet-600 font-bold px-1.5 py-0.5 rounded">You</span>' : '') + '</td>' +
+          '<td class="px-5 py-3.5 text-gray-500 whitespace-nowrap">' + escHtml(s.email || '—') + '</td>' +
+          '<td class="px-5 py-3.5 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ' + (s.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-blue-50 text-blue-600') + '">' + escHtml(cap(s.role || 'staff')) + '</span></td>' +
+          '<td class="px-5 py-3.5 whitespace-nowrap">' + (isActive ? '<span class="badge-active"><i class="fa-solid fa-circle text-[7px]"></i> Active</span>' : '<span class="badge-inactive"><i class="fa-regular fa-circle text-[7px]"></i> Inactive</span>') + '</td>' +
+          '<td class="px-5 py-3.5 text-gray-400 whitespace-nowrap text-xs">' + escHtml(date) + '</td>' +
+          '<td class="px-5 py-3.5 whitespace-nowrap text-right">' +
+            (isSelf ? '<span class="text-xs text-gray-300 italic">—</span>' :
+              '<div class="flex items-center justify-end gap-1.5">' +
+              '<button class="btn-action ' + (isActive ? 'btn-deactivate' : 'btn-activate') + '" onclick="toggleStaff(\'' + escHtml(s.uid) + '\',' + isActive + ',this)" title="' + (isActive ? 'Deactivate' : 'Activate') + '">' +
+              '<i class="fa-solid ' + (isActive ? 'fa-ban' : 'fa-check') + ' text-[10px]"></i> ' + (isActive ? 'Deactivate' : 'Activate') + '</button>' +
+              '<button class="btn-action btn-delete" onclick="deleteStaff(\'' + escHtml(s.uid) + '\',\'' + escHtml(s.displayName||s.email) + '\',this)" title="Delete"><i class="fa-solid fa-trash text-[10px]"></i> Delete</button>' +
+              '</div>'
+            ) +
+          '</td>';
+        tbody.appendChild(row);
+      });
+      document.getElementById('staffTableLoading').classList.add('hidden');
+      document.getElementById('staffTable').classList.remove('hidden');
+    } catch(e) {
+      document.getElementById('staffTableLoading').innerHTML = '<span class="text-red-400 text-sm">Failed to load staff: ' + escHtml(e.message) + '</span>';
+    }
+  }
+
+  async function toggleStaff(uid, currentlyActive, btn) {
+    if (!confirm((currentlyActive ? 'Deactivate' : 'Activate') + ' this staff account?')) return;
+    btn.disabled = true;
+    try {
+      await patch('/auth/staff/' + uid + '/deactivate', {});
+      await loadStaff();
+    } catch(e) {
+      alert('Failed: ' + e.message);
+      btn.disabled = false;
+    }
+  }
+
+  async function deleteStaff(uid, name, btn) {
+    if (!confirm('Permanently delete "' + name + '"? This cannot be undone.')) return;
+    btn.disabled = true;
+    try {
+      await del('/auth/staff/' + uid);
+      await loadStaff();
+    } catch(e) {
+      alert('Failed: ' + e.message);
+      btn.disabled = false;
     }
   }
 </script>

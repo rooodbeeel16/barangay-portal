@@ -42,13 +42,13 @@
       <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
       <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
       <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
-      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/residents.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
       <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
       <a href="/admin/appointments.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
       <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
       <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
-      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
-      <a href="/admin/settings.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+      <a href="/admin/audit-logs.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link active admin-only"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
     </nav>
     <div class="px-4 py-3.5 border-t border-white/10">
       <div class="flex items-center gap-2.5 px-1">
@@ -232,6 +232,7 @@
       var idTokenResult = await fbUser.getIdTokenResult();
       var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       currentUser = { uid: fbUser.uid, email: fbUser.email, name: fbUser.displayName || storedUser.name || '', role: idTokenResult.claims.role || 'staff', photoUrl: fbUser.photoURL || storedUser.photoUrl || '' };
+      if (currentUser.role === 'staff') { window.location.href = '/admin/dashboard.html'; return; }
       localStorage.setItem('authToken', freshToken);
       localStorage.setItem('user', JSON.stringify(currentUser));
       renderProfileHeader(currentUser);
@@ -270,6 +271,9 @@
       var imgHtml = off.imageUrl
         ? '<img src="' + escHtml(off.imageUrl) + '" class="w-full h-full object-cover" alt="">'
         : '<i class="fa-solid fa-user text-slate-400 text-2xl"></i>';
+      var removeBtn = off.imageUrl
+        ? '<button type="button" onclick="removeOfficialImage(\'' + o.key + '\')" class="flex items-center gap-1.5 text-xs text-red-500 font-semibold hover:text-red-700 ml-3" title="Remove photo"><i class="fa-solid fa-xmark"></i> Remove</button>'
+        : '';
       return '<div class="border border-gray-200 rounded-2xl p-4">' +
         '<div class="flex items-center gap-3 mb-3">' +
         '<div class="w-14 h-14 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center" id="official_' + o.key + '_preview">' + imgHtml + '</div>' +
@@ -277,9 +281,12 @@
         '<div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">' + escHtml(o.label) + '</div>' +
         '<input type="text" id="official_' + o.key + '_name" value="' + escHtml(off.name || '') + '" placeholder="Full name" class="form-input">' +
         '</div></div>' +
+        '<div class="flex items-center gap-0">' +
         '<label class="flex items-center gap-2 cursor-pointer text-xs text-[#1e3a5f] font-semibold hover:underline">' +
         '<input type="file" class="hidden" accept="image/jpeg,image/png,image/jpg" onchange="handleOfficialImageUpload(\'' + o.key + '\',this)">' +
         '<i class="fa-solid fa-camera"></i> Upload Photo</label>' +
+        removeBtn +
+        '</div>' +
         '</div>';
     }).join('');
   }
@@ -313,6 +320,9 @@
       var imgHtml = m.imageUrl
         ? '<img src="' + escHtml(m.imageUrl) + '" class="w-full h-full object-cover" alt="">'
         : '<i class="fa-solid fa-user text-gray-400 text-base"></i>';
+      var removeImgBtn = m.imageUrl
+        ? '<button type="button" onclick="removeMemberImage(\'' + listKey + '\',' + i + ')" class="p-1.5 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition flex-shrink-0" title="Remove photo"><i class="fa-solid fa-image-slash text-xs"></i></button>'
+        : '';
       return '<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">' +
         '<div class="relative flex-shrink-0 group">' +
           '<div class="w-11 h-11 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center border-2 border-white shadow-sm" id="' + listKey + '_prev_' + i + '">' + imgHtml + '</div>' +
@@ -320,9 +330,28 @@
           '<input type="file" id="' + listKey + '_fi_' + i + '" class="hidden" accept="image/jpeg,image/png,image/jpg" onchange="handleMemberImageUpload(\'' + listKey + '\',' + i + ',this)">' +
         '</div>' +
         '<input type="text" value="' + escHtml(m.name || '') + '" oninput="updateMemberName(\'' + listKey + '\',' + i + ',this.value)" class="form-input flex-1" placeholder="Name">' +
+        removeImgBtn +
         '<button onclick="removeMember(\'' + listKey + '\',' + i + ')" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition flex-shrink-0" title="Remove"><i class="fa-solid fa-trash text-xs"></i></button>' +
         '</div>';
     }).join('');
+  }
+
+  function removeOfficialImage(key) {
+    if (!officialsData[key]) return;
+    // sync any unsaved name edits from DOM before re-rendering
+    KEY_OFFICIALS_META.forEach(function(o) {
+      var nameEl = document.getElementById('official_' + o.key + '_name');
+      if (nameEl && officialsData[o.key]) officialsData[o.key].name = nameEl.value;
+    });
+    officialsData[key].imageUrl = '';
+    renderKeyOfficials();
+  }
+
+  function removeMemberImage(listKey, index) {
+    if (officialsData[listKey] && officialsData[listKey][index] !== undefined) {
+      officialsData[listKey][index].imageUrl = '';
+    }
+    renderMemberList(listKey, listKey + 'sList');
   }
 
   function updateMemberName(listKey, index, value) {

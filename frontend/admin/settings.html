@@ -69,13 +69,13 @@
       <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
       <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
       <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
-      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/residents.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
       <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
       <a href="/admin/appointments.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
       <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
       <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
-      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
-      <a href="/admin/settings.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+      <a href="/admin/audit-logs.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link active admin-only"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
     </nav>
     <div class="px-4 py-3.5 border-t border-white/10">
       <div class="flex items-center gap-2.5 px-1">
@@ -243,6 +243,7 @@
         role: idTokenResult.claims.role || 'staff',
         photoUrl: fbUser.photoURL || storedUser.photoUrl || ''
       };
+      if (currentUser.role === 'staff') { window.location.href = '/admin/dashboard.html'; return; }
       localStorage.setItem('authToken', freshToken);
       localStorage.setItem('user', JSON.stringify(currentUser));
       renderProfileHeader(currentUser);

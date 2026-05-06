@@ -80,7 +80,7 @@ router.get('/requests/:id', requireAuth, async (req: AuthRequest, res: Response)
 router.patch('/requests/:id/status', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const schema = z.object({
-      newStatus: z.enum(['PENDING', 'FOR_SIGNATURE', 'READY_FOR_RELEASE', 'RELEASED']),
+      newStatus: z.enum(['PENDING', 'FOR_SIGNATURE', 'READY_FOR_RELEASE', 'RELEASED', 'REJECTED']),
       remarks: z.string().max(500).optional(),
     });
 
@@ -166,7 +166,7 @@ router.patch('/requests/bulk/status', requireAuth, async (req: AuthRequest, res:
   try {
     const schema = z.object({
       requestIds: z.array(z.string()).min(1).max(50),
-      newStatus: z.enum(['PENDING', 'FOR_SIGNATURE', 'READY_FOR_RELEASE', 'RELEASED']),
+      newStatus: z.enum(['PENDING', 'FOR_SIGNATURE', 'READY_FOR_RELEASE', 'RELEASED', 'REJECTED']),
       remarks: z.string().max(500).optional(),
     });
 

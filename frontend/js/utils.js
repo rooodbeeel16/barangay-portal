@@ -1,13 +1,19 @@
 const Utils = {
   formatDate(timestamp) {
     if (!timestamp) return 'N/A';
-    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000)
+      : timestamp._seconds ? new Date(timestamp._seconds * 1000)
+      : new Date(timestamp);
+    if (isNaN(date.getTime())) return 'N/A';
     return date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
   },
 
   formatDateTime(timestamp) {
     if (!timestamp) return 'N/A';
-    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000)
+      : timestamp._seconds ? new Date(timestamp._seconds * 1000)
+      : new Date(timestamp);
+    if (isNaN(date.getTime())) return 'N/A';
     return date.toLocaleString('en-PH', {
       year: 'numeric', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit',
@@ -20,6 +26,7 @@ const Utils = {
       FOR_SIGNATURE: 'bg-blue-100 text-blue-800 border border-blue-300',
       READY_FOR_RELEASE: 'bg-purple-100 text-purple-800 border border-purple-300',
       RELEASED: 'bg-gray-100 text-gray-800 border border-gray-300',
+      REJECTED: 'bg-red-100 text-red-800 border border-red-300',
     };
     return classes[status] || 'bg-gray-100 text-gray-800';
   },
@@ -30,19 +37,14 @@ const Utils = {
       FOR_SIGNATURE: 'For Signature',
       READY_FOR_RELEASE: 'Ready for Release',
       RELEASED: 'Released',
-    };
-    return labels[status] || status;
-  },
-
-  getDocTypeLabel(type) {
-    const labels = {
+      REJECTED: 'Rejected',
       BARANGAY_CLEARANCE: 'Barangay Clearance',
       CERTIFICATE_OF_RESIDENCY: 'Certificate of Residency',
       CERTIFICATE_OF_INDIGENCY: 'Certificate of Indigency',
       BUSINESS_PERMIT_ENDORSEMENT: 'Business Permit Endorsement',
       INCIDENT_REPORT: 'Incident Report',
     };
-    return labels[type] || type;
+    return labels[status] || status;
   },
 
   showToast(message, type = 'success') {

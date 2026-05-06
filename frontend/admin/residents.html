@@ -35,13 +35,13 @@
       <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
       <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
       <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
-      <a href="/admin/residents.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/residents.html" class="nav-link active admin-only"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
       <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
       <a href="/admin/appointments.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
       <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
       <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
-      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
-      <a href="/admin/settings.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+      <a href="/admin/audit-logs.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link admin-only"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
     </nav>
     <div class="px-4 py-3.5 border-t border-white/10">
       <div class="flex items-center gap-2.5 px-1">
@@ -77,7 +77,7 @@
               <div class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Signed in as</div>
               <div class="text-xs font-semibold text-gray-800 truncate mt-0.5" id="profileMenuEmail"></div>
             </div>
-            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
+            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition admin-only"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
             <a href="/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-house w-4 text-gray-400 text-xs"></i> Barangay Portal</a>
             <div class="border-t border-gray-50 my-1.5"></div>
             <button onclick="AuthService.logout()" class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><i class="fa-solid fa-right-from-bracket w-4 text-xs"></i> Sign Out</button>
@@ -134,6 +134,41 @@
     </div>
   </main>
 </div>
+<!-- Resident Detail Modal -->
+<div id="residentModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4" onclick="closeResidentModal()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="flex items-center gap-4 px-6 py-4 border-b border-gray-100 flex-shrink-0">
+      <div class="w-11 h-11 rounded-xl bg-[#1e3a5f] flex items-center justify-center text-white text-sm font-bold flex-shrink-0" id="residentModalAvatar">??</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-base font-bold text-gray-900" id="residentModalName"></span>
+          <span id="residentModalBadge"></span>
+        </div>
+        <div class="text-xs text-gray-400 mt-0.5">Resident Profile</div>
+      </div>
+      <button onclick="closeResidentModal()" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition text-xl leading-none flex-shrink-0">&times;</button>
+    </div>
+    <!-- Modal Body -->
+    <div class="flex-1 overflow-y-auto">
+      <!-- Profile info -->
+      <div class="px-6 py-5 border-b border-gray-100">
+        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-3"><i class="fa-solid fa-user mr-1"></i>Personal Information</div>
+        <div id="residentModalProfile"></div>
+      </div>
+      <!-- Requests -->
+      <div>
+        <div class="px-6 py-3 border-b border-gray-100">
+          <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide"><i class="fa-solid fa-clipboard-list mr-1"></i>Document Requests <span class="normal-case font-normal text-gray-400">(click a row to view details)</span></div>
+        </div>
+        <div id="residentModalRequests" class="overflow-x-auto"></div>
+      </div>
+    </div>
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0" id="residentModalBlacklistBtn"></div>
+  </div>
+</div>
+
 <script src="/js/utils.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
@@ -162,6 +197,7 @@
       var freshToken = await fbUser.getIdToken(true);
       var idTokenResult = await fbUser.getIdTokenResult();
       var role = idTokenResult.claims.role || 'staff';
+      if (role === 'staff') { window.location.href = '/admin/dashboard.html'; return; }
       var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       localStorage.setItem('authToken', freshToken);
       var userData = { uid: fbUser.uid, email: fbUser.email, name: fbUser.displayName || '', role: role, photoUrl: fbUser.photoURL || storedUser.photoUrl || '' };
@@ -181,7 +217,7 @@
   });
   function cap(str) { return str ? str.charAt(0).toUpperCase()+str.slice(1) : ''; }
 
-  var allResidents = [], filtered = [], currentPage = 1, pageSize = 25;
+  var allResidents = [], allResidentsMap = {}, filtered = [], currentPage = 1, pageSize = 25;
 
   function esc(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -189,6 +225,8 @@
     try {
       var data = await get('/admin/residents');
       allResidents = Array.isArray(data) ? data : (data.residents || data.data || []);
+      allResidentsMap = {};
+      allResidents.forEach(function(r) { var id = r.id||r._id||r.residentId||''; if(id) allResidentsMap[id]=r; });
       document.getElementById('residentCount').textContent = allResidents.length + ' residents';
       applySearch();
     } catch(e) {
@@ -225,15 +263,15 @@
       var id = r.id || r._id || r.residentId || '';
       var name = r.residentName || ((r.firstName || '') + ' ' + (r.lastName || '')).trim();
       var isBlacklisted = r.isBlacklisted || false;
-      return '<tr class="border-t border-gray-50 hover:bg-gray-50 transition ' + (isBlacklisted ? 'bg-red-50' : '') + '">' +
+      return '<tr class="border-t border-gray-50 hover:bg-blue-50 transition cursor-pointer ' + (isBlacklisted ? 'bg-red-50' : '') + '" onclick="openResidentModal(\'' + id + '\')">' +
         '<td class="px-4 py-3"><div class="font-medium text-gray-800 text-xs">' + esc(name) + '</div><div class="text-gray-400 text-xs">' + esc(r.email || '') + '</div></td>' +
         '<td class="px-4 py-3 text-xs text-gray-600">' + (r.age ? r.age + ' yrs' : '—') + ' / ' + esc(r.gender || '—') + '</td>' +
-        '<td class="px-4 py-3 text-xs text-gray-600">' + esc(r.purok || r.streetAddress || '—') + '</td>' +
+        '<td class="px-4 py-3 text-xs text-gray-600">' + esc(r.purok || r.purokSitio || r.streetAddress || '—') + '</td>' +
         '<td class="px-4 py-3 text-xs text-gray-600">' + esc(r.contactNumber || '—') + '</td>' +
         '<td class="px-4 py-3 text-xs font-semibold text-gray-800">' + (r.totalRequests || 0) + '</td>' +
         '<td class="px-4 py-3">' + (isBlacklisted ? '<span class="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-semibold">Blacklisted</span>' : '<span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 font-semibold">Active</span>') + '</td>' +
-        '<td class="px-4 py-3 flex gap-2">' +
-        '<a href="/admin/requests.html?search=' + encodeURIComponent(name) + '" class="text-xs bg-[#1e3a5f] text-white px-3 py-1.5 rounded-lg hover:bg-blue-800 transition whitespace-nowrap">View Requests</a>' +
+        '<td class="px-4 py-3 flex gap-2" onclick="event.stopPropagation()">' +
+        '<button onclick="openResidentModal(\'' + id + '\')" class="text-xs bg-[#1e3a5f] hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg transition whitespace-nowrap">View Details</button>' +
         (id ? '<button onclick="toggleBlacklist(\'' + id + '\',' + isBlacklisted + ',\'' + esc(name) + '\')" class="text-xs ' + (isBlacklisted ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700') + ' text-white px-3 py-1.5 rounded-lg transition whitespace-nowrap">' + (isBlacklisted ? 'Unblacklist' : 'Blacklist') + '</button>' : '') +
         '</td></tr>';
     }).join('');
@@ -258,6 +296,138 @@
   }
 
   document.getElementById('searchInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') applySearch(); });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeResidentModal();
+  });
+
+  var DOC_LABELS = {
+    BARANGAY_CLEARANCE:'Barangay Clearance', CERTIFICATE_OF_RESIDENCY:'Certificate of Residency',
+    CERTIFICATE_OF_INDIGENCY:'Certificate of Indigency', BUSINESS_PERMIT_ENDORSEMENT:'Business Permit Endorsement',
+    INCIDENT_REPORT:'Incident Report'
+  };
+
+  async function openResidentModal(id) {
+    var r = allResidentsMap[id];
+    if (!r) return;
+    var modal = document.getElementById('residentModal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    renderResidentModal(r, null);
+    // Load requests for this resident
+    // Search by lastName only (backend uses includes()), then exact-match client-side
+    try {
+      var searchTerm = r.lastName || r.firstName || '';
+      var reqData = await get('/admin/requests?search=' + encodeURIComponent(searchTerm));
+      var all = Array.isArray(reqData) ? reqData : (reqData.requests || reqData.data || []);
+      var fn = (r.firstName || '').toLowerCase();
+      var ln = (r.lastName || '').toLowerCase();
+      var requests = all.filter(function(req) {
+        return (req.firstName || '').toLowerCase() === fn &&
+               (req.lastName || '').toLowerCase() === ln;
+      });
+      renderResidentModal(r, requests);
+    } catch(e) {
+      document.getElementById('residentModalRequests').innerHTML = '<div class="text-xs text-red-400 px-4 py-3">Failed to load requests.</div>';
+    }
+  }
+
+  function closeResidentModal() {
+    document.getElementById('residentModal').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function infoCell(label, value) {
+    return '<div>' +
+      '<div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">' + label + '</div>' +
+      '<div class="text-sm font-medium text-gray-800">' + (value || '<span class="text-gray-400">—</span>') + '</div>' +
+      '</div>';
+  }
+
+  function renderResidentModal(r, requests) {
+    var name = r.residentName || ((r.firstName || '') + ' ' + (r.middleName ? r.middleName + ' ' : '') + (r.lastName || '')).trim();
+    var id = r.id || r._id || r.residentId || '';
+    var isBlacklisted = r.isBlacklisted || false;
+    var initials = ((r.firstName || '?')[0] + (r.lastName || '?')[0]).toUpperCase();
+
+    // Header
+    document.getElementById('residentModalName').textContent = name;
+    document.getElementById('residentModalBadge').innerHTML = isBlacklisted
+      ? '<span class="px-2.5 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-semibold">Blacklisted</span>'
+      : '<span class="px-2.5 py-0.5 rounded-full text-xs bg-green-100 text-green-700 font-semibold">Active</span>';
+    document.getElementById('residentModalAvatar').textContent = initials;
+
+    // Profile info
+    document.getElementById('residentModalProfile').innerHTML =
+      '<div class="grid grid-cols-2 gap-x-6 gap-y-4">' +
+      infoCell('Email', esc(r.email || '')) +
+      infoCell('Contact', esc(r.contactNumber || '')) +
+      infoCell('Age', r.age ? r.age + ' yrs old' : '') +
+      infoCell('Gender', esc(r.gender || '')) +
+      infoCell('Civil Status', esc(r.civilStatus || '')) +
+      infoCell('Purok / Sitio', esc(r.purok || r.purokSitio || '')) +
+      infoCell('Birthdate', r.birthdate ? Utils.formatDate(r.birthdate) : '') +
+      '</div>';
+
+    // Blacklist button
+    document.getElementById('residentModalBlacklistBtn').innerHTML = id
+      ? '<button onclick="modalToggleBlacklist(\'' + id + '\',' + isBlacklisted + ',\'' + esc(name) + '\')" class="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition ' + (isBlacklisted ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700') + '">' +
+        '<i class="fa-solid ' + (isBlacklisted ? 'fa-user-check' : 'fa-user-slash') + ' mr-1.5"></i>' +
+        (isBlacklisted ? 'Remove from Blacklist' : 'Blacklist Resident') + '</button>'
+      : '';
+
+    // Requests table
+    var reqContainer = document.getElementById('residentModalRequests');
+    if (requests === null) {
+      reqContainer.innerHTML = '<div class="px-4 py-6 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin text-xl"></i></div>';
+      return;
+    }
+    if (!requests.length) {
+      reqContainer.innerHTML = '<div class="px-4 py-8 text-center text-gray-400 text-sm">No document requests found.</div>';
+      return;
+    }
+    reqContainer.innerHTML =
+      '<table class="w-full text-sm">' +
+      '<thead class="bg-gray-50 text-gray-500 text-xs uppercase">' +
+      '<tr>' +
+      '<th class="px-4 py-2.5 text-left">Tracking ID</th>' +
+      '<th class="px-4 py-2.5 text-left">Document Type</th>' +
+      '<th class="px-4 py-2.5 text-left">Status</th>' +
+      '<th class="px-4 py-2.5 text-left">Date</th>' +
+      '<th class="px-4 py-2.5 text-left">Actions</th>' +
+      '</tr>' +
+      '</thead><tbody>' +
+      requests.map(function(req) {
+        var rid = req.id || req._id || '';
+        var statusClass = Utils.getStatusBadgeClass(req.status || 'PENDING');
+        var statusLabel = Utils.getStatusLabel(req.status || 'PENDING');
+        var docLabel = DOC_LABELS[req.documentType] || req.documentType || 'N/A';
+        return '<tr class="border-t border-gray-50 hover:bg-blue-50 transition cursor-pointer" onclick="window.location.href=\'/admin/request-detail.html?id=' + rid + '\'">' +
+          '<td class="px-4 py-2.5 font-mono text-xs text-[#1e3a5f] font-semibold whitespace-nowrap">' + esc(req.trackingId || 'N/A') + '</td>' +
+          '<td class="px-4 py-2.5 text-xs text-gray-700">' + esc(docLabel) + '</td>' +
+          '<td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ' + statusClass + '">' + statusLabel + '</span></td>' +
+          '<td class="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">' + Utils.formatDate(req.createdAt || req.submittedAt) + '</td>' +
+          '<td class="px-4 py-2.5 whitespace-nowrap" onclick="event.stopPropagation()">' +
+            '<a href="/admin/request-detail.html?id=' + rid + '" class="inline-flex items-center gap-1 text-xs font-semibold text-[#1e3a5f] bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition mr-1"><i class="fa-solid fa-eye text-[10px]"></i> View</a>' +
+            '<a href="/admin/pdf-preview.html?id=' + rid + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition"><i class="fa-solid fa-file-pdf text-[10px]"></i> Preview</a>' +
+          '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  async function modalToggleBlacklist(id, currently, name) {
+    var action = currently ? 'unblacklist' : 'blacklist';
+    if (!confirm('Are you sure you want to ' + action + ' ' + name + '?')) return;
+    try {
+      await patch('/admin/residents/' + id + '/blacklist', {isBlacklisted: !currently});
+      Utils.showToast(name + ' has been ' + action + 'ed.', 'success');
+      closeResidentModal();
+      loadResidents();
+    } catch(e) {
+      Utils.showToast('Failed: ' + e.message, 'error');
+    }
+  }
 </script>
 </body>
 </html>
