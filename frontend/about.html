@@ -1,0 +1,505 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Barangay Sirangan Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* ── Navigation ── */
+    .nav-wrap { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid #e8edf3; transition: box-shadow 0.3s ease; }
+    .nav-wrap.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.07); }
+    .btn-amber { background: linear-gradient(135deg,#f59e0b,#d97706); color: #1a1a1a; transition: all 0.25s ease; }
+    .btn-amber:hover { background: linear-gradient(135deg,#fbbf24,#f59e0b); box-shadow: 0 8px 24px rgba(245,158,11,0.4); transform: translateY(-2px); }
+    .nav-link { color: #475569; font-size: 0.875rem; font-weight: 500; padding: 0.45rem 0.85rem; border-radius: 8px; transition: color 0.18s ease, background 0.18s ease; }
+    .nav-link:hover { color: #0f172a; background: #f1f5f9; }
+    .nav-link.active { color: #1d4ed8; background: #eff6ff; font-weight: 600; }
+    .nav-cta { background: #1d4ed8; color: #fff; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1.1rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
+    .nav-cta:hover { background: #1e40af; box-shadow: 0 4px 14px rgba(29,78,216,0.32); transform: translateY(-1px); }
+    .mobile-nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 10px; font-weight: 500; font-size: 0.9rem; color: #334155; transition: background 0.15s ease, color 0.15s ease; }
+    .mobile-nav-link:hover { background: #f1f5f9; color: #0f172a; }
+    .mobile-nav-link.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+    /* ── Page Hero ── */
+    .page-hero { background: linear-gradient(160deg, #0c1f3f 0%, #1a3a6e 45%, #1d4ed8 100%); position: relative; overflow: hidden; }
+    .page-hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 56px 56px; pointer-events: none; mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%); }
+    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; }
+    /* ── Cards ── */
+    .card-hover { transition: transform 0.22s ease, box-shadow 0.22s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.10); }
+    .official-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .official-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.10); }
+    /* Placeholder user image */
+    .user-placeholder {
+      background: radial-gradient(circle at top, rgba(148,163,184,0.35), rgba(241,245,249,1));
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 antialiased">
+
+<nav class="nav-wrap fixed w-full top-0 z-50" id="mainNav">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="/index.html" class="flex items-center gap-2.5 group flex-shrink-0">
+      <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition">
+      <div>
+        <div class="font-extrabold text-slate-900 text-sm leading-tight tracking-tight">Barangay Sirangan</div>
+        <div class="text-xs text-slate-400 leading-tight">Sorsogon City</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-0.5">
+      <a href="/index.html"         class="nav-link">Home</a>
+      <a href="/about.html"         class="nav-link active">About</a>
+      <a href="/services.html"      class="nav-link">Services</a>
+      <a href="/announcements.html" class="nav-link">Announcements</a>
+      <a href="/appointment.html"   class="nav-link">Appointments</a>
+      <a href="/contact.html"       class="nav-link">Contact</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2">
+      <a href="/track.html" class="nav-cta"><i class="fa-solid fa-magnifying-glass text-xs"></i>Track Document</a>
+    </div>
+    <button id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false" class="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition text-slate-600">
+      <i class="fa-solid fa-bars text-lg" id="menuIcon"></i>
+    </button>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-5 shadow-lg">
+    <div class="space-y-0.5">
+      <a href="/index.html"         class="mobile-nav-link"><i class="fa-solid fa-house w-4 text-slate-400"></i>Home</a>
+      <a href="/about.html"         class="mobile-nav-link active"><i class="fa-solid fa-circle-info w-4 text-blue-600"></i>About</a>
+      <a href="/services.html"      class="mobile-nav-link"><i class="fa-solid fa-briefcase w-4 text-slate-400"></i>Services</a>
+      <a href="/announcements.html" class="mobile-nav-link"><i class="fa-solid fa-bullhorn w-4 text-slate-400"></i>Announcements</a>
+      <a href="/appointment.html"   class="mobile-nav-link"><i class="fa-solid fa-calendar-check w-4 text-slate-400"></i>Appointments</a>
+      <a href="/contact.html"       class="mobile-nav-link"><i class="fa-solid fa-phone w-4 text-slate-400"></i>Contact</a>
+    </div>
+    <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+      <a href="/request.html" class="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-clipboard-list"></i>Request</a>
+      <a href="/track.html" class="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-magnifying-glass"></i>Track</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="page-hero pt-16 pb-14 text-white">
+  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-2 text-center">
+    <div class="mb-5"><span class="hero-badge"><i class="fa-solid fa-circle-info text-[10px]"></i>About Us</span></div>
+    <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">About Barangay Sirangan</h1>
+    <p id="about-heroSubtitle" class="text-blue-200/80 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
+      A progressive and service-driven community in Sorsogon City, committed to transparency and public service.
+    </p>
+  </div>
+</section>
+
+<section class="py-16" data-reveal>
+  <div class="max-w-5xl mx-auto px-4 space-y-10">
+
+    <!-- Profile -->
+    <div class="card-hover bg-white rounded-3xl border border-slate-100 overflow-hidden">
+      <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 p-8 text-white relative">
+        <div class="absolute right-6 top-6 w-20 h-20 bg-white/10 rounded-3xl blur-xl"></div>
+
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div class="w-20 h-20 rounded-3xl bg-white/10 border border-white/15 flex items-center justify-center overflow-hidden">
+            <img src="/assets/logo/sirangan-bg.png" class="w-full h-full object-cover" alt="Barangay Logo">
+          </div>
+
+          <div class="flex-1">
+            <h2 class="text-2xl font-extrabold">Barangay Profile</h2>
+            <p class="text-blue-200 text-sm mt-1">Official barangay identity and governance information</p>
+          </div>
+
+          <div class="mt-3 sm:mt-0">
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/10 text-xs font-bold text-blue-100">
+              <i class="fa-solid fa-location-dot text-amber-300"></i> Sirangan, Sorsogon City
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div class="space-y-4">
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Barangay Name</div>
+              <div class="font-semibold text-slate-800" id="about-barangayName">Barangay Sirangan</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Municipality / City</div>
+              <div class="font-semibold text-slate-800" id="about-municipality">Sorsogon City</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Province</div>
+              <div class="font-semibold text-slate-800" id="about-province">Sorsogon</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Region</div>
+              <div class="font-semibold text-slate-800">Region V (Bicol Region)</div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Barangay Captain</div>
+              <div class="font-semibold text-slate-800" id="about-captainName">Hon. Maria L. Santos</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Office Address</div>
+              <div class="font-semibold text-slate-800" id="about-address">Brgy. Sirangan Hall, Sorsogon City</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Office Hours</div>
+              <div class="font-semibold text-slate-800" id="about-officeHours">Monday – Friday, 8:00 AM – 5:00 PM</div>
+            </div>
+
+            <div class="bg-blue-50 rounded-2xl p-4 border border-blue-100">
+              <div class="text-xs font-bold text-blue-500 uppercase tracking-wide mb-1">Service Commitment</div>
+              <div class="font-semibold text-blue-900" id="about-serviceCommitment">Efficient, Transparent, and Citizen-Focused Service</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Vision & Mission -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="card-hover rounded-3xl p-8 text-white" style="background:linear-gradient(135deg,#0f2044,#1e3a5f);">
+        <div class="w-12 h-12 bg-white/15 rounded-2xl flex items-center justify-center text-2xl mb-5">
+          <i class="fa-solid fa-eye text-blue-300"></i>
+        </div>
+        <h2 class="text-xl font-extrabold mb-4">Vision</h2>
+        <p id="about-vision" class="text-blue-100 leading-relaxed italic text-base">
+          "A progressive and self-reliant community with God-fearing, peaceful, and prosperous residents."
+        </p>
+      </div>
+
+      <div class="card-hover rounded-3xl p-8" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);">
+        <div class="w-12 h-12 bg-black/10 rounded-2xl flex items-center justify-center text-2xl mb-5">
+          <i class="fa-solid fa-bullseye text-amber-900"></i>
+        </div>
+        <h2 class="text-xl font-extrabold text-gray-900 mb-4">Mission</h2>
+        <p id="about-mission" class="text-gray-800 leading-relaxed italic text-base">
+          "To provide efficient, transparent, and accessible barangay services through modern governance and technology."
+        </p>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card-hover bg-white rounded-3xl border border-slate-100 p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 text-lg">
+          <i class="fa-solid fa-scroll"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-slate-800">History</h2>
+      </div>
+
+      <div class="space-y-4 text-slate-600 leading-relaxed text-sm" id="about-history">
+        <p>
+          Barangay Sirangan is one of the barangays comprising Sorsogon City in the province of Sorsogon, located in the Bicol Region of the Philippines.
+          The barangay has a rich history rooted in the agricultural and coastal traditions of the Bicolano people.
+        </p>
+        <p>
+          The name "Sirangan" is derived from the local dialect, reflecting the cultural heritage of its founding residents.
+          Over the generations, the community has grown from a small settlement into a thriving barangay with a dedicated local government committed to the welfare of its residents.
+        </p>
+        <p>
+          Today, Barangay Sirangan continues to advance through responsible governance, community programs, and digital innovations such as this portal — ensuring that residents receive fast, transparent, and accessible public services.
+        </p>
+      </div>
+    </div>
+
+    <!-- Officials -->
+    <div class="card-hover bg-white rounded-3xl border border-slate-100 p-8">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 text-lg">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-800">Barangay Officials</h2>
+          <p class="text-sm text-slate-500 mt-1">Barangay Sirangan Local Government Unit</p>
+        </div>
+      </div>
+
+      <!-- Key Officials -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="officials-key-grid">
+
+        <!-- Captain -->
+        <div class="official-card text-center p-6 rounded-3xl text-white relative overflow-hidden"
+          style="background:linear-gradient(135deg,#0f2044,#1e3a5f,#2563eb);">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+
+          <div class="w-16 h-16 bg-white/15 border border-white/20 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden" id="oc-captain-img">
+            <img src="/assets/logo/sirangan-bg.png" class="w-full h-full object-cover" alt="Logo">
+          </div>
+
+          <div class="font-bold text-sm" id="oc-captain-name">Hon. Maria L. Santos</div>
+          <div class="text-blue-200 text-xs mt-2">Barangay Captain</div>
+        </div>
+
+        <!-- Secretary -->
+        <div class="official-card text-center p-6 bg-slate-50 border border-slate-100 rounded-3xl">
+          <div class="w-16 h-16 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden" id="oc-secretary-img">
+            <i class="fa-solid fa-user text-slate-500 text-xl"></i>
+          </div>
+          <div class="font-bold text-sm text-slate-700" id="oc-secretary-name">Ms. Angela P. Reyes</div>
+          <div class="text-slate-400 text-xs mt-2">Barangay Secretary</div>
+        </div>
+
+        <!-- Treasurer -->
+        <div class="official-card text-center p-6 bg-slate-50 border border-slate-100 rounded-3xl">
+          <div class="w-16 h-16 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden" id="oc-treasurer-img">
+            <i class="fa-solid fa-user text-slate-500 text-xl"></i>
+          </div>
+          <div class="font-bold text-sm text-slate-700" id="oc-treasurer-name">Mr. Daniel R. Villanueva</div>
+          <div class="text-slate-400 text-xs mt-2">Barangay Treasurer</div>
+        </div>
+
+        <!-- SK Chairperson -->
+        <div class="official-card text-center p-6 bg-slate-50 border border-slate-100 rounded-3xl">
+          <div class="w-16 h-16 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden" id="oc-skChair-img">
+            <i class="fa-solid fa-user text-slate-500 text-xl"></i>
+          </div>
+          <div class="font-bold text-sm text-slate-700" id="oc-skChair-name">Hon. Kyle M. Fernandez</div>
+          <div class="text-slate-400 text-xs mt-2">SK Chairperson</div>
+        </div>
+
+      </div>
+
+      <!-- Barangay Kagawads -->
+      <div class="mt-10">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-extrabold text-slate-800">Barangay Kagawads</h3>
+          <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full" id="kagawad-count">7 Members</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="officials-kagawad-grid">
+          <div class="official-card p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">Hon. Ricardo T. Mendoza</div><div class="text-slate-400 text-xs mt-1">Kagawad</div></div>
+          <div class="official-card p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">Hon. Liza M. Dela Cruz</div><div class="text-slate-400 text-xs mt-1">Kagawad</div></div>
+          <div class="official-card p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">Hon. Joseph A. Domingo</div><div class="text-slate-400 text-xs mt-1">Kagawad</div></div>
+          <div class="official-card p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">Hon. Marlon G. Bautista</div><div class="text-slate-400 text-xs mt-1">Kagawad</div></div>
+          <div class="official-card p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">Hon. Joy P. Ramirez</div><div class="text-slate-400 text-xs mt-1">Kagawad</div></div>
+          <div class="official-card p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">Hon. Ernesto L. Castillo</div><div class="text-slate-400 text-xs mt-1">Kagawad</div></div>
+          <div class="official-card p-5 bg-slate-50 rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">Hon. Clarissa B. Navarro</div><div class="text-slate-400 text-xs mt-1">Kagawad</div></div>
+        </div>
+      </div>
+
+      <!-- SK Kagawads -->
+      <div class="mt-12">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="text-lg font-extrabold text-slate-800">SK Kagawads</h3>
+          <span id="sk-count" class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">7 Members</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="officials-sk-grid">
+          <div class="official-card p-5 bg-white rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">SK John A. Mercado</div><div class="text-slate-400 text-xs mt-1">SK Kagawad</div></div>
+          <div class="official-card p-5 bg-white rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">SK Maria C. Lopez</div><div class="text-slate-400 text-xs mt-1">SK Kagawad</div></div>
+          <div class="official-card p-5 bg-white rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">SK Patrick D. Flores</div><div class="text-slate-400 text-xs mt-1">SK Kagawad</div></div>
+          <div class="official-card p-5 bg-white rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">SK Angelica R. Cruz</div><div class="text-slate-400 text-xs mt-1">SK Kagawad</div></div>
+          <div class="official-card p-5 bg-white rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">SK Mark S. Gonzales</div><div class="text-slate-400 text-xs mt-1">SK Kagawad</div></div>
+          <div class="official-card p-5 bg-white rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">SK Janelle P. Ramos</div><div class="text-slate-400 text-xs mt-1">SK Kagawad</div></div>
+          <div class="official-card p-5 bg-white rounded-2xl border border-slate-100 text-center"><div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-user text-slate-500"></i></div><div class="font-bold text-sm text-slate-700">SK Nathaniel B. Santos</div><div class="text-slate-400 text-xs mt-1">SK Kagawad</div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CTA -->
+    <div class="rounded-3xl p-10 text-white text-center" style="background:linear-gradient(135deg,#0a1628 0%,#1e3a5f 50%,#1d4ed8 100%);">
+      <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5">
+        <i class="fa-solid fa-globe text-amber-400"></i>
+      </div>
+      <h3 class="text-2xl font-extrabold mb-3">Digital Barangay Portal</h3>
+      <p class="text-blue-200 text-sm mb-7 max-w-md mx-auto">
+        We embrace digital governance to serve our community better. Submit document requests online and track them in real-time.
+      </p>
+      <a href="/request.html" class="btn-amber px-10 py-3.5 rounded-2xl font-bold inline-flex items-center gap-2 shadow-xl">
+        <i class="fa-solid fa-clipboard-list"></i>Request a Document Now →
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<footer class="bg-slate-950 text-white pt-14 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-10">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10">
+          <div>
+            <div class="font-bold text-base text-white">Barangay Sirangan</div>
+            <div class="text-slate-400 text-sm">Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+        <p class="text-slate-400 text-sm leading-relaxed">Serving our community with dedication, transparency, and efficiency through modern digital governance.</p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
+        <nav class="space-y-2 text-sm">
+          <a href="/request.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-clipboard-list w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Request Document</a>
+          <a href="/track.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-magnifying-glass w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Track Request</a>
+          <a href="/announcements.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-bullhorn w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Announcements</a>
+          <a href="/about.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-circle-info w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>About Us</a>
+          <a href="/contact.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-phone w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Contact</a>
+        </nav>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Office Info</h4>
+        <div class="text-sm text-slate-400 space-y-3">
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Office Hours</div>
+            <div>Monday – Friday</div>
+            <div>8:00 AM – 5:00 PM</div>
+            <div class="text-xs text-slate-600 mt-1">Closed weekends &amp; holidays</div>
+          </div>
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Address</div>
+            <div>Brgy. Sirangan Hall</div>
+            <div>Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-800/60 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+      <p>© 2025 Barangay Sirangan, Sorsogon City, Sorsogon. All rights reserved.</p>
+      <a href="/admin/login.html" class="hover:text-slate-300 transition">Admin Login</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  /* ── Nav scroll effect ── */
+  (function () {
+    var nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+  })();
+  /* ── Mobile menu ── */
+  document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+    var menu = document.getElementById('mobileMenu');
+    var icon = document.getElementById('menuIcon');
+    var open = !menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', open);
+    icon.className = open ? 'fa-solid fa-bars text-lg' : 'fa-solid fa-xmark text-lg';
+    this.setAttribute('aria-expanded', String(!open));
+  });
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+
+  function setImgOrIcon(container, imageUrl, name) {
+    if (imageUrl) {
+      container.innerHTML = '<img src="' + escHtml(imageUrl) + '" class="w-full h-full object-cover" alt="' + escHtml(name) + '">';
+    }
+    // else keep the existing placeholder icon
+  }
+
+  function renderKagawadGrid(containerId, members, cardBg) {
+    var grid = document.getElementById(containerId);
+    if (!grid || !members || !members.length) return;
+    grid.innerHTML = members.map(function(m) {
+      var imgHtml = m.imageUrl
+        ? '<img src="' + escHtml(m.imageUrl) + '" class="w-full h-full object-cover" alt="' + escHtml(m.name) + '">'
+        : '<i class="fa-solid fa-user text-slate-500"></i>';
+      return '<div class="official-card p-5 ' + cardBg + ' rounded-2xl border border-slate-100 text-center">' +
+        '<div class="w-14 h-14 user-placeholder border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden">' + imgHtml + '</div>' +
+        '<div class="font-bold text-sm text-slate-700">' + escHtml(m.name || '—') + '</div>' +
+        '<div class="text-slate-400 text-xs mt-1">' + (containerId === 'officials-sk-grid' ? 'SK Kagawad' : 'Kagawad') + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  async function loadAboutContent() {
+    try {
+      var config = await get('/config');
+
+      // Hero
+      if (config.heroSubtitle) setText('about-heroSubtitle', config.heroSubtitle);
+
+      // Barangay profile
+      setText('about-barangayName', config.barangayName || config.name || 'Barangay Sirangan');
+      setText('about-municipality',  config.municipality  || 'Sorsogon City');
+      setText('about-province',      config.province      || 'Sorsogon');
+      setText('about-captainName',   config.captainName   || 'Hon. Maria L. Santos');
+      setText('about-address',       config.address       || 'Brgy. Sirangan Hall, Sorsogon City');
+      setText('about-officeHours',   config.officeHours   || 'Monday – Friday, 8:00 AM – 5:00 PM');
+      if (config.serviceCommitment) setText('about-serviceCommitment', config.serviceCommitment);
+
+      // Vision & Mission
+      if (config.vision)  setText('about-vision',  '\u201c' + config.vision + '\u201d');
+      if (config.mission) setText('about-mission', '\u201c' + config.mission + '\u201d');
+
+      // History
+      if (config.history) {
+        var histEl = document.getElementById('about-history');
+        if (histEl) {
+          histEl.innerHTML = config.history.split(/\n\n+/).map(function(p) {
+            return '<p>' + escHtml(p.trim()) + '</p>';
+          }).join('');
+        }
+      }
+
+      // Officials
+      if (config.officials) {
+        var off = config.officials;
+        // Key officials
+        var keyMap = {
+          captain:   { nameId: 'oc-captain-name',   imgId: 'oc-captain-img',   label: 'Captain' },
+          secretary: { nameId: 'oc-secretary-name', imgId: 'oc-secretary-img', label: 'Secretary' },
+          treasurer: { nameId: 'oc-treasurer-name', imgId: 'oc-treasurer-img', label: 'Treasurer' },
+          skChair:   { nameId: 'oc-skChair-name',   imgId: 'oc-skChair-img',   label: 'SK Chair' }
+        };
+        Object.keys(keyMap).forEach(function(k) {
+          var data = off[k] || {};
+          var meta = keyMap[k];
+          if (data.name)     setText(meta.nameId, data.name);
+          if (data.imageUrl) setImgOrIcon(document.getElementById(meta.imgId), data.imageUrl, data.name);
+        });
+        // Also update captain name in profile card
+        if (off.captain && off.captain.name) setText('about-captainName', off.captain.name);
+
+        // Kagawads
+        if (off.kagawads && off.kagawads.length) {
+          renderKagawadGrid('officials-kagawad-grid', off.kagawads, 'bg-slate-50');
+          var kCount = document.getElementById('kagawad-count');
+          if (kCount) kCount.textContent = off.kagawads.length + ' Members';
+        }
+        // SK Kagawads
+        if (off.skKagawads && off.skKagawads.length) {
+          renderKagawadGrid('officials-sk-grid', off.skKagawads, 'bg-white');
+          var skCount = document.getElementById('sk-count');
+          if (skCount) skCount.textContent = off.skKagawads.length + ' Members';
+        }
+      }
+    } catch(e) {
+      console.warn('Could not load dynamic about content:', e);
+    }
+  }
+
+  loadAboutContent();
+</script>
+
+<button id="backToTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+<script src="/js/portal.js"></script>
+
+</body>
+</html>

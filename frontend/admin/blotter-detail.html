@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blotter Case Detail — Barangay Sirangan Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/admin.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <style>
+    :root { --c-primary:#1e3a5f; --c-accent:#f59e0b; }
+
+    /* Status pills */
+    .s-open            { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
+    .s-under-mediation { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+    .s-settled         { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+    .s-escalated       { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+    .s-escalated-returned { background:#ede9fe; color:#5b21b6; border:1px solid #ddd6fe; }
+    .s-dismissed       { background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb; }
+
+    /* Tabs */
+    .tab-btn { padding:8px 16px; font-size:13px; font-weight:600; color:#64748b; border-bottom:2px solid transparent; cursor:pointer; transition:color .15s, border-color .15s; white-space:nowrap; }
+    .tab-btn:hover { color:#1e3a5f; }
+    .tab-btn.active { color:#1e3a5f; border-bottom-color:#1e3a5f; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* Form inputs */
+    .f-input {
+      width:100%; padding:9px 12px; border:1px solid #e2e8f0; border-radius:10px;
+      font-size:13px; font-family:'Inter',sans-serif; color:#1e293b;
+      transition:border-color .15s,box-shadow .15s; outline:none; background:#fff;
+    }
+    .f-input:focus { border-color:#1e3a5f; box-shadow:0 0 0 3px rgba(30,58,95,.08); }
+    .f-label { display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:5px; }
+    .f-req { color:#ef4444; margin-left:2px; }
+
+    /* Info row */
+    .info-row { display:flex; gap:8px; padding:10px 0; border-bottom:1px solid #f1f5f9; align-items:flex-start; }
+    .info-row:last-child { border-bottom:none; }
+    .info-label { font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; flex:0 0 140px; padding-top:1px; }
+    .info-value { font-size:13px; color:#1e293b; font-weight:500; flex:1; }
+
+    /* Progress bar */
+    .kp-progress-bar { height:8px; border-radius:4px; background:#e2e8f0; overflow:hidden; }
+    .kp-progress-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#1e3a5f,#3b82f6); transition:width .4s ease; }
+
+    /* Hearing card */
+    .hearing-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:12px; transition:box-shadow .15s; }
+    .hearing-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); }
+
+    /* Timeline */
+    .timeline-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+
+    /* Skeleton */
+    .skeleton { background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:8px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Modal */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9000; display:flex; align-items:center; justify-content:center; padding:16px; }
+    .modal-box { background:#fff; border-radius:20px; width:100%; max-width:600px; box-shadow:0 24px 64px rgba(0,0,0,.22); overflow:hidden; }
+    .modal-header { padding:20px 24px 16px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between; }
+    .modal-title { font-size:16px; font-weight:700; color:#1e3a5f; }
+    .modal-body { padding:20px 24px; max-height:calc(100vh - 180px); overflow-y:auto; }
+    .modal-body::-webkit-scrollbar { width:5px; }
+    .modal-body::-webkit-scrollbar-track { background:#f1f5f9; border-radius:3px; }
+    .modal-body::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:3px; }
+    .modal-footer { padding:16px 24px; border-top:1px solid #f1f5f9; display:flex; gap:8px; justify-content:flex-end; }
+
+    /* Anim */
+    .anim-up   { animation:fadeUp .35s ease both; }
+    .anim-down { animation:fadeDown .3s ease both; }
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+
+    /* Attendance table */
+    .att-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .att-table th { text-align:left; padding:6px 8px; background:#f8fafc; font-weight:600; color:#64748b; border-bottom:1px solid #e2e8f0; }
+    .att-table td { padding:6px 8px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    .att-table tr:last-child td { border-bottom:none; }
+
+    /* Note card */
+    .note-card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 16px; margin-bottom:10px; }
+
+    /* Right column sticky */
+    @media(min-width:1024px) { .right-sticky { position:sticky; top:76px; } }
+
+    /* Section header */
+    .sec-header { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <aside class="w-64 bg-[#0b1929] text-white flex flex-col flex-shrink-0 fixed h-full z-40" style="box-shadow:4px 0 24px rgba(0,0,0,.18)">
+    <div class="px-5 py-5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <img src="/assets/logo/sirangan-bg.png" alt="Logo" class="w-9 h-9 rounded-xl object-cover" style="box-shadow:0 0 0 2px rgba(251,191,36,.35)">
+          <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1929] pulse-dot"></span>
+        </div>
+        <div>
+          <div class="font-bold text-sm text-white leading-tight">Brgy. Sirangan</div>
+          <div class="text-[10px] text-blue-300/70 font-medium tracking-wide uppercase mt-0.5">Admin Portal</div>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
+      <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
+      <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
+      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
+      <a href="/admin/appointments.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
+      <a href="/admin/blotter.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
+      <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
+      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+    </nav>
+    <div class="px-4 py-3.5 border-t border-white/10">
+      <div class="flex items-center gap-2.5 px-1">
+        <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0" id="sidebarAvatar">?</div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold text-white truncate" id="sidebarName">Loading…</div>
+          <div class="text-[10px] text-white/35 mt-0.5" id="sidebarRole">—</div>
+        </div>
+        <button onclick="AuthService.logout()" title="Sign out" class="w-6 h-6 flex items-center justify-center text-white/30 hover:text-red-400 transition rounded"><i class="fa-solid fa-right-from-bracket text-xs"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════ MAIN ════════════════ -->
+  <main class="ml-64 flex-1 overflow-y-auto flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200/70 px-6 py-3.5 flex items-center gap-4 sticky top-0 z-30" style="box-shadow:0 1px 0 rgba(0,0,0,.05)">
+      <a href="/admin/blotter.html" class="text-gray-400 hover:text-gray-600 transition text-sm flex items-center gap-1 flex-shrink-0"><i class="fa-solid fa-arrow-left text-xs"></i> Back</a>
+      <div class="anim-down" style="animation-delay:.04s">
+        <h1 class="text-lg font-bold text-gray-900 leading-tight">Blotter Case Detail</h1>
+        <div class="text-[11px] text-gray-400 font-mono" id="pageCaseNumber"></div>
+      </div>
+      <div class="ml-auto flex items-center gap-2 flex-wrap">
+        <div id="notifContainer"></div>
+        <button onclick="downloadPDF('/api/pdf/blotter/certification/'+caseId,'Blotter_Cert_'+(window.caseNumber||caseId)+'.pdf')" class="inline-flex items-center gap-2 bg-indigo-600 text-white px-3.5 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition"><i class="fa-solid fa-certificate text-xs"></i> Certification</button>
+        <button onclick="downloadPDF('/api/pdf/blotter/summary/'+caseId,'Blotter_Summary_'+(window.caseNumber||caseId)+'.pdf')" class="inline-flex items-center gap-2 bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition"><i class="fa-solid fa-file-lines text-xs"></i> Full Summary</button>
+        <div class="relative" id="profileDropdown">
+          <button onclick="toggleProfileDropdown()" class="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-gray-100 transition-all duration-150">
+            <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] text-white flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0" id="profileAvatar">?</div>
+            <div class="text-left hidden sm:block">
+              <div class="text-xs font-semibold text-gray-800 leading-tight" id="profileName"></div>
+              <div class="text-[10px] text-gray-400" id="profileRoleTag"></div>
+            </div>
+            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200" id="profileChevron"></i>
+          </button>
+          <div id="profileMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl py-2 z-50" style="box-shadow:0 16px 40px -8px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.07)">
+            <div class="px-4 py-2.5 border-b border-gray-50 mb-1">
+              <div class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Signed in as</div>
+              <div class="text-xs font-semibold text-gray-800 truncate mt-0.5" id="profileMenuEmail"></div>
+            </div>
+            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
+            <a href="/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-house w-4 text-gray-400 text-xs"></i> Barangay Portal</a>
+            <div class="border-t border-gray-50 my-1.5"></div>
+            <button onclick="AuthService.logout()" class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><i class="fa-solid fa-right-from-bracket w-4 text-xs"></i> Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page body -->
+    <div class="p-6 flex-1" id="mainContent">
+      <!-- Skeleton loader -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 space-y-4">
+          <div class="skeleton h-10 rounded-2xl w-full"></div>
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-3" style="box-shadow:0 1px 6px rgba(0,0,0,.05)">
+            <div class="skeleton h-5 rounded w-1/3"></div>
+            <div class="skeleton h-4 rounded w-full"></div>
+            <div class="skeleton h-4 rounded w-5/6"></div>
+            <div class="skeleton h-4 rounded w-4/6"></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-3" style="box-shadow:0 1px 6px rgba(0,0,0,.05)">
+            <div class="skeleton h-5 rounded w-1/4"></div>
+            <div class="skeleton h-4 rounded w-full"></div>
+            <div class="skeleton h-4 rounded w-3/4"></div>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="skeleton h-40 rounded-2xl"></div>
+          <div class="skeleton h-32 rounded-2xl"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════════════════ ADD HEARING MODAL ════════════════ -->
+<div id="hearingModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="hearingModalTitle">Add Hearing</span>
+      <button onclick="closeHearingModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editHearingId">
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="f-label">Hearing Date <span class="f-req">*</span></label>
+          <input type="date" id="hearingDate" class="f-input">
+        </div>
+        <div>
+          <label class="f-label">Time <span class="f-req">*</span></label>
+          <input type="time" id="hearingTime" class="f-input">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="f-label">Venue <span class="f-req">*</span></label>
+        <input type="text" id="hearingVenue" class="f-input" placeholder="e.g. Barangay Hall, Rm 1">
+      </div>
+      <div class="mb-4">
+        <label class="f-label">Notes / Agenda</label>
+        <textarea id="hearingNotes" rows="3" class="f-input resize-none" placeholder="Optional notes for this hearing…"></textarea>
+      </div>
+      <div class="mb-2">
+        <div class="flex items-center justify-between mb-2">
+          <label class="f-label mb-0">Attendance</label>
+          <button type="button" onclick="addAttendeeRow()" class="text-xs font-semibold text-[#1e3a5f] hover:underline"><i class="fa-solid fa-plus mr-1"></i>Add Attendee</button>
+        </div>
+        <div class="border border-gray-100 rounded-xl overflow-hidden">
+          <table class="att-table">
+            <thead>
+              <tr>
+                <th>Party Type</th>
+                <th>Name</th>
+                <th class="text-center">Attended</th>
+                <th class="w-8"></th>
+              </tr>
+            </thead>
+            <tbody id="attendanceBody">
+              <!-- rows added dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeHearingModal()" class="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancel</button>
+      <button onclick="submitAddHearing()" id="submitHearingBtn" class="px-5 py-2 text-sm font-bold text-white bg-[#1e3a5f] rounded-xl hover:bg-blue-800 transition">Save Hearing</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SUMMONS MODAL ════════════════ -->
+<div id="summonsModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:440px">
+    <div class="modal-header">
+      <span class="modal-title" id="summonsModalTitle">Print Summons</span>
+      <button onclick="closeSummonsModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="text-sm text-gray-500 mb-4">Select or enter the hearing schedule to include in the summons.</p>
+      <div class="mb-4">
+        <label class="f-label">Select Existing Hearing (optional)</label>
+        <select id="summonsHearingSelect" class="f-input" onchange="onSummonsHearingChange()">
+          <option value="">— Enter manually —</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="f-label">Hearing Date <span class="f-req">*</span></label>
+          <input type="date" id="summonsDate" class="f-input">
+        </div>
+        <div>
+          <label class="f-label">Hearing Time <span class="f-req">*</span></label>
+          <input type="time" id="summonsTime" class="f-input">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeSummonsModal()" class="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancel</button>
+      <button onclick="printSummons()" id="printSummonsBtn" class="px-5 py-2 text-sm font-bold text-white bg-[#1e3a5f] rounded-xl hover:bg-blue-800 transition"><i class="fa-solid fa-print mr-1.5 text-xs"></i>Print Summons</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ DELETE CONFIRM MODAL ════════════════ -->
+<div id="deleteModal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-header">
+      <span class="modal-title text-red-600"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Delete Hearing</span>
+      <button onclick="closeDeleteModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="text-sm text-gray-600">Are you sure you want to delete this hearing record? This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeDeleteModal()" class="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancel</button>
+      <button onclick="confirmDeleteHearing()" id="confirmDeleteBtn" class="px-5 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/notifications.js"></script>
+<script src="/js/portal.js"></script>
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+var BLOTTER_STATUS_FLOW = {
+  OPEN:             ['UNDER_MEDIATION','DISMISSED'],
+  UNDER_MEDIATION:  ['SETTLED','ESCALATED','OPEN'],
+  SETTLED:          [],
+  ESCALATED:        ['ESCALATED_RETURNED'],
+  ESCALATED_RETURNED: ['UNDER_MEDIATION','DISMISSED'],
+  DISMISSED:        []
+};
+var STATUS_LABELS = {
+  OPEN:'Open', UNDER_MEDIATION:'Under Mediation', SETTLED:'Settled',
+  ESCALATED:'Escalated', ESCALATED_RETURNED:'Escalated (Returned)', DISMISSED:'Dismissed'
+};
+var STATUS_COLORS = {
+  OPEN:'#1e40af', UNDER_MEDIATION:'#92400e', SETTLED:'#166534',
+  ESCALATED:'#991b1b', ESCALATED_RETURNED:'#5b21b6', DISMISSED:'#4b5563'
+};
+var STATUS_DOT = {
+  OPEN:'bg-blue-500', UNDER_MEDIATION:'bg-amber-500', SETTLED:'bg-green-500',
+  ESCALATED:'bg-red-500', ESCALATED_RETURNED:'bg-purple-500', DISMISSED:'bg-gray-400'
+};
+
+toastr.options = { positionClass:'toast-top-right', timeOut:3500, progressBar:true, closeButton:true };
+
+// ─── Globals ─────────────────────────────────────────────────────────────────
+var caseId = new URLSearchParams(window.location.search).get('id');
+window.caseData = null;
+window.caseNumber = '';
+var _pendingDeleteHearingId = null;
+var _summonPartyType = '';
+
+// ─── Auth bootstrap ──────────────────────────────────────────────────────────
+function toggleProfileDropdown() {
+  var menu = document.getElementById('profileMenu');
+  var chevron = document.getElementById('profileChevron');
+  var hidden = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden', !hidden);
+  chevron.style.transform = hidden ? 'rotate(180deg)' : '';
+}
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('profileDropdown');
+  if (dd && !dd.contains(e.target)) {
+    document.getElementById('profileMenu').classList.add('hidden');
+    document.getElementById('profileChevron').style.transform = '';
+  }
+});
+
+function cap(str) { return str ? str.charAt(0).toUpperCase()+str.slice(1) : ''; }
+
+firebase.auth().onAuthStateChanged(async function(fbUser) {
+  if (!fbUser) { localStorage.removeItem('authToken'); localStorage.removeItem('user'); window.location.href = '/admin/login.html'; return; }
+  try {
+    var freshToken = await fbUser.getIdToken(true);
+    var idTokenResult = await fbUser.getIdTokenResult();
+    var role = idTokenResult.claims.role || 'staff';
+    var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    localStorage.setItem('authToken', freshToken);
+    var userData = { uid:fbUser.uid, email:fbUser.email, name:fbUser.displayName||'', role:role, photoUrl:fbUser.photoURL||storedUser.photoUrl||'' };
+    localStorage.setItem('user', JSON.stringify(userData));
+    var initials = (userData.name||'?').split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase()||'?';
+    var avatarHTML = userData.photoUrl ? '<img src="'+userData.photoUrl.replace(/"/g,'&quot;')+'" class="w-full h-full object-cover" alt="">' : initials;
+    document.getElementById('profileAvatar').innerHTML = avatarHTML;
+    document.getElementById('profileName').textContent = userData.name;
+    document.getElementById('profileRoleTag').textContent = cap(role);
+    if (document.getElementById('profileMenuEmail')) document.getElementById('profileMenuEmail').textContent = userData.email;
+    var sa = document.getElementById('sidebarAvatar');
+    if (userData.photoUrl) { sa.innerHTML = '<img src="'+userData.photoUrl.replace(/"/g,'&quot;')+'" class="w-full h-full object-cover rounded-lg" alt="">'; } else { sa.textContent = initials; }
+    document.getElementById('sidebarName').textContent = userData.name;
+    document.getElementById('sidebarRole').textContent = cap(role);
+    loadCase();
+  } catch(e) { window.location.href = '/admin/login.html'; }
+});
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatDate(iso) {
+  if (!iso) return 'N/A';
+  var d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+}
+function formatDateTime(iso) {
+  if (!iso) return 'N/A';
+  var d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) + ' ' +
+    d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+}
+function formatTime(t) {
+  // t = "HH:MM"
+  if (!t) return '';
+  var parts = t.split(':');
+  var h = parseInt(parts[0],10);
+  var m = parts[1];
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + m + ' ' + ampm;
+}
+function getStatusBadgeHtml(status) {
+  var cls = getStatusClass(status);
+  return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold '+cls+'">'+(STATUS_LABELS[status]||escHtml(status))+'</span>';
+}
+function getStatusClass(status) {
+  var map = {
+    OPEN:'s-open', UNDER_MEDIATION:'s-under-mediation', SETTLED:'s-settled',
+    ESCALATED:'s-escalated', ESCALATED_RETURNED:'s-escalated-returned', DISMISSED:'s-dismissed'
+  };
+  return map[status] || 's-dismissed';
+}
+
+// ─── PDF helpers ─────────────────────────────────────────────────────────────
+async function downloadPDF(url, filename) {
+  try {
+    var token = localStorage.getItem('authToken');
+    var resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!resp.ok) { toastr.error('Failed to generate PDF'); return; }
+    var blob = await resp.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  } catch(e) { toastr.error('PDF generation failed'); }
+}
+async function previewPDF(url) {
+  try {
+    var token = localStorage.getItem('authToken');
+    var resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!resp.ok) { toastr.error('Failed to generate PDF'); return; }
+    var blob = await resp.blob();
+    window.open(URL.createObjectURL(blob), '_blank');
+  } catch(e) { toastr.error('PDF generation failed'); }
+}
+
+// ─── Load case ───────────────────────────────────────────────────────────────
+async function loadCase() {
+  if (!caseId) {
+    document.getElementById('mainContent').innerHTML =
+      '<div class="text-center py-24"><i class="fa-solid fa-triangle-exclamation text-4xl text-red-300 mb-4 block"></i><p class="text-red-400 font-semibold text-lg">No case ID specified.</p><a href="/admin/blotter.html" class="mt-4 inline-flex items-center gap-2 text-sm text-[#1e3a5f] font-semibold hover:underline"><i class="fa-solid fa-arrow-left text-xs"></i> Back to Blotter</a></div>';
+    return;
+  }
+  try {
+    var data = await get('/admin/blotter/' + caseId);
+    window.caseData = data;
+    window.caseNumber = data.caseNumber || data.id || caseId;
+    document.getElementById('pageCaseNumber').textContent = window.caseNumber;
+    renderPage(data);
+  } catch(e) {
+    var msg = (e && e.message) ? e.message : 'Unknown error';
+    var is404 = msg.toLowerCase().includes('404') || msg.toLowerCase().includes('not found');
+    document.getElementById('mainContent').innerHTML =
+      '<div class="text-center py-24">' +
+      '<i class="fa-solid fa-'+(is404?'folder-open':'circle-exclamation')+' text-4xl text-gray-300 mb-4 block"></i>' +
+      '<p class="'+(is404?'text-gray-500':'text-red-400')+' font-semibold text-lg">'+(is404?'Blotter case not found.':'Failed to load case: '+escHtml(msg))+'</p>' +
+      '<a href="/admin/blotter.html" class="mt-4 inline-flex items-center gap-2 text-sm text-[#1e3a5f] font-semibold hover:underline"><i class="fa-solid fa-arrow-left text-xs"></i> Back to Blotter</a>' +
+      '</div>';
+  }
+}
+
+// ─── Full page render ─────────────────────────────────────────────────────────
+function renderPage(data) {
+  var html =
+    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 anim-up">' +
+
+    // ── Left column ──
+    '<div class="lg:col-span-2 space-y-5">' +
+
+    // Tab nav
+    '<div class="bg-white rounded-2xl border border-gray-100 overflow-hidden" style="box-shadow:0 1px 6px rgba(0,0,0,.05)">' +
+    '<div class="flex border-b border-gray-100 px-2 overflow-x-auto">' +
+    '<button class="tab-btn active" data-tab="overview" onclick="showTab(\'overview\')">Overview</button>' +
+    '<button class="tab-btn" data-tab="hearings" onclick="showTab(\'hearings\')">Hearings</button>' +
+    '<button class="tab-btn" data-tab="kp" onclick="showTab(\'kp\')">KP Checklist</button>' +
+    '<button class="tab-btn" data-tab="notes" onclick="showTab(\'notes\')">Notes</button>' +
+    '</div>' +
+
+    // Tab: Overview
+    '<div class="tab-panel active p-6" id="tab-overview">' +
+    buildOverviewTab(data) +
+    '</div>' +
+
+    // Tab: Hearings
+    '<div class="tab-panel p-6" id="tab-hearings">' +
+    buildHearingsTab(data) +
+    '</div>' +
+
+    // Tab: KP Checklist
+    '<div class="tab-panel p-6" id="tab-kp">' +
+    buildKpTab(data) +
+    '</div>' +
+
+    // Tab: Notes
+    '<div class="tab-panel p-6" id="tab-notes">' +
+    buildNotesTab(data) +
+    '</div>' +
+
+    '</div>' +  // end tab card
+    '</div>' +  // end left col
+
+    // ── Right column ──
+    '<div class="space-y-5 right-sticky">' +
+    buildCaseInfoCard(data) +
+    buildUpdateStatusCard(data) +
+    buildDocumentsCard(data) +
+    '</div>' +
+
+    '</div>' +  // end grid
+
+    // ── Status History (full width) ──
+    '<div class="mt-5 bg-white rounded-2xl border border-gray-100 p-6 anim-up" style="animation-delay:.1s;box-shadow:0 1px 6px rgba(0,0,0,.05)">' +
+    '<h2 class="font-bold text-[#1e3a5f] mb-5 text-sm uppercase tracking-wide"><i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Status History</h2>' +
+    buildStatusTimeline(data) +
+    '</div>';
+
+  document.getElementById('mainContent').innerHTML = html;
+  renderKpChecklist(data);
+  renderCaseNotes(data);
+  renderHearings(data);
+  populateSummonsSelect(data.hearings || []);
+}
+
+// ─── Overview Tab ─────────────────────────────────────────────────────────────
+function buildOverviewTab(data) {
+  return (
+    // Incident Details - display
+    '<div id="overviewDisplay">' +
+    '<div class="flex items-center justify-between mb-4">' +
+    '<div class="sec-header mb-0"><i class="fa-solid fa-file-lines mr-1.5"></i> Incident Details</div>' +
+    '<button onclick="enableEditMode()" class="text-xs font-semibold text-[#1e3a5f] hover:underline flex items-center gap-1"><i class="fa-solid fa-pen text-[10px]"></i> Edit</button>' +
+    '</div>' +
+    '<div class="space-y-0">' +
+    infoRow('Date of Incident', formatDate(data.incidentDate)) +
+    infoRow('Time of Incident', data.incidentTime ? formatTime(data.incidentTime) : 'N/A') +
+    infoRow('Location', data.incidentLocation || 'N/A') +
+    infoRow('Nature of Complaint', data.nature || data.natureOfComplaint || 'N/A') +
+    infoRow('Book / Page No.', data.bookPage || 'N/A') +
+    '</div>' +
+    '<div class="mt-4">' +
+    '<div class="text-xs font-bold text-gray-400 uppercase mb-1.5">Narrative</div>' +
+    '<div class="text-sm text-gray-700 bg-gray-50 rounded-xl p-4 leading-relaxed whitespace-pre-wrap">' + escHtml(data.narrative || data.incidentNarrative || '—') + '</div>' +
+    '</div>' +
+    '</div>' +
+
+    // Incident Details - edit form (hidden)
+    '<div id="overviewEditForm" class="hidden">' +
+    '<div class="flex items-center justify-between mb-4">' +
+    '<div class="sec-header mb-0"><i class="fa-solid fa-pen mr-1.5"></i> Edit Incident Details</div>' +
+    '</div>' +
+    '<div class="grid grid-cols-2 gap-4 mb-4">' +
+    '<div><label class="f-label">Date of Incident <span class="f-req">*</span></label><input type="date" id="editIncidentDate" class="f-input" value="'+escHtml(data.incidentDate ? data.incidentDate.substring(0,10) : '')+'"></div>' +
+    '<div><label class="f-label">Time</label><input type="time" id="editIncidentTime" class="f-input" value="'+escHtml(data.incidentTime||'')+'"></div>' +
+    '</div>' +
+    '<div class="mb-4"><label class="f-label">Location <span class="f-req">*</span></label><input type="text" id="editIncidentLocation" class="f-input" value="'+escHtml(data.incidentLocation||'')+'"></div>' +
+    '<div class="mb-4"><label class="f-label">Nature of Complaint <span class="f-req">*</span></label><input type="text" id="editNature" class="f-input" value="'+escHtml(data.nature||data.natureOfComplaint||'')+'"></div>' +
+    '<div class="mb-4"><label class="f-label">Book / Page No.</label><input type="text" id="editBookPage" class="f-input" value="'+escHtml(data.bookPage||'')+'"></div>' +
+    '<div class="mb-4"><label class="f-label">Narrative <span class="f-req">*</span></label><textarea id="editNarrative" rows="5" class="f-input resize-none">' + escHtml(data.narrative||data.incidentNarrative||'') + '</textarea></div>' +
+    '<div class="flex gap-3">' +
+    '<button onclick="cancelEdit()" class="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition">Cancel</button>' +
+    '<button onclick="saveEdit()" id="saveEditBtn" class="px-5 py-2 text-sm font-bold text-white bg-[#1e3a5f] rounded-xl hover:bg-blue-800 transition">Save Changes</button>' +
+    '</div>' +
+    '</div>' +
+
+    '<hr class="my-6 border-gray-100">' +
+
+    // Parties
+    '<div class="sec-header"><i class="fa-solid fa-users mr-1.5"></i> Parties Involved</div>' +
+    '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' +
+    buildPartyCard('Complainant', data.complainant) +
+    buildPartyCard('Respondent', data.respondent) +
+    '</div>'
+  );
+}
+
+function infoRow(label, value) {
+  return '<div class="info-row"><span class="info-label">'+escHtml(label)+'</span><span class="info-value">'+(value != null ? escHtml(String(value)) : 'N/A')+'</span></div>';
+}
+
+function buildPartyCard(role, party) {
+  if (!party) return '<div class="border border-dashed border-gray-200 rounded-xl p-4 text-xs text-gray-400 text-center">'+escHtml(role)+' info not available</div>';
+  return (
+    '<div class="border border-gray-100 rounded-xl p-4" style="background:#f8fafc">' +
+    '<div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-3">'+escHtml(role)+'</div>' +
+    '<div class="font-bold text-sm text-gray-900 mb-2">'+escHtml(party.name||party.fullName||'—')+'</div>' +
+    '<div class="space-y-1 text-xs text-gray-600">' +
+    (party.address ? '<div><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> '+escHtml(party.address)+'</div>' : '') +
+    (party.contact||party.contactNumber ? '<div><i class="fa-solid fa-phone w-4 text-gray-400"></i> '+escHtml(party.contact||party.contactNumber)+'</div>' : '') +
+    (party.age ? '<div><i class="fa-solid fa-cake-candles w-4 text-gray-400"></i> Age: '+escHtml(String(party.age))+'</div>' : '') +
+    (party.gender ? '<div><i class="fa-solid fa-venus-mars w-4 text-gray-400"></i> '+escHtml(party.gender)+'</div>' : '') +
+    '</div>' +
+    '</div>'
+  );
+}
+
+// ─── Hearings Tab ─────────────────────────────────────────────────────────────
+function buildHearingsTab(data) {
+  return (
+    '<div class="flex items-center justify-between mb-4">' +
+    '<div class="sec-header mb-0"><i class="fa-solid fa-gavel mr-1.5"></i> Hearings</div>' +
+    '<button onclick="openHearingModal()" class="inline-flex items-center gap-2 bg-[#1e3a5f] text-white px-3.5 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 transition"><i class="fa-solid fa-plus text-xs"></i> Add Hearing</button>' +
+    '</div>' +
+    '<div id="hearingsList"></div>'
+  );
+}
+
+function renderHearings(data) {
+  var hearings = data.hearings || [];
+  var el = document.getElementById('hearingsList');
+  if (!el) return;
+  if (!hearings.length) {
+    el.innerHTML = '<div class="empty-state"><i class="fa-solid fa-gavel"></i><p class="font-semibold">No hearings recorded yet.</p><p class="text-xs mt-1">Click "Add Hearing" to record the first hearing.</p></div>';
+    return;
+  }
+  var sorted = hearings.slice().sort(function(a,b){ return new Date(a.hearingDate||a.date) - new Date(b.hearingDate||b.date); });
+  el.innerHTML = sorted.map(function(h, i) {
+    var hId = h.id || h._id || i;
+    var att = (h.attendance || []);
+    var attHtml = att.length ? (
+      '<div class="mt-3">' +
+      '<div class="text-xs font-semibold text-gray-400 uppercase mb-2">Attendance</div>' +
+      '<table class="att-table"><thead><tr><th>Party</th><th>Name</th><th class="text-center">Attended</th></tr></thead><tbody>' +
+      att.map(function(a) {
+        return '<tr><td class="text-gray-500">'+escHtml(a.partyType||a.role||'—')+'</td><td class="font-medium text-gray-800">'+escHtml(a.name||'—')+'</td><td class="text-center">'+(a.attended||a.present ? '<i class="fa-solid fa-circle-check text-green-500"></i>' : '<i class="fa-solid fa-circle-xmark text-red-400"></i>')+'</td></tr>';
+      }).join('') +
+      '</tbody></table></div>'
+    ) : '';
+    return (
+      '<div class="hearing-card">' +
+      '<div class="flex items-start justify-between gap-4">' +
+      '<div>' +
+      '<div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Hearing #'+(i+1)+'</div>' +
+      '<div class="flex flex-wrap items-center gap-3 text-sm">' +
+      '<span class="font-semibold text-gray-900"><i class="fa-solid fa-calendar-day text-[#1e3a5f] mr-1 text-xs"></i>'+escHtml(formatDate(h.hearingDate||h.date))+'</span>' +
+      '<span class="text-gray-500"><i class="fa-solid fa-clock text-gray-400 mr-1 text-xs"></i>'+escHtml(h.hearingTime||h.time ? formatTime(h.hearingTime||h.time) : 'N/A')+'</span>' +
+      '<span class="text-gray-500"><i class="fa-solid fa-location-dot text-gray-400 mr-1 text-xs"></i>'+escHtml(h.venue||'N/A')+'</span>' +
+      '</div>' +
+      (h.notes||h.agenda ? '<div class="mt-2 text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">'+escHtml(h.notes||h.agenda)+'</div>' : '') +
+      attHtml +
+      '</div>' +
+      '<div class="flex flex-col gap-1.5 flex-shrink-0">' +
+      '<button onclick="openEditHearingModal(\''+escHtml(String(hId))+'\')" class="text-xs font-semibold text-[#1e3a5f] hover:underline flex items-center gap-1"><i class="fa-solid fa-pen text-[10px]"></i> Edit</button>' +
+      '<button onclick="openDeleteModal(\''+escHtml(String(hId))+'\')" class="text-xs font-semibold text-red-500 hover:underline flex items-center gap-1"><i class="fa-solid fa-trash text-[10px]"></i> Delete</button>' +
+      '<button onclick="openSummonsFromHearing(\''+escHtml(String(hId))+'\')" class="text-xs font-semibold text-amber-600 hover:underline flex items-center gap-1"><i class="fa-solid fa-envelope text-[10px]"></i> Summons</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+// ─── KP Checklist Tab ─────────────────────────────────────────────────────────
+function buildKpTab(data) {
+  return (
+    '<div class="sec-header"><i class="fa-solid fa-list-check mr-1.5"></i> KP Checklist</div>' +
+    '<div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5 text-sm text-blue-800">' +
+    '<i class="fa-solid fa-circle-info mr-2 text-blue-500"></i>' +
+    '<strong>Per Katarungang Pambarangay Law (R.A. 7160)</strong>, three hearings must be conducted before a case can be escalated to the courts.' +
+    '</div>' +
+    '<div class="mb-4">' +
+    '<div class="flex items-center justify-between mb-1.5">' +
+    '<span class="text-xs font-semibold text-gray-500" id="kpProgressLabel">0 of 5 completed</span>' +
+    '<span class="text-xs font-bold text-[#1e3a5f]" id="kpProgressPct">0%</span>' +
+    '</div>' +
+    '<div class="kp-progress-bar"><div class="kp-progress-fill" id="kpProgressFill" style="width:0%"></div></div>' +
+    '</div>' +
+    '<div class="space-y-3" id="kpChecklistItems">' +
+    kpCheckboxHtml('kpSummonsComplainant','summons_complainant','Summons Issued to Complainant') +
+    kpCheckboxHtml('kpSummonsRespondent','summons_respondent','Summons Issued to Respondent') +
+    kpCheckboxHtml('kpHearing1','hearing_1','First Hearing Conducted') +
+    kpCheckboxHtml('kpHearing2','hearing_2','Second Hearing Conducted') +
+    kpCheckboxHtml('kpHearing3','hearing_3','Third Hearing Conducted') +
+    '</div>'
+  );
+}
+
+function kpCheckboxHtml(id, field, label) {
+  return (
+    '<label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-50 transition" style="background:#fafbfc">' +
+    '<input type="checkbox" id="'+id+'" class="w-4 h-4 accent-[#1e3a5f] cursor-pointer" onchange="toggleKpItem(\''+field+'\',this.checked)">' +
+    '<span class="text-sm font-medium text-gray-700">'+escHtml(label)+'</span>' +
+    '</label>'
+  );
+}
+
+function renderKpChecklist(data) {
+  var kp = data.kpChecklist || {};
+  var fields = ['summons_complainant','summons_respondent','hearing_1','hearing_2','hearing_3'];
+  var ids = ['kpSummonsComplainant','kpSummonsRespondent','kpHearing1','kpHearing2','kpHearing3'];
+  var checked = 0;
+  fields.forEach(function(f, i) {
+    var el = document.getElementById(ids[i]);
+    if (el) { el.checked = !!kp[f]; if (kp[f]) checked++; }
+  });
+  updateKpProgress(checked);
+}
+
+function updateKpProgress(checked) {
+  var pct = Math.round((checked/5)*100);
+  var fill = document.getElementById('kpProgressFill');
+  var label = document.getElementById('kpProgressLabel');
+  var pctEl = document.getElementById('kpProgressPct');
+  if (fill) fill.style.width = pct+'%';
+  if (label) label.textContent = checked+' of 5 completed';
+  if (pctEl) pctEl.textContent = pct+'%';
+}
+
+async function toggleKpItem(field, value) {
+  try {
+    var payload = {}; payload[field] = value;
+    await patch('/admin/blotter/'+caseId+'/kp-checklist', payload);
+    var checked = 0;
+    ['kpSummonsComplainant','kpSummonsRespondent','kpHearing1','kpHearing2','kpHearing3'].forEach(function(id) {
+      var el = document.getElementById(id); if (el && el.checked) checked++;
+    });
+    updateKpProgress(checked);
+    toastr.success('Checklist updated');
+  } catch(e) {
+    toastr.error('Failed to update checklist: '+(e&&e.message?e.message:'Error'));
+    // Revert checkbox
+    var fieldToId = { summons_complainant:'kpSummonsComplainant', summons_respondent:'kpSummonsRespondent', hearing_1:'kpHearing1', hearing_2:'kpHearing2', hearing_3:'kpHearing3' };
+    var el = document.getElementById(fieldToId[field]);
+    if (el) el.checked = !value;
+  }
+}
+
+// ─── Notes Tab ────────────────────────────────────────────────────────────────
+function buildNotesTab(data) {
+  return (
+    '<div class="sec-header"><i class="fa-solid fa-note-sticky mr-1.5"></i> Case Notes</div>' +
+    '<div class="mb-5 bg-gray-50 border border-gray-100 rounded-xl p-4">' +
+    '<label class="f-label">Add Note</label>' +
+    '<textarea id="newNoteText" rows="3" class="f-input resize-none mb-2" placeholder="Enter a note…"></textarea>' +
+    '<div class="flex justify-end">' +
+    '<button onclick="addNote()" class="inline-flex items-center gap-2 bg-[#1e3a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 transition"><i class="fa-solid fa-plus text-xs"></i> Add Note</button>' +
+    '</div>' +
+    '</div>' +
+    '<div id="notesList"></div>'
+  );
+}
+
+function renderCaseNotes(data) {
+  var notes = (data.notes || []).slice().reverse();
+  var el = document.getElementById('notesList');
+  if (!el) return;
+  if (!notes.length) {
+    el.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm"><i class="fa-solid fa-note-sticky text-3xl mb-3 block opacity-30"></i>No notes yet.</div>';
+    return;
+  }
+  el.innerHTML = notes.map(function(n) {
+    return (
+      '<div class="note-card">' +
+      '<div class="flex items-center justify-between mb-2">' +
+      '<span class="text-xs font-bold text-[#1e3a5f]">'+escHtml(n.staffName||n.addedBy||'Staff')+'</span>' +
+      '<span class="text-xs text-gray-400">'+escHtml(formatDateTime(n.createdAt||n.timestamp))+'</span>' +
+      '</div>' +
+      '<p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">'+escHtml(n.text||n.note||n.content||'')+'</p>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+async function addNote() {
+  var text = (document.getElementById('newNoteText').value || '').trim();
+  if (!text) { toastr.warning('Please enter a note.'); return; }
+  try {
+    await post('/admin/blotter/'+caseId+'/notes', { text: text });
+    document.getElementById('newNoteText').value = '';
+    toastr.success('Note added');
+    var data = await get('/admin/blotter/'+caseId);
+    window.caseData = data;
+    renderCaseNotes(data);
+  } catch(e) { toastr.error('Failed to add note: '+(e&&e.message?e.message:'Error')); }
+}
+
+// ─── Case Info Card ──────────────────────────────────────────────────────────
+function buildCaseInfoCard(data) {
+  return (
+    '<div class="bg-white rounded-2xl border border-gray-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,.05)">' +
+    '<div class="sec-header"><i class="fa-solid fa-id-card mr-1.5"></i> Case Info</div>' +
+    '<div class="space-y-3 text-sm">' +
+    cInfoRow('Case Number', escHtml(data.caseNumber||data.id||caseId)) +
+    cInfoRow('Status', getStatusBadgeHtml(data.status)) +
+    cInfoRow('Filed By', escHtml(data.filedBy||data.staffName||'—')) +
+    cInfoRow('Filed Date', escHtml(formatDate(data.createdAt||data.filedDate))) +
+    cInfoRow('Book / Page', escHtml(data.bookPage||'—')) +
+    cInfoRow('Last Updated', escHtml(formatDateTime(data.updatedAt||data.lastUpdated))) +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function cInfoRow(label, valueHtml) {
+  return '<div class="flex items-start justify-between gap-2"><span class="text-xs text-gray-400 font-medium flex-shrink-0">'+escHtml(label)+'</span><span class="text-xs font-semibold text-gray-800 text-right">'+valueHtml+'</span></div>';
+}
+
+// ─── Update Status Card ───────────────────────────────────────────────────────
+function buildUpdateStatusCard(data) {
+  var next = BLOTTER_STATUS_FLOW[data.status] || [];
+  if (!next.length) {
+    return (
+      '<div class="bg-white rounded-2xl border border-gray-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,.05)">' +
+      '<div class="sec-header"><i class="fa-solid fa-arrows-rotate mr-1.5"></i> Update Status</div>' +
+      '<div class="text-xs text-gray-400 text-center py-3"><i class="fa-solid fa-lock mr-1"></i>No further status changes allowed.</div>' +
+      '</div>'
+    );
+  }
+  var optionsHtml = next.map(function(s) {
+    return '<option value="'+s+'">'+escHtml(STATUS_LABELS[s]||s)+'</option>';
+  }).join('');
+  return (
+    '<div class="bg-white rounded-2xl border border-gray-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,.05)">' +
+    '<div class="flex items-center justify-between mb-1">' +
+    '<div class="sec-header mb-0"><i class="fa-solid fa-arrows-rotate mr-1.5"></i> Update Status</div>' +
+    '<button onclick="toggleStatusForm()" class="text-xs font-semibold text-[#1e3a5f] hover:underline" id="statusToggleBtn">Expand</button>' +
+    '</div>' +
+    '<div class="text-xs text-gray-500 mb-3">Current: '+getStatusBadgeHtml(data.status)+'</div>' +
+    '<div id="statusFormArea" class="hidden">' +
+    '<div class="mb-3">' +
+    '<label class="f-label">New Status <span class="f-req">*</span></label>' +
+    '<select id="newStatusSelect" class="f-input" onchange="onStatusTargetChange()">' +
+    '<option value="">— Select status —</option>' +
+    optionsHtml +
+    '</select>' +
+    '</div>' +
+    '<div class="mb-3">' +
+    '<label class="f-label">Remarks</label>' +
+    '<textarea id="statusRemarks" rows="2" class="f-input resize-none" placeholder="Optional remarks…"></textarea>' +
+    '</div>' +
+    // Conditional: SETTLED
+    '<div id="statusFieldSettled" class="hidden space-y-3 mb-3">' +
+    '<div><label class="f-label">Resolution Notes <span class="f-req">*</span></label><textarea id="resolutionNotes" rows="2" class="f-input resize-none" placeholder="Describe the resolution…"></textarea></div>' +
+    '<div><label class="f-label">Settlement Terms <span class="f-req">*</span></label><textarea id="settlementTerms" rows="2" class="f-input resize-none" placeholder="Terms agreed upon…"></textarea></div>' +
+    '</div>' +
+    // Conditional: ESCALATED
+    '<div id="statusFieldEscalated" class="hidden space-y-3 mb-3">' +
+    '<div class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs text-amber-800 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Ensure the KP checklist (3 hearings) is complete before escalating.</div>' +
+    '<div><label class="f-label">Escalation Reason <span class="f-req">*</span></label><textarea id="escalationReason" rows="2" class="f-input resize-none" placeholder="Reason for escalation…"></textarea></div>' +
+    '</div>' +
+    '<button onclick="updateStatus()" id="updateStatusBtn" class="w-full bg-[#1e3a5f] text-white py-2.5 rounded-xl text-sm font-bold hover:bg-blue-800 transition">Update Status</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+function toggleStatusForm() {
+  var area = document.getElementById('statusFormArea');
+  var btn = document.getElementById('statusToggleBtn');
+  if (!area) return;
+  var hidden = area.classList.contains('hidden');
+  area.classList.toggle('hidden', !hidden);
+  if (btn) btn.textContent = hidden ? 'Collapse' : 'Expand';
+}
+
+function onStatusTargetChange() {
+  var val = (document.getElementById('newStatusSelect')||{}).value || '';
+  var settledDiv = document.getElementById('statusFieldSettled');
+  var escalatedDiv = document.getElementById('statusFieldEscalated');
+  if (settledDiv) settledDiv.classList.toggle('hidden', val !== 'SETTLED');
+  if (escalatedDiv) escalatedDiv.classList.toggle('hidden', val !== 'ESCALATED');
+}
+
+async function updateStatus() {
+  var newStatus = (document.getElementById('newStatusSelect')||{}).value || '';
+  if (!newStatus) { toastr.warning('Please select a new status.'); return; }
+  var remarks = (document.getElementById('statusRemarks')||{}).value || '';
+  var payload = { newStatus: newStatus, remarks: remarks };
+
+  if (newStatus === 'SETTLED') {
+    var rn = ((document.getElementById('resolutionNotes')||{}).value||'').trim();
+    var st = ((document.getElementById('settlementTerms')||{}).value||'').trim();
+    if (!rn || !st) { toastr.warning('Please fill in Resolution Notes and Settlement Terms.'); return; }
+    payload.resolutionNotes = rn;
+    payload.settlementTerms = st;
+  }
+  if (newStatus === 'ESCALATED') {
+    var er = ((document.getElementById('escalationReason')||{}).value||'').trim();
+    if (!er) { toastr.warning('Please enter an escalation reason.'); return; }
+    payload.escalationReason = er;
+  }
+
+  var btn = document.getElementById('updateStatusBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
+  try {
+    await patch('/admin/blotter/'+caseId+'/status', payload);
+    toastr.success('Status updated to <strong>'+(STATUS_LABELS[newStatus]||newStatus)+'</strong>', 'Status Updated');
+    setTimeout(function() { loadCase(); }, 1200);
+  } catch(e) {
+    toastr.error('Failed to update status: '+(e&&e.message?e.message:'Error'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Update Status'; }
+  }
+}
+
+// ─── Documents Card ───────────────────────────────────────────────────────────
+function buildDocumentsCard(data) {
+  return (
+    '<div class="bg-white rounded-2xl border border-gray-100 p-5" style="box-shadow:0 1px 6px rgba(0,0,0,.05)">' +
+    '<div class="sec-header"><i class="fa-solid fa-folder-open mr-1.5"></i> Documents</div>' +
+    '<div class="space-y-2">' +
+    '<button onclick="downloadPDF(\'/api/pdf/blotter/certification/\'+caseId,\'Blotter_Cert_\'+(window.caseNumber||caseId)+\'.pdf\')" class="w-full flex items-center gap-2.5 px-4 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition text-left">' +
+    '<i class="fa-solid fa-download w-4 text-indigo-500"></i> Download Certification' +
+    '</button>' +
+    '<button onclick="previewPDF(\'/api/pdf/blotter/certification/\'+caseId+\'/preview\')" class="w-full flex items-center gap-2.5 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition text-left">' +
+    '<i class="fa-solid fa-eye w-4 text-gray-400"></i> Preview Certification' +
+    '</button>' +
+    '<button onclick="downloadPDF(\'/api/pdf/blotter/summary/\'+caseId,\'Blotter_Summary_\'+(window.caseNumber||caseId)+\'.pdf\')" class="w-full flex items-center gap-2.5 px-4 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition text-left">' +
+    '<i class="fa-solid fa-file-lines w-4 text-emerald-500"></i> Download Full Summary' +
+    '</button>' +
+    '<button onclick="openSummonsModal(\'COMPLAINANT\')" class="w-full flex items-center gap-2.5 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-xl text-xs font-semibold text-amber-700 hover:bg-amber-100 transition text-left">' +
+    '<i class="fa-solid fa-print w-4 text-amber-500"></i> Summons – Complainant' +
+    '</button>' +
+    '<button onclick="openSummonsModal(\'RESPONDENT\')" class="w-full flex items-center gap-2.5 px-4 py-2.5 bg-orange-50 border border-orange-100 rounded-xl text-xs font-semibold text-orange-700 hover:bg-orange-100 transition text-left">' +
+    '<i class="fa-solid fa-print w-4 text-orange-500"></i> Summons – Respondent' +
+    '</button>' +
+    '</div>' +
+    '</div>'
+  );
+}
+
+// ─── Status Timeline ─────────────────────────────────────────────────────────
+function buildStatusTimeline(data) {
+  var history = (data.statusHistory || data.history || []).slice().reverse();
+  if (!history.length) return '<div class="text-xs text-gray-400">No status history yet.</div>';
+  return '<div class="space-y-0">' + history.map(function(entry, i) {
+    var s = entry.status || entry.newStatus || '';
+    var dot = STATUS_DOT[s] || 'bg-gray-400';
+    var isFirst = (i === 0);
+    return (
+      '<div class="flex gap-4 '+(i > 0 ? 'opacity-70' : '')+'">' +
+      '<div class="flex flex-col items-center">' +
+      '<div class="timeline-dot '+dot+(isFirst?' ring-2 ring-offset-2 ring-current':'')+' mt-1"></div>' +
+      (i < history.length - 1 ? '<div class="w-0.5 flex-1 bg-gray-100 mt-1 mb-1 ml-px" style="min-height:24px"></div>' : '') +
+      '</div>' +
+      '<div class="pb-5 flex-1 min-w-0">' +
+      '<div class="flex flex-wrap items-center gap-2 mb-1">' +
+      getStatusBadgeHtml(s) +
+      (entry.staffName ? '<span class="text-xs text-gray-500">by '+escHtml(entry.staffName)+'</span>' : '') +
+      '<span class="text-xs text-gray-400 ml-auto">'+escHtml(formatDateTime(entry.timestamp||entry.createdAt))+'</span>' +
+      '</div>' +
+      (entry.remarks ? '<div class="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 mt-1.5 whitespace-pre-wrap">'+escHtml(entry.remarks)+'</div>' : '') +
+      '</div>' +
+      '</div>'
+    );
+  }).join('') + '</div>';
+}
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(function(p) {
+    p.classList.toggle('active', p.id === 'tab-'+name);
+  });
+}
+
+// ─── Edit mode ────────────────────────────────────────────────────────────────
+function enableEditMode() {
+  document.getElementById('overviewDisplay').classList.add('hidden');
+  document.getElementById('overviewEditForm').classList.remove('hidden');
+}
+function cancelEdit() {
+  document.getElementById('overviewEditForm').classList.add('hidden');
+  document.getElementById('overviewDisplay').classList.remove('hidden');
+}
+async function saveEdit() {
+  var date = (document.getElementById('editIncidentDate')||{}).value||'';
+  var time = (document.getElementById('editIncidentTime')||{}).value||'';
+  var location = ((document.getElementById('editIncidentLocation')||{}).value||'').trim();
+  var nature = ((document.getElementById('editNature')||{}).value||'').trim();
+  var bookPage = ((document.getElementById('editBookPage')||{}).value||'').trim();
+  var narrative = ((document.getElementById('editNarrative')||{}).value||'').trim();
+  if (!date || !location || !nature || !narrative) { toastr.warning('Please fill in all required fields.'); return; }
+  var btn = document.getElementById('saveEditBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    await patch('/admin/blotter/'+caseId, {
+      incidentDate: date, incidentTime: time,
+      incidentLocation: location, nature: nature,
+      bookPage: bookPage, narrative: narrative
+    });
+    toastr.success('Incident details updated');
+    setTimeout(function() { loadCase(); }, 800);
+  } catch(e) {
+    toastr.error('Failed to save: '+(e&&e.message?e.message:'Error'));
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+  }
+}
+
+// ─── Hearing Modal ────────────────────────────────────────────────────────────
+function openHearingModal() {
+  document.getElementById('hearingModalTitle').textContent = 'Add Hearing';
+  document.getElementById('editHearingId').value = '';
+  document.getElementById('hearingDate').value = '';
+  document.getElementById('hearingTime').value = '';
+  document.getElementById('hearingVenue').value = '';
+  document.getElementById('hearingNotes').value = '';
+  document.getElementById('attendanceBody').innerHTML = '';
+  document.getElementById('hearingModal').classList.remove('hidden');
+}
+
+function openEditHearingModal(hearingId) {
+  var hearings = (window.caseData && window.caseData.hearings) || [];
+  var h = hearings.find(function(x){ return (x.id||x._id) == hearingId; });
+  if (!h) { toastr.error('Hearing not found'); return; }
+  document.getElementById('hearingModalTitle').textContent = 'Edit Hearing';
+  document.getElementById('editHearingId').value = hearingId;
+  document.getElementById('hearingDate').value = (h.hearingDate||h.date||'').substring(0,10);
+  document.getElementById('hearingTime').value = h.hearingTime||h.time||'';
+  document.getElementById('hearingVenue').value = h.venue||'';
+  document.getElementById('hearingNotes').value = h.notes||h.agenda||'';
+  var tbody = document.getElementById('attendanceBody');
+  tbody.innerHTML = '';
+  (h.attendance||[]).forEach(function(a) {
+    addAttendeeRowWithData(a.partyType||a.role||'', a.name||'', !!(a.attended||a.present));
+  });
+  document.getElementById('hearingModal').classList.remove('hidden');
+}
+
+function closeHearingModal() {
+  document.getElementById('hearingModal').classList.add('hidden');
+}
+
+function addAttendeeRow() {
+  addAttendeeRowWithData('', '', false);
+}
+
+function addAttendeeRowWithData(partyType, name, attended) {
+  var tbody = document.getElementById('attendanceBody');
+  var tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td><select class="f-input py-1 text-xs att-party-type"><option value="COMPLAINANT"'+(partyType==='COMPLAINANT'?' selected':'')+'>Complainant</option><option value="RESPONDENT"'+(partyType==='RESPONDENT'?' selected':'')+'>Respondent</option><option value="WITNESS"'+(partyType==='WITNESS'?' selected':'')+'>Witness</option><option value="OTHER"'+(partyType==='OTHER'?' selected':'')+'>Other</option></select></td>' +
+    '<td><input type="text" class="f-input py-1 text-xs att-name" value="'+escHtml(name)+'" placeholder="Full name"></td>' +
+    '<td class="text-center"><input type="checkbox" class="w-4 h-4 accent-[#1e3a5f] att-attended"'+(attended?' checked':')+'></td>' +
+    '<td><button type="button" onclick="removeAttendeeRow(this)" class="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 mx-auto"><i class="fa-solid fa-xmark text-xs"></i></button></td>';
+  tbody.appendChild(tr);
+}
+
+function removeAttendeeRow(btn) {
+  var tr = btn.closest('tr');
+  if (tr) tr.remove();
+}
+
+async function submitAddHearing() {
+  var date = (document.getElementById('hearingDate')||{}).value||'';
+  var time = (document.getElementById('hearingTime')||{}).value||'';
+  var venue = ((document.getElementById('hearingVenue')||{}).value||'').trim();
+  var notes = ((document.getElementById('hearingNotes')||{}).value||'').trim();
+  if (!date || !time || !venue) { toastr.warning('Date, time and venue are required.'); return; }
+
+  var attendance = [];
+  document.querySelectorAll('#attendanceBody tr').forEach(function(tr) {
+    var pt = (tr.querySelector('.att-party-type')||{}).value||'';
+    var nm = ((tr.querySelector('.att-name')||{}).value||'').trim();
+    var at = !!(tr.querySelector('.att-attended')||{}).checked;
+    if (nm) attendance.push({ partyType: pt, name: nm, attended: at });
+  });
+
+  var editId = (document.getElementById('editHearingId')||{}).value||'';
+  var btn = document.getElementById('submitHearingBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  try {
+    if (editId) {
+      await patch('/admin/blotter/'+caseId+'/hearings/'+editId, { hearingDate:date, hearingTime:time, venue:venue, notes:notes, attendance:attendance });
+      toastr.success('Hearing updated');
+    } else {
+      await post('/admin/blotter/'+caseId+'/hearings', { hearingDate:date, hearingTime:time, venue:venue, notes:notes, attendance:attendance });
+      toastr.success('Hearing added');
+    }
+    closeHearingModal();
+    var data = await get('/admin/blotter/'+caseId);
+    window.caseData = data;
+    renderHearings(data);
+    populateSummonsSelect(data.hearings||[]);
+  } catch(e) {
+    toastr.error('Failed: '+(e&&e.message?e.message:'Error'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Hearing'; }
+  }
+}
+
+// ─── Delete hearing ───────────────────────────────────────────────────────────
+function openDeleteModal(hearingId) {
+  _pendingDeleteHearingId = hearingId;
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+function closeDeleteModal() {
+  _pendingDeleteHearingId = null;
+  document.getElementById('deleteModal').classList.add('hidden');
+}
+async function confirmDeleteHearing() {
+  if (!_pendingDeleteHearingId) return;
+  var btn = document.getElementById('confirmDeleteBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+  try {
+    await del('/admin/blotter/'+caseId+'/hearings/'+_pendingDeleteHearingId);
+    toastr.success('Hearing deleted');
+    closeDeleteModal();
+    var data = await get('/admin/blotter/'+caseId);
+    window.caseData = data;
+    renderHearings(data);
+    populateSummonsSelect(data.hearings||[]);
+  } catch(e) {
+    toastr.error('Failed to delete: '+(e&&e.message?e.message:'Error'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Delete'; }
+  }
+}
+
+// ─── Summons Modal ────────────────────────────────────────────────────────────
+function populateSummonsSelect(hearings) {
+  var sel = document.getElementById('summonsHearingSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Enter manually —</option>';
+  (hearings||[]).forEach(function(h) {
+    var opt = document.createElement('option');
+    opt.value = JSON.stringify({ date:(h.hearingDate||h.date||'').substring(0,10), time:h.hearingTime||h.time||'' });
+    opt.textContent = formatDate(h.hearingDate||h.date) + (h.hearingTime||h.time ? ' '+formatTime(h.hearingTime||h.time) : '');
+    sel.appendChild(opt);
+  });
+}
+
+function openSummonsModal(partyType) {
+  _summonPartyType = partyType;
+  document.getElementById('summonsModalTitle').textContent = 'Print Summons – '+cap(partyType.toLowerCase());
+  document.getElementById('summonsDate').value = '';
+  document.getElementById('summonsTime').value = '';
+  document.getElementById('summonsHearingSelect').value = '';
+  document.getElementById('summonsModal').classList.remove('hidden');
+}
+
+function openSummonsFromHearing(hearingId) {
+  var hearings = (window.caseData && window.caseData.hearings) || [];
+  var h = hearings.find(function(x){ return (x.id||x._id) == hearingId; });
+  _summonPartyType = '';
+  document.getElementById('summonsModalTitle').textContent = 'Print Summons';
+  if (h) {
+    document.getElementById('summonsDate').value = (h.hearingDate||h.date||'').substring(0,10);
+    document.getElementById('summonsTime').value = h.hearingTime||h.time||'';
+  } else {
+    document.getElementById('summonsDate').value = '';
+    document.getElementById('summonsTime').value = '';
+  }
+  document.getElementById('summonsHearingSelect').value = '';
+  document.getElementById('summonsModal').classList.remove('hidden');
+}
+
+function closeSummonsModal() {
+  document.getElementById('summonsModal').classList.add('hidden');
+}
+
+function onSummonsHearingChange() {
+  var val = document.getElementById('summonsHearingSelect').value;
+  if (!val) return;
+  try {
+    var obj = JSON.parse(val);
+    document.getElementById('summonsDate').value = obj.date || '';
+    document.getElementById('summonsTime').value = obj.time || '';
+  } catch(e) {}
+}
+
+async function printSummons() {
+  var hDate = (document.getElementById('summonsDate')||{}).value||'';
+  var hTime = (document.getElementById('summonsTime')||{}).value||'';
+  if (!hDate || !hTime) { toastr.warning('Please select or enter a hearing date and time.'); return; }
+  var party = _summonPartyType || 'COMPLAINANT';
+  closeSummonsModal();
+  await previewPDF('/api/pdf/blotter/summons/'+caseId+'/'+party+'?hearingDate='+encodeURIComponent(hDate)+'&hearingTime='+encodeURIComponent(hTime));
+}
+
+// Close modals on overlay click
+['hearingModal','summonsModal','deleteModal'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('click', function(e) { if (e.target === el) el.classList.add('hidden'); });
+});
+</script>
+</body>
+</html>

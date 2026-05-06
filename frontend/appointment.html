@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule an Appointment — Barangay Sirangan Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* ── Navigation ── */
+    .nav-wrap { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid #e8edf3; transition: box-shadow 0.3s ease; }
+    .nav-wrap.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.07); }
+    .btn-amber { background: linear-gradient(135deg,#f59e0b,#d97706); color: #1a1a1a; transition: all 0.25s ease; }
+    .btn-amber:hover { background: linear-gradient(135deg,#fbbf24,#f59e0b); box-shadow: 0 8px 24px rgba(245,158,11,0.4); transform: translateY(-2px); }
+    .nav-link { color: #475569; font-size: 0.875rem; font-weight: 500; padding: 0.45rem 0.85rem; border-radius: 8px; transition: color 0.18s ease, background 0.18s ease; }
+    .nav-link:hover { color: #0f172a; background: #f1f5f9; }
+    .nav-link.active { color: #1d4ed8; background: #eff6ff; font-weight: 600; }
+    .nav-cta { background: #1d4ed8; color: #fff; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1.1rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
+    .nav-cta:hover { background: #1e40af; box-shadow: 0 4px 14px rgba(29,78,216,0.32); transform: translateY(-1px); }
+    .mobile-nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 10px; font-weight: 500; font-size: 0.9rem; color: #334155; transition: background 0.15s ease, color 0.15s ease; }
+    .mobile-nav-link:hover { background: #f1f5f9; color: #0f172a; }
+    .mobile-nav-link.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+
+    /* Calendar */
+    .cal-day { cursor: pointer; transition: all 0.15s ease; border: 2px solid transparent; user-select: none; }
+    .cal-day:hover:not(.cal-disabled):not(.cal-selected) { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+    .cal-selected { background: #1e3a5f !important; color: #fff !important; border-color: #1e3a5f !important; }
+    .cal-disabled { opacity: 0.28; cursor: not-allowed; pointer-events: none; }
+    .cal-today:not(.cal-selected):not(.cal-disabled) { border-color: #f59e0b !important; color: #d97706; font-weight: 700; }
+
+    /* Time slots */
+    .ts-slot { cursor: pointer; transition: all 0.15s ease; border: 2px solid #e2e8f0; }
+    .ts-slot:hover:not(.ts-selected) { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+    .ts-selected { background: #1e3a5f !important; color: #fff !important; border-color: #1e3a5f !important; }
+
+    /* Step indicator */
+    .step-active  { background: #1e3a5f; color: #fff; }
+    .step-done    { background: #22c55e; color: #fff; }
+    .step-pending { background: #e2e8f0; color: #94a3b8; }
+
+    /* Animations */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    .fade-in { animation: fadeUp 0.35s ease forwards; }
+    @keyframes popIn { 0%{transform:scale(.7);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+    .pop-in { animation: popIn 0.5s ease forwards; }
+
+    /* Field error */
+    .field-error { display: none; }
+    .field-error.show { display: flex; }
+    .f-invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 2px rgba(239,68,68,.1); }
+
+    /* Char counter colors */
+    .char-warn { color: #f59e0b; }
+    .char-over { color: #ef4444; }
+  </style>
+</head>
+<body class="bg-slate-50 antialiased">
+
+<!-- Navigation -->
+<nav class="nav-wrap fixed w-full top-0 z-50" id="mainNav">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="/index.html" class="flex items-center gap-2.5 group flex-shrink-0">
+      <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition">
+      <div>
+        <div class="font-extrabold text-slate-900 text-sm leading-tight tracking-tight">Barangay Sirangan</div>
+        <div class="text-xs text-slate-400 leading-tight">Sorsogon City</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-0.5">
+      <a href="/index.html"         class="nav-link">Home</a>
+      <a href="/about.html"         class="nav-link">About</a>
+      <a href="/services.html"      class="nav-link">Services</a>
+      <a href="/announcements.html" class="nav-link">Announcements</a>
+      <a href="/appointment.html"   class="nav-link active">Appointments</a>
+      <a href="/contact.html"       class="nav-link">Contact</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2">
+      <a href="/track.html" class="nav-cta"><i class="fa-solid fa-magnifying-glass text-xs"></i>Track Document</a>
+    </div>
+    <button id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false" class="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition text-slate-600">
+      <i class="fa-solid fa-bars text-lg" id="menuIcon"></i>
+    </button>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-5 shadow-lg">
+    <div class="space-y-0.5">
+      <a href="/index.html"         class="mobile-nav-link"><i class="fa-solid fa-house w-4 text-slate-400"></i>Home</a>
+      <a href="/about.html"         class="mobile-nav-link"><i class="fa-solid fa-circle-info w-4 text-slate-400"></i>About</a>
+      <a href="/services.html"      class="mobile-nav-link"><i class="fa-solid fa-briefcase w-4 text-slate-400"></i>Services</a>
+      <a href="/announcements.html" class="mobile-nav-link"><i class="fa-solid fa-bullhorn w-4 text-slate-400"></i>Announcements</a>
+      <a href="/appointment.html"   class="mobile-nav-link active"><i class="fa-solid fa-calendar-check w-4 text-blue-600"></i>Appointments</a>
+      <a href="/contact.html"       class="mobile-nav-link"><i class="fa-solid fa-phone w-4 text-slate-400"></i>Contact</a>
+    </div>
+    <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+      <a href="/request.html" class="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-clipboard-list"></i>Request</a>
+      <a href="/track.html" class="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-magnifying-glass"></i>Track</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<section class="pt-16" style="background: linear-gradient(160deg, #0c1f3f 0%, #1a3a6e 45%, #1d4ed8 100%); position:relative; overflow:hidden;">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:56px 56px;pointer-events:none;mask-image:radial-gradient(ellipse at center,black 40%,transparent 80%);"></div>
+  <div class="relative max-w-3xl mx-auto px-4 pt-14 pb-12 text-center text-white">
+    <div class="inline-flex items-center gap-2 bg-amber-400/15 border border-amber-400/30 text-amber-300 text-[0.7rem] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-5">
+      <i class="fa-solid fa-calendar-check text-[10px]"></i>Schedule a Visit
+    </div>
+    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Schedule an Appointment</h1>
+    <p class="text-blue-200/80 text-base max-w-md mx-auto leading-relaxed">Book a visit to the Barangay Hall. Available Monday – Friday, 8:00 AM – 5:00 PM.</p>
+  </div>
+  
+</section>
+    <svg viewBox="0 0 1440 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full block">
+      <path d="M0 40L480 10C720 0 960 0 1440 10V40H0Z" fill="#f8fafc"/>
+    </svg>
+  </div>
+</section>
+
+<!-- Booking Section -->
+<section class="py-12 bg-slate-50 min-h-screen" data-reveal>
+  <div class="max-w-2xl mx-auto px-4">
+
+    <!-- Step Indicator -->
+    <div id="stepIndicator" class="flex items-center justify-center gap-3 mb-10">
+      <div class="flex items-center gap-2">
+        <div id="sc1" class="step-active w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all">1</div>
+        <span id="sl1" class="text-sm font-semibold text-slate-700 hidden sm:block">Select Date</span>
+      </div>
+      <div class="h-px w-8 bg-slate-300"></div>
+      <div class="flex items-center gap-2">
+        <div id="sc2" class="step-pending w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all">2</div>
+        <span id="sl2" class="text-sm text-slate-400 hidden sm:block">Select Time</span>
+      </div>
+      <div class="h-px w-8 bg-slate-300"></div>
+      <div class="flex items-center gap-2">
+        <div id="sc3" class="step-pending w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all">3</div>
+        <span id="sl3" class="text-sm text-slate-400 hidden sm:block">Your Details</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: Calendar ── -->
+    <div id="step1" class="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 fade-in">
+      <h2 class="text-xl font-extrabold text-slate-800 mb-1">Choose a Date</h2>
+      <p class="text-slate-400 text-sm mb-6">Weekdays only · At least 1 business day in advance</p>
+
+      <!-- Month Navigator -->
+      <div class="flex items-center justify-between mb-4">
+        <button id="prevMonth" class="w-9 h-9 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center transition" aria-label="Previous month">
+          <i class="fa-solid fa-chevron-left text-slate-500 text-xs"></i>
+        </button>
+        <span id="calMonthLabel" class="text-base font-bold text-slate-800"></span>
+        <button id="nextMonth" class="w-9 h-9 rounded-xl border border-slate-200 hover:bg-slate-50 flex items-center justify-center transition" aria-label="Next month">
+          <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Day headers -->
+      <div class="grid grid-cols-7 mb-1">
+        <div class="text-center text-xs font-bold text-slate-400 py-2">Sun</div>
+        <div class="text-center text-xs font-bold text-blue-500 py-2">Mon</div>
+        <div class="text-center text-xs font-bold text-blue-500 py-2">Tue</div>
+        <div class="text-center text-xs font-bold text-blue-500 py-2">Wed</div>
+        <div class="text-center text-xs font-bold text-blue-500 py-2">Thu</div>
+        <div class="text-center text-xs font-bold text-blue-500 py-2">Fri</div>
+        <div class="text-center text-xs font-bold text-slate-400 py-2">Sat</div>
+      </div>
+
+      <!-- Calendar grid -->
+      <div id="calGrid" class="grid grid-cols-7 gap-1.5"></div>
+
+      <!-- Legend -->
+      <div class="mt-5 flex items-center gap-5 text-xs text-slate-400 flex-wrap">
+        <span class="inline-flex items-center gap-1.5"><span class="w-4 h-4 rounded-lg border-2 border-amber-400 inline-block"></span>Today</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-4 h-4 rounded-lg bg-[#1e3a5f] inline-block"></span>Selected</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-4 h-4 rounded-lg bg-slate-200 opacity-40 inline-block"></span>Unavailable</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Time Slots ── -->
+    <div id="step2" class="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 fade-in hidden">
+      <div class="flex items-start justify-between mb-1 gap-3">
+        <h2 class="text-xl font-extrabold text-slate-800">Choose a Time</h2>
+        <span id="selectedDateLabel" class="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl whitespace-nowrap flex-shrink-0"></span>
+      </div>
+      <p class="text-slate-400 text-sm mb-7">All times are in Philippine Standard Time (PST/UTC+8).</p>
+
+      <div class="mb-6">
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3"><i class="fa-solid fa-sun text-amber-400 mr-1.5"></i>Morning</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="morningSlots"></div>
+      </div>
+      <div class="mb-8">
+        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3"><i class="fa-solid fa-cloud-sun text-orange-400 mr-1.5"></i>Afternoon</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="afternoonSlots"></div>
+      </div>
+
+      <button onclick="goBack(1)" class="text-sm text-slate-400 hover:text-slate-700 inline-flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-chevron-left text-xs"></i>Back to Calendar
+      </button>
+    </div>
+
+    <!-- ── STEP 3: Booking Form ── -->
+    <div id="step3" class="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 fade-in hidden">
+      <div class="flex flex-wrap items-start justify-between gap-2 mb-6">
+        <h2 class="text-xl font-extrabold text-slate-800">Your Details</h2>
+        <div class="flex gap-2 flex-wrap">
+          <span id="summaryDate" class="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl"></span>
+          <span id="summaryTime" class="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl"></span>
+        </div>
+      </div>
+
+      <form id="bookingForm" novalidate class="space-y-5">
+        <!-- Full Name -->
+        <div>
+          <label for="fName" class="block text-sm font-semibold text-slate-700 mb-1.5">Full Name <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+            <input type="text" id="fName" maxlength="200" autocomplete="name" placeholder="e.g. Juan dela Cruz"
+              class="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-[#1e3a5f] transition">
+          </div>
+          <p class="field-error mt-1 items-center gap-1 text-xs text-red-500" id="errName"><i class="fa-solid fa-circle-exclamation"></i><span>Full name is required.</span></p>
+        </div>
+
+        <!-- Contact Number -->
+        <div>
+          <label for="fContact" class="block text-sm font-semibold text-slate-700 mb-1.5">Contact Number <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <i class="fa-solid fa-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+            <input type="tel" id="fContact" maxlength="20" autocomplete="tel" placeholder="e.g. 09XX-XXX-XXXX"
+              class="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-[#1e3a5f] transition">
+          </div>
+          <p class="field-error mt-1 items-center gap-1 text-xs text-red-500" id="errContact"><i class="fa-solid fa-circle-exclamation"></i><span>Contact number is required.</span></p>
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label for="fEmail" class="block text-sm font-semibold text-slate-700 mb-1.5">Email Address <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+            <input type="email" id="fEmail" maxlength="200" autocomplete="email" placeholder="e.g. juan@email.com"
+              class="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-[#1e3a5f] transition">
+          </div>
+          <p class="field-error mt-1 items-center gap-1 text-xs text-red-500" id="errEmail"><i class="fa-solid fa-circle-exclamation"></i><span>A valid email address is required.</span></p>
+        </div>
+
+        <!-- Purpose -->
+        <div>
+          <label for="fPurpose" class="block text-sm font-semibold text-slate-700 mb-1.5">Purpose of Visit <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <i class="fa-solid fa-comment-dots absolute left-3.5 top-3.5 text-slate-400 text-xs pointer-events-none"></i>
+            <textarea id="fPurpose" maxlength="300" rows="3" placeholder="Describe the reason for your visit (max 300 characters)..."
+              class="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-[#1e3a5f] transition resize-none"></textarea>
+          </div>
+          <div class="flex justify-between items-start mt-1">
+            <p class="field-error items-center gap-1 text-xs text-red-500" id="errPurpose"><i class="fa-solid fa-circle-exclamation"></i><span>Purpose of visit is required.</span></p>
+            <span class="text-xs text-slate-400 ml-auto" id="charCount">0 / 300</span>
+          </div>
+        </div>
+
+        <!-- Notice -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 flex gap-2.5">
+          <i class="fa-solid fa-circle-info text-amber-500 mt-0.5 flex-shrink-0"></i>
+          <span>Please bring a valid Government ID. Arrive at least 5 minutes before your scheduled time. The barangay staff will confirm your appointment via email.</span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-3 pt-1">
+          <button type="button" onclick="goBack(2)" class="flex-none border border-slate-200 text-slate-600 px-5 py-3 rounded-xl text-sm font-semibold hover:bg-slate-50 transition">
+            <i class="fa-solid fa-chevron-left mr-1 text-xs"></i>Back
+          </button>
+          <button type="submit" id="submitBtn" class="flex-1 btn-amber py-3 rounded-xl font-bold text-sm shadow-lg inline-flex items-center justify-center gap-2">
+            <i class="fa-solid fa-calendar-check"></i>Confirm Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div id="stepSuccess" class="bg-white rounded-3xl border border-slate-100 shadow-sm p-10 text-center fade-in hidden">
+      <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 pop-in">
+        <i class="fa-solid fa-circle-check text-emerald-500 text-4xl"></i>
+      </div>
+      <h2 class="text-2xl font-extrabold text-slate-800 mb-2">Appointment Submitted!</h2>
+      <p class="text-slate-500 mb-7 text-sm max-w-xs mx-auto">Your request has been submitted. Barangay staff will review and confirm your schedule.</p>
+
+      <div class="bg-slate-50 rounded-2xl p-5 mb-6 text-left max-w-sm mx-auto space-y-3 text-sm border border-slate-100">
+        <div class="flex justify-between gap-2"><span class="text-slate-500 flex-shrink-0">Name:</span><span class="font-semibold text-slate-800 text-right" id="sucName"></span></div>
+        <div class="flex justify-between gap-2"><span class="text-slate-500 flex-shrink-0">Date:</span><span class="font-semibold text-slate-800 text-right" id="sucDate"></span></div>
+        <div class="flex justify-between gap-2"><span class="text-slate-500 flex-shrink-0">Time:</span><span class="font-semibold text-slate-800" id="sucTime"></span></div>
+        <div class="border-t border-slate-200 pt-3 flex justify-between gap-2"><span class="text-slate-500 flex-shrink-0">Reference ID:</span><span class="font-mono font-bold text-[#1e3a5f] text-xs text-right break-all" id="sucRef"></span></div>
+      </div>
+      <p class="text-xs text-slate-400 mb-7">Keep your reference ID for follow-up inquiries at the Barangay Hall.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/index.html" class="border border-slate-200 text-slate-600 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-slate-50 transition inline-flex items-center justify-center gap-2">
+          <i class="fa-solid fa-house"></i>Return Home
+        </a>
+        <button onclick="location.reload()" class="btn-amber px-6 py-3 rounded-xl text-sm font-bold shadow inline-flex items-center justify-center gap-2">
+          <i class="fa-solid fa-plus"></i>Book Another
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-950 text-white pt-14 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-10">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10">
+          <div>
+            <div class="font-bold text-base text-white">Barangay Sirangan</div>
+            <div class="text-slate-400 text-sm">Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+        <p class="text-slate-400 text-sm leading-relaxed">Serving our community with dedication, transparency, and efficiency through modern digital governance.</p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
+        <nav class="space-y-2 text-sm">
+          <a href="/request.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-clipboard-list w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Request Document</a>
+          <a href="/track.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-magnifying-glass w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Track Request</a>
+          <a href="/announcements.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-bullhorn w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Announcements</a>
+          <a href="/about.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-circle-info w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>About Us</a>
+          <a href="/contact.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-phone w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Contact</a>
+        </nav>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Office Info</h4>
+        <div class="text-sm text-slate-400 space-y-3">
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Office Hours</div>
+            <div>Monday – Friday</div>
+            <div>8:00 AM – 5:00 PM</div>
+            <div class="text-xs text-slate-600 mt-1">Closed weekends &amp; holidays</div>
+          </div>
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Address</div>
+            <div>Brgy. Sirangan Hall</div>
+            <div>Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-800/60 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+      <p>© 2025 Barangay Sirangan, Sorsogon City, Sorsogon. All rights reserved.</p>
+      <a href="/admin/login.html" class="hover:text-slate-300 transition">Admin Login</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  /* ── Nav scroll effect ── */
+  (function () {
+    var nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+  })();
+  /* ── Mobile menu ── */
+  document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+    var menu = document.getElementById('mobileMenu');
+    var icon = document.getElementById('menuIcon');
+    var open = !menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', open);
+    icon.className = open ? 'fa-solid fa-bars text-lg' : 'fa-solid fa-xmark text-lg';
+    this.setAttribute('aria-expanded', String(!open));
+  });
+
+  // ── State ──
+  var selectedDate = null;  // 'YYYY-MM-DD'
+  var selectedTime = null;  // display label e.g. '9:00 AM'
+  var calYear, calMonth;
+
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  var TIME_SLOTS = [
+    { label: '8:00 AM',  period: 'morning'   },
+    { label: '9:00 AM',  period: 'morning'   },
+    { label: '10:00 AM', period: 'morning'   },
+    { label: '11:00 AM', period: 'morning'   },
+    { label: '1:00 PM',  period: 'afternoon' },
+    { label: '2:00 PM',  period: 'afternoon' },
+    { label: '3:00 PM',  period: 'afternoon' },
+    { label: '4:00 PM',  period: 'afternoon' },
+  ];
+
+  // ── Init calendar ──
+  (function() {
+    var now = new Date();
+    calYear  = now.getFullYear();
+    calMonth = now.getMonth();
+    renderCalendar();
+  })();
+
+  document.getElementById('prevMonth').addEventListener('click', function() {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  document.getElementById('nextMonth').addEventListener('click', function() {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+
+  function renderCalendar() {
+    document.getElementById('calMonthLabel').textContent = MONTHS[calMonth] + ' ' + calYear;
+
+    var firstDay   = new Date(calYear, calMonth, 1).getDay();
+    var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var minDate = new Date(today);
+    minDate.setDate(minDate.getDate() + 1); // at least 1 day ahead
+
+    var html = '';
+    for (var i = 0; i < firstDay; i++) html += '<div></div>';
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      var date = new Date(calYear, calMonth, d);
+      date.setHours(0, 0, 0, 0);
+      var dow = date.getDay();
+      var isWeekend = (dow === 0 || dow === 6);
+      var isPast    = date < minDate;
+      var disabled  = isWeekend || isPast;
+      var dateStr   = calYear + '-' + pad2(calMonth + 1) + '-' + pad2(d);
+      var isToday   = date.getTime() === today.getTime();
+      var isSelected = dateStr === selectedDate;
+
+      var cls = 'cal-day w-full aspect-square flex items-center justify-center rounded-xl text-sm font-medium';
+      if (disabled) {
+        cls += ' cal-disabled bg-slate-50 text-slate-300';
+      } else {
+        cls += ' bg-white border border-slate-100 text-slate-700';
+        if (isToday)    cls += ' cal-today';
+        if (isSelected) cls += ' cal-selected';
+      }
+
+      var onclick = disabled ? '' : (' onclick="selectDate(\'' + dateStr + '\')"');
+      html += '<div class="' + cls + '"' + onclick + '>' + d + '</div>';
+    }
+    document.getElementById('calGrid').innerHTML = html;
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function selectDate(dateStr) {
+    selectedDate = dateStr;
+    selectedTime = null;
+    renderCalendar();
+
+    var parts = dateStr.split('-');
+    var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    var formatted = DAYS[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    document.getElementById('selectedDateLabel').textContent = formatted;
+    document.getElementById('summaryDate').textContent = formatted;
+    document.getElementById('sucDate').textContent = formatted;
+
+    renderTimeSlots();
+    showStep(2);
+    updateStepUI(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderTimeSlots() {
+    var morning = '', afternoon = '';
+    TIME_SLOTS.forEach(function(slot) {
+      var sel = slot.label === selectedTime;
+      var cls = 'ts-slot py-3 px-2 rounded-xl text-sm font-semibold text-center bg-slate-50 text-slate-700';
+      if (sel) cls += ' ts-selected';
+      var btn = '<button type="button" class="' + cls + '" onclick="selectTime(\'' + slot.label + '\')">' + slot.label + '</button>';
+      if (slot.period === 'morning') morning += btn; else afternoon += btn;
+    });
+    document.getElementById('morningSlots').innerHTML = morning;
+    document.getElementById('afternoonSlots').innerHTML = afternoon;
+  }
+
+  function selectTime(label) {
+    selectedTime = label;
+    document.getElementById('summaryTime').textContent = label;
+    document.getElementById('sucTime').textContent = label;
+    renderTimeSlots();
+    setTimeout(function() {
+      showStep(3);
+      updateStepUI(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 180);
+  }
+
+  function goBack(toStep) {
+    showStep(toStep);
+    updateStepUI(toStep);
+    if (toStep === 1) { selectedDate = null; renderCalendar(); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showStep(n) {
+    var steps = ['step1', 'step2', 'step3', 'stepSuccess'];
+    steps.forEach(function(id, idx) {
+      var el = document.getElementById(id);
+      var isActive = (idx + 1 === n) || (n === 99 && id === 'stepSuccess');
+      el.classList.toggle('hidden', !isActive);
+    });
+  }
+
+  function updateStepUI(active) {
+    for (var i = 1; i <= 3; i++) {
+      var sc = document.getElementById('sc' + i);
+      var sl = document.getElementById('sl' + i);
+      sc.className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ';
+      if (i < active) {
+        sc.className += 'step-done';
+        sl.className = 'text-sm font-semibold text-emerald-600 hidden sm:block';
+      } else if (i === active) {
+        sc.className += 'step-active';
+        sl.className = 'text-sm font-semibold text-slate-800 hidden sm:block';
+      } else {
+        sc.className += 'step-pending';
+        sl.className = 'text-sm text-slate-400 hidden sm:block';
+      }
+    }
+  }
+
+  // ── Character counter ──
+  document.getElementById('fPurpose').addEventListener('input', function() {
+    var len = this.value.length;
+    var el  = document.getElementById('charCount');
+    el.textContent = len + ' / 300';
+    el.className   = len >= 280 ? (len >= 300 ? 'text-xs char-over' : 'text-xs char-warn') : 'text-xs text-slate-400';
+  });
+
+  // ── Form submission ──
+  document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    var name    = document.getElementById('fName').value.trim();
+    var contact = document.getElementById('fContact').value.trim();
+    var email   = document.getElementById('fEmail').value.trim();
+    var purpose = document.getElementById('fPurpose').value.trim();
+    var valid   = true;
+
+    function setErr(id, bad, msg) {
+      var el = document.getElementById(id);
+      if (bad) {
+        el.classList.add('show');
+        if (msg) el.querySelector('span').textContent = msg;
+        valid = false;
+      } else {
+        el.classList.remove('show');
+      }
+    }
+
+    setErr('errName',    !name,    'Full name is required.');
+    setErr('errContact', !contact, 'Contact number is required.');
+    var emailOk = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    setErr('errEmail',   !emailOk, !email ? 'Email address is required.' : 'Enter a valid email address.');
+    setErr('errPurpose', !purpose, 'Purpose of visit is required.');
+
+    if (!valid) return;
+
+    var btn = document.getElementById('submitBtn');
+    Utils.showLoading(btn, 'Submitting...');
+    try {
+      var result = await post('/appointments/general', {
+        name: name,
+        contact: contact,
+        email: email,
+        purpose: purpose,
+        date: selectedDate,
+        time: selectedTime,
+      });
+      document.getElementById('sucName').textContent = name;
+      document.getElementById('sucRef').textContent  = result.id || '—';
+      // Show success panel
+      document.getElementById('step3').classList.add('hidden');
+      document.getElementById('stepIndicator').classList.add('hidden');
+      document.getElementById('stepSuccess').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      Utils.showToast((err && err.message) || 'Failed to submit. Please try again.', 'error');
+    } finally {
+      Utils.hideLoading(btn);
+    }
+  });
+</script>
+
+<button id="backToTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+<script src="/js/portal.js"></script>
+</body>
+</html>

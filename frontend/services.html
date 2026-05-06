@@ -1,0 +1,351 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services — Barangay Sirangan Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* ── Navigation ── */
+    .nav-wrap { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid #e8edf3; transition: box-shadow 0.3s ease; }
+    .nav-wrap.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.07); }
+    .btn-amber { background: linear-gradient(135deg,#f59e0b,#d97706); color: #1a1a1a; transition: all 0.25s ease; }
+    .btn-amber:hover { background: linear-gradient(135deg,#fbbf24,#f59e0b); box-shadow: 0 8px 24px rgba(245,158,11,0.4); transform: translateY(-2px); }
+    .nav-link { color: #475569; font-size: 0.875rem; font-weight: 500; padding: 0.45rem 0.85rem; border-radius: 8px; transition: color 0.18s ease, background 0.18s ease; }
+    .nav-link:hover { color: #0f172a; background: #f1f5f9; }
+    .nav-link.active { color: #1d4ed8; background: #eff6ff; font-weight: 600; }
+    .nav-cta { background: #1d4ed8; color: #fff; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1.1rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
+    .nav-cta:hover { background: #1e40af; box-shadow: 0 4px 14px rgba(29,78,216,0.32); transform: translateY(-1px); }
+    .mobile-nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 10px; font-weight: 500; font-size: 0.9rem; color: #334155; transition: background 0.15s ease, color 0.15s ease; }
+    .mobile-nav-link:hover { background: #f1f5f9; color: #0f172a; }
+    .mobile-nav-link.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+    /* ── Page Hero ── */
+    .page-hero { background: linear-gradient(160deg, #0c1f3f 0%, #1a3a6e 45%, #1d4ed8 100%); position: relative; overflow: hidden; }
+    .page-hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 56px 56px; pointer-events: none; mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%); }
+    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; }
+    /* ── Cards ── */
+    .svc-card { transition: transform 0.22s ease, box-shadow 0.22s ease; }
+    .svc-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.08); }
+  </style>
+</head>
+
+<body class="bg-slate-50 antialiased">
+
+<nav class="nav-wrap fixed w-full top-0 z-50" id="mainNav">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="/index.html" class="flex items-center gap-2.5 group flex-shrink-0">
+      <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition">
+      <div>
+        <div class="font-extrabold text-slate-900 text-sm leading-tight tracking-tight">Barangay Sirangan</div>
+        <div class="text-xs text-slate-400 leading-tight">Sorsogon City</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-0.5">
+      <a href="/index.html"         class="nav-link">Home</a>
+      <a href="/about.html"         class="nav-link">About</a>
+      <a href="/services.html"      class="nav-link active">Services</a>
+      <a href="/announcements.html" class="nav-link">Announcements</a>
+      <a href="/appointment.html"   class="nav-link">Appointments</a>
+      <a href="/contact.html"       class="nav-link">Contact</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2">
+      <a href="/track.html" class="nav-cta"><i class="fa-solid fa-magnifying-glass text-xs"></i>Track Document</a>
+    </div>
+    <button id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false" class="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition text-slate-600">
+      <i class="fa-solid fa-bars text-lg" id="menuIcon"></i>
+    </button>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-5 shadow-lg">
+    <div class="space-y-0.5">
+      <a href="/index.html"         class="mobile-nav-link"><i class="fa-solid fa-house w-4 text-slate-400"></i>Home</a>
+      <a href="/about.html"         class="mobile-nav-link"><i class="fa-solid fa-circle-info w-4 text-slate-400"></i>About</a>
+      <a href="/services.html"      class="mobile-nav-link active"><i class="fa-solid fa-briefcase w-4 text-blue-600"></i>Services</a>
+      <a href="/announcements.html" class="mobile-nav-link"><i class="fa-solid fa-bullhorn w-4 text-slate-400"></i>Announcements</a>
+      <a href="/appointment.html"   class="mobile-nav-link"><i class="fa-solid fa-calendar-check w-4 text-slate-400"></i>Appointments</a>
+      <a href="/contact.html"       class="mobile-nav-link"><i class="fa-solid fa-phone w-4 text-slate-400"></i>Contact</a>
+    </div>
+    <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+      <a href="/request.html" class="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-clipboard-list"></i>Request</a>
+      <a href="/track.html" class="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-magnifying-glass"></i>Track</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero pt-16 pb-14 text-white">
+  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-2 text-center">
+    <div class="mb-5"><span class="hero-badge"><i class="fa-solid fa-briefcase text-[10px]"></i>Available Services</span></div>
+    <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Our Services</h1>
+    <p class="text-blue-200/80 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+      Official barangay documents processed quickly and transparently for residents of Barangay Sirangan.
+    </p>
+  </div>
+</section>
+
+<section class="py-16" data-reveal>
+  <div class="max-w-5xl mx-auto px-4 space-y-8">
+
+    <!-- Barangay Clearance -->
+    <div class="svc-card bg-white rounded-3xl border border-blue-200 overflow-hidden">
+      <div class="flex flex-col md:flex-row">
+        <div class="bg-blue-50 p-8 flex items-center justify-center md:w-40 flex-shrink-0">
+          <div class="text-6xl text-blue-600"><i class="fa-solid fa-file-lines"></i></div>
+        </div>
+
+        <div class="p-6 flex-1">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-800 mb-2">Barangay Clearance</h2>
+              <p class="text-slate-600 text-sm">
+                Official clearance certifying you are a resident in good standing with no derogatory records in the barangay.
+                Required for employment, legal transactions, and government applications.
+              </p>
+
+              <div class="mt-4">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                  <i class="fa-solid fa-clock"></i> 1–2 Business Days
+                </span>
+              </div>
+            </div>
+
+            <a href="/request.html?type=BARANGAY_CLEARANCE"
+              class="shrink-0 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold border border-blue-600 text-blue-700 bg-blue-50 hover:bg-blue-100 transition whitespace-nowrap">
+              Request This <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificate of Residency -->
+    <div class="svc-card bg-white rounded-3xl border border-green-200 overflow-hidden">
+      <div class="flex flex-col md:flex-row">
+        <div class="bg-green-50 p-8 flex items-center justify-center md:w-40 flex-shrink-0">
+          <div class="text-6xl text-green-600"><i class="fa-solid fa-house"></i></div>
+        </div>
+
+        <div class="p-6 flex-1">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-800 mb-2">Certificate of Residency</h2>
+              <p class="text-slate-600 text-sm">
+                Certifies that you are a legitimate resident of Barangay Sirangan, Sorsogon City.
+                Required for school enrollment, scholarship applications, and other official purposes.
+              </p>
+
+              <div class="mt-4">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-800 text-xs font-bold">
+                  <i class="fa-solid fa-clock"></i> Same Day
+                </span>
+              </div>
+            </div>
+
+            <a href="/request.html?type=CERTIFICATE_OF_RESIDENCY"
+              class="shrink-0 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold border border-green-600 text-green-700 bg-green-50 hover:bg-green-100 transition whitespace-nowrap">
+              Request This <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certificate of Indigency -->
+    <div class="svc-card bg-white rounded-3xl border border-purple-200 overflow-hidden">
+      <div class="flex flex-col md:flex-row">
+        <div class="bg-purple-50 p-8 flex items-center justify-center md:w-40 flex-shrink-0">
+          <div class="text-6xl text-purple-600"><i class="fa-solid fa-handshake"></i></div>
+        </div>
+
+        <div class="p-6 flex-1">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-800 mb-2">Certificate of Indigency</h2>
+              <p class="text-slate-600 text-sm">
+                Certifies that you belong to an indigent or low-income family.
+                Required for medical assistance, scholarship grants, and other social welfare programs.
+              </p>
+
+              <div class="mt-4">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-800 text-xs font-bold">
+                  <i class="fa-solid fa-clock"></i> Same Day
+                </span>
+              </div>
+            </div>
+
+            <a href="/request.html?type=CERTIFICATE_OF_INDIGENCY"
+              class="shrink-0 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold border border-purple-600 text-purple-700 bg-purple-50 hover:bg-purple-100 transition whitespace-nowrap">
+              Request This <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business Permit Endorsement -->
+    <div class="svc-card bg-white rounded-3xl border border-yellow-200 overflow-hidden">
+      <div class="flex flex-col md:flex-row">
+        <div class="bg-yellow-50 p-8 flex items-center justify-center md:w-40 flex-shrink-0">
+          <div class="text-6xl text-yellow-600"><i class="fa-solid fa-building"></i></div>
+        </div>
+
+        <div class="p-6 flex-1">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-800 mb-2">Business Permit Endorsement</h2>
+              <p class="text-slate-600 text-sm">
+                Barangay endorsement required for business permit applications at the city hall.
+                Applicable to new and renewing business owners operating within Barangay Sirangan.
+              </p>
+
+              <div class="mt-4">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100 text-yellow-800 text-xs font-bold">
+                  <i class="fa-solid fa-clock"></i> 2–3 Business Days
+                </span>
+              </div>
+            </div>
+
+            <a href="/request.html?type=BUSINESS_PERMIT_ENDORSEMENT"
+              class="shrink-0 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold border border-yellow-600 text-yellow-800 bg-yellow-50 hover:bg-yellow-100 transition whitespace-nowrap">
+              Request This <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Incident Report -->
+    <div class="svc-card bg-white rounded-3xl border border-red-200 overflow-hidden">
+      <div class="flex flex-col md:flex-row">
+        <div class="bg-red-50 p-8 flex items-center justify-center md:w-40 flex-shrink-0">
+          <div class="text-6xl text-red-500"><i class="fa-solid fa-pen-to-square"></i></div>
+        </div>
+
+        <div class="p-6 flex-1">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+            <div>
+              <h2 class="text-xl font-extrabold text-slate-800 mb-2">Incident Report</h2>
+              <p class="text-slate-600 text-sm">
+                Official documentation of incidents, disputes, accidents, or complaints filed with the barangay.
+                Used for legal purposes and community safety records.
+              </p>
+
+              <div class="mt-4">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-100 text-red-800 text-xs font-bold">
+                  <i class="fa-solid fa-clock"></i> Same Day
+                </span>
+              </div>
+            </div>
+
+            <a href="/request.html?type=INCIDENT_REPORT"
+              class="shrink-0 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold border border-red-600 text-red-700 bg-red-50 hover:bg-red-100 transition whitespace-nowrap">
+              Request This <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="rounded-3xl p-10 text-white text-center border border-blue-400/30"
+      style="background:linear-gradient(135deg,#0a1628 0%,#1e3a5f 50%,#1d4ed8 100%)">
+
+      <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5">
+        <i class="fa-solid fa-clipboard-list text-amber-400"></i>
+      </div>
+
+      <h3 class="text-2xl font-extrabold mb-3">Ready to submit your request?</h3>
+      <p class="text-blue-200 text-sm mb-7 max-w-md mx-auto">
+        Submit your request online and receive a tracking ID instantly. No need to visit the office just to submit — come only to pick up your document!
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/request.html" class="btn-amber px-8 py-3.5 rounded-2xl font-bold inline-flex items-center gap-2 shadow-xl">
+          <i class="fa-solid fa-clipboard-list"></i>Request a Document
+        </a>
+        <a href="/track.html" class="bg-white/15 hover:bg-white/25 text-white px-8 py-3.5 rounded-2xl font-bold inline-flex items-center gap-2 transition">
+          <i class="fa-solid fa-magnifying-glass"></i>Track Existing Request
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="bg-slate-950 text-white pt-14 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-10">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10">
+          <div>
+            <div class="font-bold text-base text-white">Barangay Sirangan</div>
+            <div class="text-slate-400 text-sm">Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+        <p class="text-slate-400 text-sm leading-relaxed">Serving our community with dedication, transparency, and efficiency through modern digital governance.</p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
+        <nav class="space-y-2 text-sm">
+          <a href="/request.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-clipboard-list w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Request Document</a>
+          <a href="/track.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-magnifying-glass w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Track Request</a>
+          <a href="/announcements.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-bullhorn w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Announcements</a>
+          <a href="/about.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-circle-info w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>About Us</a>
+          <a href="/contact.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-phone w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Contact</a>
+        </nav>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Office Info</h4>
+        <div class="text-sm text-slate-400 space-y-3">
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Office Hours</div>
+            <div>Monday – Friday</div>
+            <div>8:00 AM – 5:00 PM</div>
+            <div class="text-xs text-slate-600 mt-1">Closed weekends &amp; holidays</div>
+          </div>
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Address</div>
+            <div>Brgy. Sirangan Hall</div>
+            <div>Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-800/60 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+      <p>© 2025 Barangay Sirangan, Sorsogon City, Sorsogon. All rights reserved.</p>
+      <a href="/admin/login.html" class="hover:text-slate-300 transition">Admin Login</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  /* ── Nav scroll effect ── */
+  (function () {
+    var nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+  })();
+  /* ── Mobile menu ── */
+  document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+    var menu = document.getElementById('mobileMenu');
+    var icon = document.getElementById('menuIcon');
+    var open = !menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', open);
+    icon.className = open ? 'fa-solid fa-bars text-lg' : 'fa-solid fa-xmark text-lg';
+    this.setAttribute('aria-expanded', String(!open));
+  });
+</script>
+
+<button id="backToTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+<script src="/js/portal.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+node_modules/
+backend/node_modules/
+dist/
+backend/dist/
+*.env
+.env.local
+backend/src/config/serviceAccount.json
+uploads/
+backend/uploads/

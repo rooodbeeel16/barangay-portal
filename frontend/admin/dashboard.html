@@ -1,0 +1,701 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Barangay Sirangan Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/admin.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    /* Page-specific overrides — shared styles in admin.css */
+
+    /* Stat modal (dashboard-specific) */
+    #statModal { display:none; opacity:0; transition: opacity .22s ease; }
+    #statModal.is-open    { display:flex; }
+    #statModal.is-visible { opacity:1; }
+    .modal-panel {
+      transform:scale(.95) translateY(14px); opacity:0;
+      transition: transform .28s cubic-bezier(.34,1.26,.64,1), opacity .22s ease;
+    }
+    #statModal.is-visible .modal-panel { transform:scale(1) translateY(0); opacity:1; }
+
+    /* Progress bars */
+    @keyframes fillBar { from { width:0 } to { width:var(--w) } }
+    .bar-fill { animation: fillBar .65s cubic-bezier(.4,0,.2,1) forwards; }
+  </style>
+
+</head>
+<body>
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ════ SIDEBAR ════════════════════════════════════════ -->
+  <aside class="w-64 bg-[#0b1929] text-white flex flex-col flex-shrink-0 fixed h-full z-40"
+         style="box-shadow:4px 0 24px rgba(0,0,0,.18)">
+
+    <!-- Brand -->
+    <div class="px-5 py-5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <img src="/assets/logo/sirangan-bg.png" alt="Logo"
+               class="w-9 h-9 rounded-xl object-cover"
+               style="box-shadow:0 0 0 2px rgba(251,191,36,.35)">
+          <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1929] pulse-dot"></span>
+        </div>
+        <div>
+          <div class="font-bold text-sm text-white leading-tight">Brgy. Sirangan</div>
+          <div class="text-[10px] text-blue-300/70 font-medium tracking-wide uppercase mt-0.5">Admin Portal</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
+      <a href="/admin/dashboard.html" class="nav-link active">
+        <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard
+      </a>
+      <a href="/admin/requests.html" class="nav-link">
+        <span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests
+      </a>
+      <a href="/admin/residents.html" class="nav-link">
+        <span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents
+      </a>
+      <a href="/admin/announcements.html" class="nav-link">
+        <span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements
+      </a>
+      <a href="/admin/appointments.html" class="nav-link">
+        <span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments
+      </a>
+      <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
+      <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
+      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+    </nav>
+
+    <!-- Sidebar user footer -->
+    <div class="px-4 py-3.5 border-t border-white/10">
+      <div class="flex items-center gap-2.5 px-1">
+        <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0"
+             id="sidebarAvatar">?</div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold text-white truncate" id="sidebarName">Loading…</div>
+          <div class="text-[10px] text-white/35 mt-0.5" id="sidebarRole">—</div>
+        </div>
+        <button onclick="AuthService.logout()" title="Sign out"
+                class="w-6 h-6 flex items-center justify-center text-white/30 hover:text-red-400 transition rounded">
+          <i class="fa-solid fa-right-from-bracket text-xs"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+  <!-- ════ MAIN ═════════════════════════════════════════════ -->
+  <main class="ml-64 flex-1 overflow-y-auto flex flex-col min-h-screen">
+
+    <!-- Top bar -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200/70 px-6 py-3.5 flex justify-between items-center sticky top-0 z-30"
+            style="box-shadow:0 1px 0 rgba(0,0,0,.05)">
+      <div class="anim-down" style="animation-delay:.04s">
+        <h1 class="text-lg font-bold text-gray-900 leading-tight">Dashboard</h1>
+        <div class="text-[11px] text-gray-400 font-medium mt-0.5" id="todayDate"></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div id="notifContainer"></div>
+        <div class="relative" id="profileDropdown">
+          <button onclick="toggleProfileDropdown()"
+                  class="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-gray-100 transition-all duration-150">
+            <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] text-white flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0"
+                 id="profileAvatar">?</div>
+            <div class="text-left hidden sm:block">
+              <div class="text-xs font-semibold text-gray-800 leading-tight" id="profileName"></div>
+              <div class="text-[10px] text-gray-400" id="profileRoleTag"></div>
+            </div>
+            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200" id="profileChevron"></i>
+          </button>
+          <div id="profileMenu"
+               class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl py-2 z-50"
+               style="box-shadow:0 16px 40px -8px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.07)">
+            <div class="px-4 py-2.5 border-b border-gray-50 mb-1">
+              <div class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Signed in as</div>
+              <div class="text-xs font-semibold text-gray-800 truncate mt-0.5" id="profileMenuEmail"></div>
+            </div>
+            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+              <i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings
+            </a>
+            <a href="/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+              <i class="fa-solid fa-house w-4 text-gray-400 text-xs"></i> Barangay Portal
+            </a>
+            <a href="/admin/audit-logs.html" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+              <i class="fa-solid fa-file-alt w-4 text-gray-400 text-xs"></i> Audit Logs
+            </a>
+            <div class="border-t border-gray-50 my-1.5"></div>
+            <button onclick="AuthService.logout()" class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+              <i class="fa-solid fa-right-from-bracket w-4 text-xs"></i> Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page body -->
+    <div class="p-6 space-y-6 flex-1">
+
+      <!-- Stats grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="statsGrid">
+        <div class="skeleton h-[118px] rounded-[18px]"></div>
+        <div class="skeleton h-[118px] rounded-[18px]"></div>
+        <div class="skeleton h-[118px] rounded-[18px]"></div>
+        <div class="skeleton h-[118px] rounded-[18px]"></div>
+      </div>
+
+      <!-- Blotter Overview Stats -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-sm font-bold text-gray-800">Blotter Cases Overview</h2>
+            <p class="text-[11px] text-gray-400 mt-0.5">Active case status breakdown</p>
+          </div>
+          <a href="/admin/blotter.html" class="text-xs text-[#1e3a5f] font-semibold hover:underline flex items-center gap-1"><i class="fa-solid fa-arrow-right text-[10px]"></i> Manage Blotter</a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="blotterStatsGrid">
+          <div class="rounded-xl p-3 bg-gray-50 border border-gray-100 text-center">
+            <div class="text-lg font-bold text-gray-800" id="bStatTotal">—</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">Total Cases</div>
+          </div>
+          <div class="rounded-xl p-3 bg-blue-50 border border-blue-100 text-center">
+            <div class="text-lg font-bold text-blue-700" id="bStatOpen">—</div>
+            <div class="text-[10px] text-blue-500 mt-0.5">Open</div>
+          </div>
+          <div class="rounded-xl p-3 bg-amber-50 border border-amber-100 text-center">
+            <div class="text-lg font-bold text-amber-700" id="bStatMediation">—</div>
+            <div class="text-[10px] text-amber-500 mt-0.5">Under Mediation</div>
+          </div>
+          <div class="rounded-xl p-3 bg-green-50 border border-green-100 text-center">
+            <div class="text-lg font-bold text-green-700" id="bStatSettled">—</div>
+            <div class="text-[10px] text-green-500 mt-0.5">Settled</div>
+          </div>
+          <div class="rounded-xl p-3 bg-red-50 border border-red-100 text-center">
+            <div class="text-lg font-bold text-red-700" id="bStatEscalated">—</div>
+            <div class="text-[10px] text-red-500 mt-0.5">Escalated</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle row: recent requests + doc breakdown -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- Recent requests -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden"
+             style="box-shadow:0 1px 6px rgba(0,0,0,.05)">
+          <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
+            <div>
+              <h2 class="font-bold text-gray-800 text-sm">Recent Requests</h2>
+              <p class="text-[11px] text-gray-400 mt-0.5">Latest submitted documents</p>
+            </div>
+            <a href="/admin/requests.html"
+               class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1e3a5f] bg-[#1e3a5f]/5 hover:bg-[#1e3a5f]/10 px-3 py-1.5 rounded-lg transition">
+              View All <i class="fa-solid fa-arrow-right text-[9px]"></i>
+            </a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-100">
+                  <th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Tracking ID</th>
+                  <th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Resident</th>
+                  <th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Document</th>
+                  <th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Status</th>
+                  <th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Date</th>
+                  <th class="px-5 py-3 bg-gray-50/60"></th>
+                </tr>
+              </thead>
+              <tbody id="recentRequestsBody">
+                <tr><td colspan="6" class="px-5 py-8">
+                  <div class="space-y-2.5">
+                    <div class="skeleton h-4 rounded"></div>
+                    <div class="skeleton h-4 rounded w-11/12"></div>
+                    <div class="skeleton h-4 rounded"></div>
+                    <div class="skeleton h-4 rounded w-10/12"></div>
+                    <div class="skeleton h-4 rounded w-11/12"></div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/50"
+               id="recentPagination" style="display:none!important">
+            <span class="text-[11px] text-gray-400" id="recentPageInfo"></span>
+            <div class="flex gap-1.5">
+              <button id="recentPrevBtn" onclick="changeRecentPage(-1)"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                      disabled><i class="fa-solid fa-chevron-left text-[9px]"></i> Prev</button>
+              <button id="recentNextBtn" onclick="changeRecentPage(1)"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                Next <i class="fa-solid fa-chevron-right text-[9px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Doc type breakdown -->
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden"
+             style="box-shadow:0 1px 6px rgba(0,0,0,.05)">
+          <div class="px-5 py-4 border-b border-gray-100">
+            <h2 class="font-bold text-gray-800 text-sm">By Document Type</h2>
+            <p class="text-[11px] text-gray-400 mt-0.5">Request distribution</p>
+          </div>
+          <div id="docTypeBreakdown" class="p-5 space-y-4">
+            <div class="space-y-3">
+              <div class="skeleton h-3 rounded"></div>
+              <div class="skeleton h-3 rounded w-10/12"></div>
+              <div class="skeleton h-3 rounded"></div>
+              <div class="skeleton h-3 rounded w-11/12"></div>
+              <div class="skeleton h-3 rounded w-9/12"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary status row -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" id="statusStatsRow"></div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ════ STAT DETAIL MODAL ══════════════════════════════════════ -->
+<div id="statModal" class="fixed inset-0 z-50 items-center justify-center bg-black/45 backdrop-blur-[3px] p-4">
+  <div class="modal-panel bg-white rounded-2xl w-full max-w-4xl max-h-[86vh] flex flex-col"
+       style="box-shadow:0 24px 60px -12px rgba(0,0,0,.28)">
+
+    <div class="flex items-start justify-between px-6 py-5 border-b border-gray-100">
+      <div>
+        <h3 class="font-bold text-gray-900 text-base" id="modalTitle">Requests</h3>
+        <div class="text-xs text-gray-400 mt-0.5" id="modalSubtitle"></div>
+      </div>
+      <div class="flex items-center gap-2 ml-4 flex-shrink-0">
+        <a id="modalViewAll" href="/admin/requests.html"
+           class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1e3a5f] bg-[#1e3a5f]/5 hover:bg-[#1e3a5f]/10 px-3 py-1.5 rounded-lg transition">
+          View All <i class="fa-solid fa-arrow-right text-[9px]"></i>
+        </a>
+        <button onclick="closeStatModal()"
+                class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="modalBody" class="overflow-y-auto flex-1">
+      <div class="text-center text-gray-400 py-14">
+        <i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>Loading…
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-gray-50/60 rounded-b-2xl"
+         id="modalPagination" style="display:none">
+      <span class="text-[11px] text-gray-400" id="modalPageInfo"></span>
+      <div class="flex gap-1.5">
+        <button id="modalPrevBtn" onclick="changeModalPage(-1)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+                disabled><i class="fa-solid fa-chevron-left text-[9px]"></i> Prev</button>
+        <button id="modalNextBtn" onclick="changeModalPage(1)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition">
+          Next <i class="fa-solid fa-chevron-right text-[9px]"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/notifications.js"></script>
+<script>
+  // ── Date display ──────────────────────────────────────────
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-PH', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // ── Auth guard + profile population ──────────────────────
+  firebase.auth().onAuthStateChanged(async function (fbUser) {
+    if (!fbUser) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      window.location.href = '/admin/login.html';
+      return;
+    }
+    try {
+      const freshToken    = await fbUser.getIdToken(true);
+      const idTokenResult = await fbUser.getIdTokenResult();
+      const role          = idTokenResult.claims.role || 'staff';
+      const storedUser    = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('authToken', freshToken);
+      const userData = {
+        uid: fbUser.uid, email: fbUser.email,
+        name: fbUser.displayName || '', role,
+        photoUrl: fbUser.photoURL || storedUser.photoUrl || '',
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      const initials = (userData.name || '?')
+        .split(/\s+/).map(function (w) { return w[0] || ''; }).slice(0, 2).join('').toUpperCase() || '?';
+      const avatarHTML = userData.photoUrl
+        ? '<img src="' + userData.photoUrl.replace(/"/g, '&quot;') + '" class="w-full h-full object-cover" alt="Profile">'
+        : initials;
+
+      document.getElementById('profileAvatar').innerHTML   = avatarHTML;
+      document.getElementById('profileName').textContent    = userData.name;
+      document.getElementById('profileRoleTag').textContent = cap(role);
+      if (document.getElementById('profileMenuEmail'))
+        document.getElementById('profileMenuEmail').textContent = userData.email;
+
+      var sa = document.getElementById('sidebarAvatar');
+      if (userData.photoUrl) {
+        sa.innerHTML = '<img src="' + userData.photoUrl.replace(/"/g, '&quot;') + '" class="w-full h-full object-cover rounded-lg" alt="">';
+      } else {
+        sa.textContent = initials;
+      }
+      document.getElementById('sidebarName').textContent = userData.name;
+      document.getElementById('sidebarRole').textContent = cap(role);
+
+      loadDashboard();
+      loadBlotterStats();
+    } catch (e) {
+      window.location.href = '/admin/login.html';
+    }
+  });
+
+  function cap(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''; }
+
+  // ── Labels / colors ─────────────────────────────────────
+  var DOC_SHORT = {
+    BARANGAY_CLEARANCE:          'Clearance',
+    CERTIFICATE_OF_RESIDENCY:    'Residency',
+    CERTIFICATE_OF_INDIGENCY:    'Indigency',
+    BUSINESS_PERMIT_ENDORSEMENT: 'Business Permit',
+    INCIDENT_REPORT:             'Incident Report',
+  };
+  var DOC_FULL = {
+    BARANGAY_CLEARANCE:          'Barangay Clearance',
+    CERTIFICATE_OF_RESIDENCY:    'Certificate of Residency',
+    CERTIFICATE_OF_INDIGENCY:    'Certificate of Indigency',
+    BUSINESS_PERMIT_ENDORSEMENT: 'Business Permit Endorsement',
+    INCIDENT_REPORT:             'Incident Report',
+  };
+  var DOC_BAR = {
+    BARANGAY_CLEARANCE:          'bg-blue-500',
+    CERTIFICATE_OF_RESIDENCY:    'bg-emerald-500',
+    CERTIFICATE_OF_INDIGENCY:    'bg-violet-500',
+    BUSINESS_PERMIT_ENDORSEMENT: 'bg-amber-500',
+    INCIDENT_REPORT:             'bg-rose-500',
+  };
+
+  var allRecentRequests = [];
+  var recentPage = 1;
+  var PAGE_SIZE  = 10;
+
+  // ── Load dashboard ───────────────────────────────────────
+  async function loadDashboard() {
+    var analyticsResult = null, requestsResult = null;
+    var analyticsErr = null, requestsErr = null;
+
+    try { analyticsResult = await get('/admin/analytics'); } catch (e) { analyticsErr = e; }
+    try { requestsResult = await get('/admin/requests');   } catch (e) { requestsErr = e; }
+
+    if (analyticsResult) {
+      try { renderStats(analyticsResult); } catch (_) {}
+      try { renderDocBreakdown(analyticsResult); } catch (_) {}
+    }
+
+    if (requestsResult) {
+      allRecentRequests = Array.isArray(requestsResult)
+        ? requestsResult : (requestsResult.requests || requestsResult.data || []);
+      recentPage = 1;
+      try { renderRecentRequests(); } catch (_) {}
+    }
+
+    var firstErr = analyticsErr || requestsErr;
+    if (firstErr) {
+      console.error('[Dashboard] Failed to load data:', firstErr);
+      var msg = firstErr.message || 'Unknown error';
+      document.getElementById('recentRequestsBody').innerHTML =
+        '<tr><td colspan="6" class="px-5 py-10 text-center">' +
+        '<div class="flex flex-col items-center gap-3">' +
+        '<i class="fa-solid fa-triangle-exclamation text-red-400 text-2xl"></i>' +
+        '<p class="text-sm font-medium text-red-500">Failed to load data</p>' +
+        '<p class="text-xs text-gray-400 max-w-xs">' + msg.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>' +
+        '<button onclick="loadDashboard()" class="mt-1 inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-[#1e3a5f] rounded-lg hover:bg-[#162d4a] transition">' +
+        '<i class="fa-solid fa-rotate-right"></i> Retry</button>' +
+        '</div></td></tr>';
+    }
+  }
+
+  // ── Stat cards ───────────────────────────────────────────
+  function renderStats(data) {
+    var primary = [
+      { key:'total',           label:'Total Requests',    icon:'fa-clipboard-list', ib:'bg-blue-50',   it:'text-blue-500',   vt:'text-blue-700',   filter:'' },
+      { key:'pending',         label:'Pending',           icon:'fa-hourglass-half', ib:'bg-amber-50',  it:'text-amber-500',  vt:'text-amber-700',  filter:'PENDING' },
+      { key:'forSignature',    label:'For Signature',     icon:'fa-pen-nib',        ib:'bg-sky-50',    it:'text-sky-500',    vt:'text-sky-700',    filter:'FOR_SIGNATURE' },
+      { key:'readyForRelease', label:'Ready for Release', icon:'fa-box',            ib:'bg-purple-50', it:'text-purple-500', vt:'text-purple-700', filter:'READY_FOR_RELEASE' },
+    ];
+    var secondary = [
+      { key:'released',      label:'Released',       icon:'fa-circle-check',  ib:'bg-gray-100',   it:'text-gray-500',    vt:'text-gray-700',    filter:'RELEASED' },
+      { key:'releasedToday', label:'Released Today', icon:'fa-calendar-days', ib:'bg-emerald-50', it:'text-emerald-500', vt:'text-emerald-700', filter:'RELEASED_TODAY' },
+    ];
+
+    document.getElementById('statsGrid').innerHTML = primary.map(function (s, i) {
+      var val = data[s.key] !== undefined ? data[s.key] : '—';
+      return '<div class="stat-card anim-up" style="animation-delay:' + (0.05 + i * 0.06) + 's" onclick="openStatModal(\'' + s.filter + '\',\'' + s.label + '\')">' +
+        '<div class="flex items-start justify-between mb-4">' +
+        '<div class="w-10 h-10 rounded-xl ' + s.ib + ' flex items-center justify-center flex-shrink-0">' +
+        '<i class="fa-solid ' + s.icon + ' ' + s.it + ' text-base"></i></div>' +
+        '<i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-300 mt-1.5"></i></div>' +
+        '<div class="text-[28px] font-extrabold ' + s.vt + ' leading-none tabular-nums">' + val + '</div>' +
+        '<div class="text-[11px] text-gray-500 mt-1.5 font-medium">' + s.label + '</div></div>';
+    }).join('');
+
+    document.getElementById('statusStatsRow').innerHTML = secondary.map(function (s, i) {
+      var val = data[s.key] !== undefined ? data[s.key] : '—';
+      return '<div class="stat-card anim-up text-center" style="animation-delay:' + (0.1 + i * 0.06) + 's" onclick="openStatModal(\'' + s.filter + '\',\'' + s.label + '\')">' +
+        '<div class="w-9 h-9 rounded-xl ' + s.ib + ' flex items-center justify-center mx-auto mb-2.5">' +
+        '<i class="fa-solid ' + s.icon + ' ' + s.it + ' text-sm"></i></div>' +
+        '<div class="text-2xl font-extrabold ' + s.vt + ' leading-none tabular-nums">' + val + '</div>' +
+        '<div class="text-[11px] text-gray-500 mt-1.5 font-medium">' + s.label + '</div></div>';
+    }).join('');
+  }
+
+  // ── Recent requests table ────────────────────────────────
+  function changeRecentPage(dir) {
+    var totalPages = Math.ceil(allRecentRequests.length / PAGE_SIZE);
+    recentPage = Math.min(Math.max(recentPage + dir, 1), totalPages);
+    renderRecentRequests();
+  }
+
+  function reqRow(r) {
+    var name   = r.residentName || ((r.firstName || '') + ' ' + (r.lastName || '')).trim() || 'N/A';
+    var dLabel = DOC_SHORT[r.documentType] || r.documentType || 'N/A';
+    var sBadge = Utils.getStatusBadgeClass(r.status || 'PENDING');
+    var sLabel = Utils.getStatusLabel(r.status || 'PENDING');
+    var id     = r.id || r._id || '';
+    var letter = (name[0] || '?').toUpperCase();
+    return '<tr class="req-row border-t border-gray-100/70">' +
+      '<td class="px-5 py-3.5 font-mono text-[11px] font-bold text-[#1e3a5f] whitespace-nowrap">' + (r.trackingId || 'N/A') + '</td>' +
+      '<td class="px-5 py-3.5"><div class="flex items-center gap-2.5">' +
+      '<div class="w-6 h-6 rounded-full bg-[#1e3a5f]/10 text-[#1e3a5f] flex items-center justify-center text-[10px] font-bold flex-shrink-0">' + letter + '</div>' +
+      '<span class="text-xs font-medium text-gray-800">' + name + '</span></div></td>' +
+      '<td class="px-5 py-3.5 text-xs text-gray-500">' + dLabel + '</td>' +
+      '<td class="px-5 py-3.5"><span class="s-pill ' + sBadge + '">' + sLabel + '</span></td>' +
+      '<td class="px-5 py-3.5 text-[11px] text-gray-400 whitespace-nowrap">' + Utils.formatDate(r.createdAt || r.submittedAt) + '</td>' +
+      '<td class="px-5 py-3.5"><a href="/admin/request-detail.html?id=' + id + '"' +
+      ' class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1e3a5f] hover:text-blue-700 transition">' +
+      'View <i class="fa-solid fa-chevron-right text-[8px]"></i></a></td></tr>';
+  }
+
+  function renderRecentRequests() {
+    var list       = allRecentRequests;
+    var pagination = document.getElementById('recentPagination');
+    if (!list.length) {
+      document.getElementById('recentRequestsBody').innerHTML =
+        '<tr><td colspan="6" class="px-5 py-14 text-center text-gray-400">' +
+        '<i class="fa-solid fa-inbox text-3xl block mb-3 text-gray-200"></i>No requests yet.</td></tr>';
+      pagination.style.setProperty('display', 'none', 'important');
+      return;
+    }
+    var totalPages = Math.ceil(list.length / PAGE_SIZE);
+    var start      = (recentPage - 1) * PAGE_SIZE;
+    document.getElementById('recentRequestsBody').innerHTML =
+      list.slice(start, start + PAGE_SIZE).map(reqRow).join('');
+    document.getElementById('recentPageInfo').textContent =
+      (start + 1) + '–' + Math.min(start + PAGE_SIZE, list.length) + ' of ' + list.length;
+    document.getElementById('recentPrevBtn').disabled = recentPage === 1;
+    document.getElementById('recentNextBtn').disabled = recentPage === totalPages;
+    pagination.style.removeProperty('display');
+    pagination.style.display = 'flex';
+  }
+
+  // ── Doc type breakdown ────────────────────────────────────
+  function renderDocBreakdown(data) {
+    var types     = ['BARANGAY_CLEARANCE','CERTIFICATE_OF_RESIDENCY','CERTIFICATE_OF_INDIGENCY','BUSINESS_PERMIT_ENDORSEMENT','INCIDENT_REPORT'];
+    var breakdown = data.byDocumentType || data.byDocType || data.documentTypes || {};
+    var total     = data.total || 1;
+    document.getElementById('docTypeBreakdown').innerHTML = types.map(function (dt, i) {
+      var count = breakdown[dt] || 0;
+      var pct   = total > 0 ? Math.round((count / total) * 100) : 0;
+      var bar   = DOC_BAR[dt] || 'bg-blue-500';
+      return '<div class="anim-up" style="animation-delay:' + (0.08 + i * 0.07) + 's">' +
+        '<div class="flex justify-between items-baseline mb-1.5">' +
+        '<span class="text-[11px] text-gray-600 font-medium leading-tight pr-2">' + DOC_FULL[dt] + '</span>' +
+        '<span class="text-[11px] font-bold text-gray-800 flex-shrink-0 tabular-nums">' + count +
+        ' <span class="text-gray-400 font-normal">' + pct + '%</span></span></div>' +
+        '<div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">' +
+        '<div class="' + bar + ' h-1.5 rounded-full bar-fill" style="--w:' + pct + '%;width:0"></div>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  // ── Modal ───────────────────────────────────────────────
+  var modalRequests = [];
+  var modalPage     = 1;
+
+  function modalTableHTML() {
+    var start = (modalPage - 1) * PAGE_SIZE;
+    var page  = modalRequests.slice(start, start + PAGE_SIZE);
+    var rowsHTML = page.map(function (r) {
+      var name   = r.residentName || ((r.firstName || '') + ' ' + (r.lastName || '')).trim() || 'N/A';
+      var dLabel = DOC_SHORT[r.documentType] || r.documentType || 'N/A';
+      var sBadge = Utils.getStatusBadgeClass(r.status || 'PENDING');
+      var sLabel = Utils.getStatusLabel(r.status || 'PENDING');
+      var id     = r.id || r._id || '';
+      var letter = (name[0] || '?').toUpperCase();
+      return '<tr class="req-row border-t border-gray-100/70">' +
+        '<td class="px-5 py-3.5 font-mono text-[11px] font-bold text-[#1e3a5f] whitespace-nowrap">' + (r.trackingId || 'N/A') + '</td>' +
+        '<td class="px-5 py-3.5"><div class="flex items-center gap-2.5">' +
+        '<div class="w-6 h-6 rounded-full bg-[#1e3a5f]/10 text-[#1e3a5f] flex items-center justify-center text-[10px] font-bold flex-shrink-0">' + letter + '</div>' +
+        '<span class="text-xs font-medium text-gray-800">' + name + '</span></div></td>' +
+        '<td class="px-5 py-3.5 text-xs text-gray-500">' + dLabel + '</td>' +
+        '<td class="px-5 py-3.5"><span class="s-pill ' + sBadge + '">' + sLabel + '</span></td>' +
+        '<td class="px-5 py-3.5 text-[11px] text-gray-400 whitespace-nowrap">' + Utils.formatDate(r.createdAt || r.submittedAt) + '</td>' +
+        '<td class="px-5 py-3.5"><a href="/admin/request-detail.html?id=' + id + '" onclick="closeStatModal()"' +
+        ' class="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1e3a5f] hover:text-blue-700 transition">' +
+        'View <i class="fa-solid fa-chevron-right text-[8px]"></i></a></td></tr>';
+    }).join('');
+    return '<div class="overflow-x-auto"><table class="w-full text-sm"><thead>' +
+      '<tr class="border-b border-gray-100">' +
+      '<th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Tracking ID</th>' +
+      '<th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Resident</th>' +
+      '<th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Document</th>' +
+      '<th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Status</th>' +
+      '<th class="px-5 py-3 text-left text-[10px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/60">Date</th>' +
+      '<th class="px-5 py-3 bg-gray-50/60"></th>' +
+      '</tr></thead><tbody>' + rowsHTML + '</tbody></table></div>';
+  }
+
+  function renderModalTable() {
+    document.getElementById('modalBody').innerHTML = modalTableHTML();
+    var totalPages = Math.ceil(modalRequests.length / PAGE_SIZE);
+    var start      = (modalPage - 1) * PAGE_SIZE;
+    document.getElementById('modalPageInfo').textContent =
+      (start + 1) + '–' + Math.min(start + PAGE_SIZE, modalRequests.length) + ' of ' + modalRequests.length;
+    document.getElementById('modalPrevBtn').disabled = modalPage === 1;
+    document.getElementById('modalNextBtn').disabled = modalPage === totalPages;
+    document.getElementById('modalPagination').style.display = 'flex';
+  }
+
+  function changeModalPage(dir) {
+    var totalPages = Math.ceil(modalRequests.length / PAGE_SIZE);
+    modalPage = Math.min(Math.max(modalPage + dir, 1), totalPages);
+    renderModalTable();
+  }
+
+  async function openStatModal(filter, label) {
+    var modal = document.getElementById('statModal');
+    document.getElementById('modalTitle').textContent    = label || 'Requests';
+    document.getElementById('modalSubtitle').textContent = '';
+    document.getElementById('modalBody').innerHTML =
+      '<div class="text-center text-gray-400 py-14"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>Loading…</div>';
+    document.getElementById('modalPagination').style.display = 'none';
+
+    var viewAll = document.getElementById('modalViewAll');
+    viewAll.href = (filter && filter !== '' && filter !== 'RELEASED_TODAY')
+      ? '/admin/requests.html?status=' + filter
+      : '/admin/requests.html';
+
+    modal.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { modal.classList.add('is-visible'); });
+    });
+
+    modalRequests = [];
+    modalPage     = 1;
+
+    try {
+      var url = (filter && filter !== '' && filter !== 'RELEASED_TODAY')
+        ? '/admin/requests?status=' + filter
+        : '/admin/requests';
+      var result   = await get(url);
+      var requests = Array.isArray(result) ? result : (result.requests || result.data || []);
+
+      if (filter === 'RELEASED_TODAY') {
+        var todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        requests = requests.filter(function (r) {
+          if (r.status !== 'RELEASED') return false;
+          var ts = r.updatedAt || r.createdAt || r.submittedAt;
+          if (!ts) return false;
+          var d = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime() === todayStart.getTime();
+        });
+      }
+
+      document.getElementById('modalSubtitle').textContent =
+        requests.length + ' request' + (requests.length !== 1 ? 's' : '') + ' found';
+
+      if (!requests.length) {
+        document.getElementById('modalBody').innerHTML =
+          '<div class="text-center text-gray-400 py-16">' +
+          '<i class="fa-solid fa-inbox text-4xl block mb-3 text-gray-200"></i>' +
+          '<p class="font-medium text-sm">No requests found</p></div>';
+        return;
+      }
+      modalRequests = requests;
+      renderModalTable();
+    } catch (e) {
+      document.getElementById('modalBody').innerHTML =
+        '<div class="text-center text-red-400 py-12">' +
+        '<i class="fa-solid fa-triangle-exclamation mr-2"></i>Failed to load requests.</div>';
+    }
+  }
+
+  function closeStatModal() {
+    var modal = document.getElementById('statModal');
+    modal.classList.remove('is-visible');
+    setTimeout(function () {
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      modalRequests = [];
+      modalPage     = 1;
+    }, 260);
+  }
+
+  document.getElementById('statModal').addEventListener('click', function (e) {
+    if (e.target === this) closeStatModal();
+  });
+
+  // ── Profile dropdown ──────────────────────────────────────
+  function toggleProfileDropdown() {
+    var menu    = document.getElementById('profileMenu');
+    var chevron = document.getElementById('profileChevron');
+    var hidden  = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', !hidden);
+    chevron.style.transform = hidden ? 'rotate(180deg)' : '';
+  }
+
+  async function loadBlotterStats() {
+    try {
+      const stats = await get('/api/blotter/stats');
+      document.getElementById('bStatTotal').textContent = stats.total ?? 0;
+      document.getElementById('bStatOpen').textContent = stats.OPEN ?? 0;
+      document.getElementById('bStatMediation').textContent = stats.UNDER_MEDIATION ?? 0;
+      document.getElementById('bStatSettled').textContent = stats.SETTLED ?? 0;
+      document.getElementById('bStatEscalated').textContent = (stats.ESCALATED ?? 0) + (stats.ESCALATED_RETURNED ?? 0);
+    } catch(e) {
+      console.warn('Blotter stats load failed:', e);
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var dd = document.getElementById('profileDropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('profileMenu').classList.add('hidden');
+      document.getElementById('profileChevron').style.transform = '';
+    }
+  });
+</script>
+</body>
+</html>

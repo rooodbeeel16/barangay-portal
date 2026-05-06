@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Preview — Barangay Sirangan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    /* ── A4 paper simulation ─────────────────────────── */
+    .paper {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm 20mm 36mm 20mm;
+      background: #fff;
+      box-shadow: 0 4px 32px rgba(0,0,0,.18);
+      position: relative;
+      box-sizing: border-box;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      color: #111;
+    }
+
+
+    /* Header */
+    .doc-header { text-align: center; margin-bottom: 6px; }
+    .doc-header .gov-text { font-size: 9pt; color: #555; line-height: 1.5; }
+    .doc-header .brgy-name { font-size: 16pt; font-weight: 900; color: #1e3a5f; letter-spacing: 1px; margin: 4px 0; font-family: Arial, sans-serif; }
+    .doc-header .brgy-logo { width: 64px; height: 64px; object-fit: cover; border-radius: 50%; display: block; margin: 0 auto 6px; }
+    .doc-header .brgy-logo-placeholder { width: 64px; height: 64px; border-radius: 50%; background: #1e3a5f; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; color: white; font-size: 22px; }
+    .doc-divider { border: none; border-top: 1.5px solid #8c6a12; margin: 6px 0; }
+    .doc-title { font-size: 14pt; font-weight: 900; color: #1e3a5f; text-align: center; letter-spacing: 1px; margin: 8px 0; font-family: Arial, sans-serif; }
+    .doc-divider2 { border: none; border-top: 1.5px solid #8c6a12; margin: 6px 0; }
+
+
+    /* Body */
+    .doc-body { line-height: 1.8; }
+    .doc-body p { margin: 0 0 10px; text-align: justify; text-indent: 0; }
+    .doc-body p.indent { text-indent: 2.5em; }
+
+    /* Section heading */
+    .section-head { font-weight: 700; font-family: Arial, sans-serif; color: #1e3a5f; font-size: 9.5pt; text-transform: uppercase; letter-spacing: .5px; border-bottom: .5px solid #1e3a5f; padding-bottom: 2px; margin: 14px 0 6px; }
+
+    /* Info grid for incident report */
+    .info-row { display: grid; grid-template-columns: 110px 1fr; gap: 2px 6px; font-size: 10pt; margin-bottom: 3px; }
+    .info-label { font-weight: 700; color: #555; }
+
+    /* Signature block */
+    .sig-section { margin-top: 36px; }
+    .sig-block { display: inline-block; }
+    .sig-line { border-top: 1px solid #111; width: 200px; margin-top: 40px; margin-bottom: 4px; }
+    .sig-name { font-weight: 900; font-family: Arial, sans-serif; font-size: 10.5pt; color: #1e3a5f; text-transform: uppercase; }
+    .sig-title { font-size: 9pt; color: #333; }
+
+    /* Dual sig (incident report) */
+    .dual-sig { display: flex; justify-content: space-between; margin-top: 36px; }
+    .dual-sig .sig-block { width: 45%; }
+
+    /* Fee box */
+    .fee-box { display: none; }
+
+
+    /* Validity note */
+    .validity-note { font-style: italic; font-size: 9pt; color: #666; margin-top: 10px; }
+
+    /* Loading overlay */
+    #loadingOverlay { transition: opacity 0.45s ease; }
+
+    /* Paper enter animation */
+    #paper { opacity: 0; transform: translateY(18px); transition: opacity 0.45s ease, transform 0.45s ease; }
+
+    /* Meta row — issued to + date */
+    .doc-meta-row { display: flex; justify-content: space-between; font-size: 9pt; color: #555; margin: 8px 0 14px; }
+
+    /* Certificate footer */
+    .cert-footer { position: absolute; bottom: 14mm; left: 20mm; right: 20mm; border-top: 0.5px solid #ccc; padding-top: 6px; font-size: 8pt; color: #888; font-style: italic; text-align: center; }
+
+    /* ── Inline word-editor mode ──────────────────────── */
+    [contenteditable="true"] {
+      outline: 2px dashed #3b82f6;
+      border-radius: 3px;
+      padding: 2px;
+      cursor: text;
+      transition: outline 0.15s;
+    }
+    [contenteditable="true"]:focus {
+      outline: 2px solid #1e3a5f;
+      background: rgba(30,58,95,0.025);
+    }
+    .fmt-btn {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #334155;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .fmt-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .fmt-sep { width: 1px; height: 22px; background: #e2e8f0; margin: 0 4px; display: inline-block; flex-shrink: 0; }
+
+    /* ── Print styles ───────────────────────────────── */
+    @media print {
+      html, body { margin: 0; padding: 0; background: white !important; }
+      .no-print { display: none !important; }
+      [contenteditable] { outline: none !important; background: transparent !important; padding: 0 !important; }
+      .print-wrapper { display: block !important; padding: 0 !important; background: white !important; }
+      .paper {
+        width: 100%;
+        height: 297mm;
+        box-shadow: none;
+        margin: 0;
+        padding: 14mm 18mm 32mm 18mm;
+      }
+      @page { size: A4; margin: 0; }
+    }
+
+
+  </style>
+</head>
+<body class="bg-gray-200 min-h-screen">
+
+<!-- ── Toolbar (no-print) ──────────────────────────── -->
+<div class="no-print sticky top-0 z-50 bg-[#0b1929] text-white shadow-lg">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
+    <a id="backBtn" href="/admin/requests.html"
+       class="flex items-center gap-2 text-blue-200 hover:text-white text-sm transition">
+      <i class="fa-solid fa-arrow-left"></i> Back
+    </a>
+    <div class="w-px h-5 bg-white/20"></div>
+    <div class="flex-1 min-w-0">
+      <div class="font-bold text-sm truncate" id="toolbarTitle">Document Preview</div>
+      <div class="text-xs text-blue-300 font-mono" id="toolbarTracking"></div>
+    </div>
+    <div class="flex items-center gap-2 ml-auto flex-shrink-0">
+      <!-- Status badge -->
+      <span id="statusBadge" class="hidden px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700"></span>
+      <button onclick="handlePrint()"
+              class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <i class="fa-solid fa-print"></i> Print
+      </button>
+      <button id="editBtn" onclick="toggleEditMode()"
+              class="bg-yellow-500 hover:bg-yellow-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <i class="fa-solid fa-pen"></i> Edit
+      </button>
+      <button onclick="handleDownload()"
+              class="bg-green-500 hover:bg-green-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+        <i class="fa-solid fa-download"></i> Download PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Format Toolbar (word-editor, no-print) ─────────── -->
+<div id="formatToolbar" class="no-print hidden sticky top-14 z-40 bg-white border-b border-gray-200 shadow-sm">
+  <div class="max-w-5xl mx-auto px-4 py-2 flex items-center gap-1 flex-wrap">
+    <span class="text-xs font-semibold text-gray-500 mr-2 select-none">Format:</span>
+    <button onmousedown="event.preventDefault(); formatDoc('bold')" title="Bold" class="fmt-btn"><b>B</b></button>
+    <button onmousedown="event.preventDefault(); formatDoc('italic')" title="Italic" class="fmt-btn"><i>I</i></button>
+    <button onmousedown="event.preventDefault(); formatDoc('underline')" title="Underline" class="fmt-btn"><u>U</u></button>
+    <span class="fmt-sep"></span>
+    <button onmousedown="event.preventDefault(); formatDoc('justifyLeft')" title="Align Left" class="fmt-btn"><i class="fa-solid fa-align-left" style="font-size:10px"></i></button>
+    <button onmousedown="event.preventDefault(); formatDoc('justifyCenter')" title="Center" class="fmt-btn"><i class="fa-solid fa-align-center" style="font-size:10px"></i></button>
+    <button onmousedown="event.preventDefault(); formatDoc('justifyRight')" title="Align Right" class="fmt-btn"><i class="fa-solid fa-align-right" style="font-size:10px"></i></button>
+    <button onmousedown="event.preventDefault(); formatDoc('justifyFull')" title="Justify" class="fmt-btn"><i class="fa-solid fa-align-justify" style="font-size:10px"></i></button>
+    <span class="fmt-sep"></span>
+    <select onchange="formatDoc('fontSize', this.value); this.blur()" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none cursor-pointer">
+      <option value="" disabled selected>Size</option>
+      <option value="1">8pt</option>
+      <option value="2">10pt</option>
+      <option value="3">11pt</option>
+      <option value="4">14pt</option>
+      <option value="5">18pt</option>
+      <option value="6">24pt</option>
+    </select>
+    <span class="fmt-sep"></span>
+    <button onmousedown="event.preventDefault(); formatDoc('undo')" title="Undo" class="fmt-btn"><i class="fa-solid fa-rotate-left" style="font-size:10px"></i></button>
+    <button onmousedown="event.preventDefault(); formatDoc('redo')" title="Redo" class="fmt-btn"><i class="fa-solid fa-rotate-right" style="font-size:10px"></i></button>
+    <span class="fmt-sep"></span>
+    <span class="text-xs text-blue-400 italic ml-1 select-none">Click any text in the document to edit</span>
+    <button onclick="exitEditMode()" class="ml-auto text-xs text-gray-400 hover:text-red-500 transition select-none" title="Cancel editing"><i class="fa-solid fa-xmark mr-1"></i>Cancel</button>
+  </div>
+</div>
+
+<!-- ── Loading overlay ──────────────────────────────── -->
+<div id="loadingOverlay" class="no-print fixed inset-0 z-40 bg-gray-200 flex items-center justify-center">
+  <div class="text-center">
+    <div class="w-12 h-12 border-4 border-[#1e3a5f] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <p class="text-[#1e3a5f] font-semibold text-sm">Loading document…</p>
+  </div>
+</div>
+
+<!-- ── Print wrapper ────────────────────────────────── -->
+<div class="print-wrapper py-10 px-4 flex justify-center">
+
+  <!-- Error state -->
+  <div id="errorBox" class="hidden text-center py-20 text-red-500 max-w-md">
+    <i class="fa-solid fa-circle-exclamation text-4xl mb-4"></i>
+    <p class="font-semibold" id="errorMsg">Failed to load request.</p>
+    <p class="text-sm text-gray-400 mt-1">Check that the request ID is valid and try again.</p>
+  </div>
+
+  <!-- A4 paper -->
+  <div class="paper" id="paper">
+
+    <!-- Document header -->
+    <div class="doc-header" id="docHeader"></div>
+
+    <!-- Dividers + title -->
+    <hr class="doc-divider">
+    <div class="doc-title" id="docTitle"></div>
+    <hr class="doc-divider2">
+
+    <!-- Meta: issued to + date -->
+    <div class="doc-meta-row" id="docMetaRow"></div>
+
+    <!-- Document body -->
+    <div class="doc-body" id="docBody"></div>
+
+    <!-- Generated-by footer note -->
+    <div class="cert-footer" id="certFooter"></div>
+
+  </div>
+</div>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  firebase.auth().onAuthStateChanged(async function(fbUser) {
+    if (!fbUser) { window.location.href = '/admin/login.html'; return; }
+    try {
+      var freshToken = await fbUser.getIdToken(true);
+      localStorage.setItem('authToken', freshToken);
+    } catch(e) { window.location.href = '/admin/login.html'; }
+  });
+
+  var requestId = new URLSearchParams(window.location.search).get('id');
+  var requestData = null;
+  var configData = null;
+  var overrideName = null;
+  var overrideDate = null;
+
+  function hideLoading() {
+    var overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
+    overlay.style.opacity = '0';
+    setTimeout(function() { overlay.style.display = 'none'; }, 480);
+  }
+
+  var DOC_TITLES = {
+    BARANGAY_CLEARANCE: 'Barangay Clearance',
+    CERTIFICATE_OF_RESIDENCY: 'Certificate of Residency',
+    CERTIFICATE_OF_INDIGENCY: 'Certificate of Indigency',
+    BUSINESS_PERMIT_ENDORSEMENT: 'Business Permit Endorsement',
+    INCIDENT_REPORT: 'Incident Report',
+  };
+
+  var STATUS_LABELS = { PENDING: 'Pending', READY_FOR_RELEASE: 'Ready for Release', RELEASED: 'Released' };
+  var STATUS_BADGE = { PENDING: 'bg-yellow-100 text-yellow-700', READY_FOR_RELEASE: 'bg-blue-100 text-blue-700', RELEASED: 'bg-green-100 text-green-700' };
+
+  function esc(s) {
+    return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function fmtDate(d) {
+    if (!d) return '';
+    try {
+      var dt = d.toDate ? d.toDate() : new Date(d._seconds ? d._seconds * 1000 : d);
+      return dt.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch(e) { return String(d); }
+  }
+
+  function toTitleCase(str) {
+    if (!str) return '';
+    return str.replace(/\S+/g, function(w) {
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    });
+  }
+
+  function residentName(data) {
+    if (overrideName !== null) return overrideName;
+    if (data.residentName) return toTitleCase(data.residentName);
+    var raw = ((data.firstName || '') + ' ' + (data.middleName ? data.middleName + ' ' : '') + (data.lastName || '')).trim();
+    return toTitleCase(raw);
+  }
+
+  function residentAddress(data) {
+    var purok = data.purokSitio || data.purok || '';
+    var street = data.streetAddress || '';
+    var parts = [purok, street].filter(Boolean);
+    return (parts.length ? parts.join(', ') + ', ' : '') + 'Barangay Sirangan, Sorsogon City, Sorsogon';
+  }
+
+  function today() {
+    if (overrideDate) {
+      // overrideDate is an ISO date string (YYYY-MM-DD)
+      var parts = overrideDate.split('-');
+      var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    return new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  // ── Build header HTML ──────────────────────────────────
+  function buildHeader(config) {
+    var logoHtml = '';
+    var logoUrl = (config && config.logoUrl) || '/assets/logo/sirangan-bg.png';
+    if (logoUrl) {
+      logoHtml = '<img src="' + esc(logoUrl) + '" alt="Barangay Logo" class="brgy-logo" onerror="this.replaceWith(document.querySelector(\'#logoFallback\').content.cloneNode(true))">';
+    } else {
+      logoHtml = '<div class="brgy-logo-placeholder"><i class="fa-solid fa-landmark"></i></div>';
+    }
+    return logoHtml +
+      '<div class="gov-text">Republic of the Philippines<br>Province of Sorsogon<br>Brgy. Sirangan Sorsogon City</div>';
+  }
+
+  // ── Document body renderers ────────────────────────────
+  function renderClearance(data, captainName) {
+    var name = residentName(data).toUpperCase();
+    var addr = residentAddress(data);
+    var age  = data.age || 'N/A';
+    var cs   = data.civilStatus || 'N/A';
+    var gen  = data.gender || 'N/A';
+
+    return '<p class="indent">This is to certify that <strong>' + esc(name) + '</strong>, ' +
+      esc(age) + ' years old, ' + esc(cs) + ', ' + esc(gen) + ', a resident of ' +
+      esc(addr) + ', is personally known to this office and is a bonafide resident of this barangay.</p>' +
+      '<p class="indent">This further certifies that he/she has no derogatory record filed in this office and is a person of good moral character and law-abiding citizen of this community.</p>' +
+      '<p class="indent">This certification is being issued upon the request of the above-named person for the purpose of <strong>' + esc(data.purpose) + '</strong> and for whatever legal purpose it may serve.</p>' +
+      '<p class="validity-note">Valid for six (6) months from date of issue.</p>' +
+      buildSignature(captainName);
+  }
+
+  function renderResidency(data, captainName) {
+    var name = residentName(data).toUpperCase();
+    var addr = residentAddress(data);
+    return '<p class="indent">This is to certify that <strong>' + esc(name) + '</strong>, ' +
+      esc(data.age || 'N/A') + ' years old, ' + esc(data.civilStatus || 'N/A') + ', ' + esc(data.gender || 'N/A') +
+      ', is a bonafide resident of ' + esc(addr) + '.</p>' +
+      '<p class="indent">This certification is issued to attest to the above-named person\'s residency in this barangay for a period of more than six (6) months.</p>' +
+      '<p class="indent">This certification is being issued upon the request of the above-named person for the purpose of <strong>' + esc(data.purpose) + '</strong> and for whatever legal purpose it may serve.</p>' +
+      buildSignature(captainName);
+  }
+
+  function renderIndigency(data, captainName) {
+    var name = residentName(data).toUpperCase();
+    var addr = residentAddress(data);
+    return '<p class="indent">This is to certify that <strong>' + esc(name) + '</strong>, ' +
+      esc(data.age || 'N/A') + ' years old, ' + esc(data.civilStatus || 'N/A') + ', ' + esc(data.gender || 'N/A') +
+      ', a resident of ' + esc(addr) + ', belongs to the indigent sector of our community.</p>' +
+      '<p class="indent">This further certifies that the above-named person and his/her family are among the economically disadvantaged members of our community who are dependent on daily wages or minimum income for livelihood.</p>' +
+      '<p class="indent">This certification is being issued upon his/her request for the purpose of <strong>' + esc(data.purpose) + '</strong> and for whatever legal purpose it may serve.</p>' +
+      buildSignature(captainName);
+  }
+
+  function renderBusinessPermit(data, captainName) {
+    var name = residentName(data).toUpperCase();
+    var addr = residentAddress(data);
+    return '<p style="text-align:center;font-weight:700;font-family:Arial,sans-serif;font-size:10pt;">TO THE CITY BUSINESS PERMIT AND LICENSING OFFICE</p>' +
+      '<p style="text-align:center;font-size:9.5pt;color:#555;margin-bottom:16px;">City of Sorsogon, Sorsogon</p>' +
+      '<p class="indent">This is to endorse <strong>' + esc(name) + '</strong>, a bonafide resident of ' + esc(addr) + ', who is applying for a business permit/license.</p>' +
+      '<p class="indent">This endorsement certifies that the above-named person is known to this office and that the establishment is located within the jurisdiction of Barangay Sirangan, Sorsogon City.</p>' +
+      '<p class="indent">Purpose: <strong>' + esc(data.purpose) + '</strong></p>' +
+      '<p class="indent">We recommend favorable action on this application.</p>' +
+      buildSignature(captainName);
+  }
+
+  function renderIncidentReport(data, captainName) {
+    var name = residentName(data);
+    var addr = residentAddress(data);
+    return '<div class="section-head">Complainant Information</div>' +
+      '<div class="info-row"><span class="info-label">Name:</span><span>' + esc(name) + '</span></div>' +
+      '<div class="info-row"><span class="info-label">Age:</span><span>' + esc(String(data.age || 'N/A')) + '</span></div>' +
+      '<div class="info-row"><span class="info-label">Gender:</span><span>' + esc(data.gender || 'N/A') + '</span></div>' +
+      '<div class="info-row"><span class="info-label">Civil Status:</span><span>' + esc(data.civilStatus || 'N/A') + '</span></div>' +
+      '<div class="info-row"><span class="info-label">Address:</span><span>' + esc(addr) + '</span></div>' +
+      '<div class="section-head" style="margin-top:18px">Incident Details</div>' +
+      '<p style="font-weight:700;font-size:9.5pt;color:#555;margin-bottom:4px;">Nature / Description of Incident:</p>' +
+      '<p class="indent">' + esc(data.purpose) + '</p>' +
+      buildDualSignature(captainName);
+  }
+
+  // ── Signature helpers ─────────────────────────────────
+  function buildSignature(captainName) {
+    var name = captainName || 'PAQUITO EDUARTE';
+    return '<div class="sig-section">' +
+      '<p style="font-size:10pt;margin-bottom:0;">Attested by:</p>' +
+      '<div class="sig-block">' +
+      '<div class="sig-line"></div>' +
+      '<div class="sig-name">' + esc(name.toUpperCase()) + '</div>' +
+      '<div class="sig-title">Punong Barangay</div>' +
+      '<div class="sig-title" style="color:#888;font-size:8.5pt;">Barangay Sirangan, Sorsogon City</div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function buildDualSignature(captainName) {
+    var name = captainName || 'PAQUITO EDUARTE';
+    return '<div class="dual-sig">' +
+      '<div class="sig-block">' +
+      '<p style="font-size:9.5pt;margin-bottom:0;">Prepared by:</p>' +
+      '<div class="sig-line" style="width:170px;"></div>' +
+      '<div class="sig-name" style="font-size:9pt;">Barangay Secretary</div>' +
+      '</div>' +
+      '<div class="sig-block">' +
+      '<p style="font-size:9.5pt;margin-bottom:0;">Noted by:</p>' +
+      '<div class="sig-line" style="width:170px;"></div>' +
+      '<div class="sig-name">' + esc(name.toUpperCase()) + '</div>' +
+      '<div class="sig-title">Punong Barangay</div>' +
+      '<div class="sig-title" style="color:#888;font-size:8.5pt;">Barangay Sirangan, Sorsogon City</div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  // ── Render complete document ───────────────────────────
+  function renderDocument(data, config) {
+    var captainName = (config && config.captainName) || 'Paquito Eduarte';
+    var docType = data.documentType || '';
+    var trackingId = data.trackingId || '';
+
+    // Update toolbar
+    var title = DOC_TITLES[docType] || docType;
+    document.getElementById('toolbarTitle').textContent = title;
+    document.getElementById('toolbarTracking').textContent = trackingId;
+
+    var badge = document.getElementById('statusBadge');
+    if (data.status) {
+      badge.textContent = STATUS_LABELS[data.status] || data.status;
+      badge.className = 'px-2 py-0.5 rounded-full text-xs font-semibold ' + (STATUS_BADGE[data.status] || 'bg-gray-100 text-gray-700');
+      badge.classList.remove('hidden');
+    }
+
+    // Update back button
+    if (data.id || requestId) {
+      document.getElementById('backBtn').href = '/admin/request-detail.html?id=' + (data.id || requestId);
+    }
+
+    // Build header
+    document.getElementById('docHeader').innerHTML = buildHeader(config);
+    document.getElementById('docTitle').textContent = title.toUpperCase();
+
+    // Body
+    var body = '';
+    switch (docType) {
+      case 'BARANGAY_CLEARANCE':         body = renderClearance(data, captainName);      break;
+      case 'CERTIFICATE_OF_RESIDENCY':   body = renderResidency(data, captainName);      break;
+      case 'CERTIFICATE_OF_INDIGENCY':   body = renderIndigency(data, captainName);      break;
+      case 'BUSINESS_PERMIT_ENDORSEMENT':body = renderBusinessPermit(data, captainName); break;
+      case 'INCIDENT_REPORT':            body = renderIncidentReport(data, captainName); break;
+      default:
+        body = '<p class="text-gray-400">Unknown document type: ' + esc(docType) + '</p>';
+    }
+    document.getElementById('docBody').innerHTML = body;
+
+    // Meta row: issued to + date
+    document.getElementById('docMetaRow').innerHTML =
+      '<span>Issued to: <strong>' + esc(residentName(data)) + '</strong></span>' +
+      '<span>Date Issued: <strong>' + today() + '</strong></span>';
+
+    // Generated-by footer
+    document.getElementById('certFooter').textContent =
+      'This document is electronically generated by the Barangay Sirangan Digital Portal. ' +
+      'For verification, please present this to the Barangay Sirangan Office.';
+
+    // Animate paper in
+    var paper = document.getElementById('paper');
+    requestAnimationFrame(function() {
+      paper.style.opacity = '1';
+      paper.style.transform = 'translateY(0)';
+    });
+  }
+
+  // ── Inline Word-Editor mode ───────────────────────────
+  var isEditing = false;
+  var EDIT_AREAS = ['docBody', 'docTitle', 'docMetaRow'];
+
+  function toggleEditMode() {
+    if (isEditing) exitEditMode();
+    else enterEditMode();
+  }
+
+  function enterEditMode() {
+    isEditing = true;
+    EDIT_AREAS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.contentEditable = 'true';
+    });
+    document.getElementById('formatToolbar').classList.remove('hidden');
+    var btn = document.getElementById('editBtn');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Done Editing';
+    btn.className = 'bg-green-500 hover:bg-green-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2';
+    // Scroll to and focus the document body
+    var body = document.getElementById('docBody');
+    if (body) { body.focus(); body.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+
+  function exitEditMode() {
+    isEditing = false;
+    EDIT_AREAS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.contentEditable = 'false';
+    });
+    document.getElementById('formatToolbar').classList.add('hidden');
+    var btn = document.getElementById('editBtn');
+    btn.innerHTML = '<i class="fa-solid fa-pen"></i> Edit';
+    btn.className = 'bg-yellow-500 hover:bg-yellow-400 px-3 py-1.5 rounded-lg text-sm font-semibold transition flex items-center gap-2';
+  }
+
+  function formatDoc(cmd, val) {
+    document.execCommand(cmd, false, val !== undefined ? val : null);
+  }
+
+  // ── Actions ───────────────────────────────────────────
+  function handlePrint() {
+    window.print();
+  }
+
+  function handleDownload() {
+    if (!requestId) return;
+    var token = localStorage.getItem('authToken');
+    // Fetch PDF as blob then trigger download
+    fetch('/api/pdf/generate/' + requestId, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function(res) {
+      if (!res.ok) throw new Error('PDF generation failed');
+      return res.blob();
+    }).then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      var fname = (requestData && requestData.trackingId ? requestData.trackingId : requestId) +
+                  '_' + (requestData && requestData.documentType ? requestData.documentType : 'DOCUMENT') + '.pdf';
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 2000);
+      if (typeof Utils !== 'undefined') Utils.showToast('PDF downloaded', 'success');
+    }).catch(function(e) {
+      if (typeof Utils !== 'undefined') Utils.showToast('Download failed: ' + e.message, 'error');
+      else alert('Download failed: ' + e.message);
+    });
+  }
+
+  // ── Bootstrap ─────────────────────────────────────────
+  async function init() {
+    if (!requestId) {
+      hideLoading();
+      document.getElementById('errorBox').classList.remove('hidden');
+      document.getElementById('errorMsg').textContent = 'No request ID specified.';
+      return;
+    }
+
+    try {
+      // Load request data and barangay config in parallel
+      var results = await Promise.all([
+        get('/admin/requests/' + requestId),
+        fetch('/api/config').then(function(r) { return r.json(); }).catch(function() { return {}; })
+      ]);
+      requestData = results[0];
+      configData  = results[1];
+
+      // Normalize: the admin route may return data slightly differently
+      if (!requestData.id) requestData.id = requestId;
+
+      renderDocument(requestData, configData);
+      hideLoading();
+    } catch(e) {
+      hideLoading();
+      document.getElementById('errorBox').classList.remove('hidden');
+      document.getElementById('errorMsg').textContent = 'Failed to load request: ' + e.message;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

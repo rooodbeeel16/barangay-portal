@@ -1,0 +1,266 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcements — Barangay Sirangan Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* ── Navigation ── */
+    .nav-wrap { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid #e8edf3; transition: box-shadow 0.3s ease; }
+    .nav-wrap.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.07); }
+    .nav-link { color: #475569; font-size: 0.875rem; font-weight: 500; padding: 0.45rem 0.85rem; border-radius: 8px; transition: color 0.18s ease, background 0.18s ease; }
+    .nav-link:hover { color: #0f172a; background: #f1f5f9; }
+    .nav-link.active { color: #1d4ed8; background: #eff6ff; font-weight: 600; }
+    .nav-cta { background: #1d4ed8; color: #fff; font-size: 0.8125rem; font-weight: 600; padding: 0.5rem 1.1rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
+    .nav-cta:hover { background: #1e40af; box-shadow: 0 4px 14px rgba(29,78,216,0.32); transform: translateY(-1px); }
+    .mobile-nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 10px; font-weight: 500; font-size: 0.9rem; color: #334155; transition: background 0.15s ease, color 0.15s ease; }
+    .mobile-nav-link:hover { background: #f1f5f9; color: #0f172a; }
+    .mobile-nav-link.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+    /* ── Page Hero ── */
+    .page-hero { background: linear-gradient(160deg, #0c1f3f 0%, #1a3a6e 45%, #1d4ed8 100%); position: relative; overflow: hidden; }
+    .page-hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 56px 56px; pointer-events: none; mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%); }
+    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; }
+    .line-clamp-4{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+    .filter-btn.active-filter { background: linear-gradient(135deg,#0f2044,#1d4ed8); color: #fff; border-color: transparent; }
+  </style>
+</head>
+<body class="bg-slate-50 antialiased">
+<nav class="nav-wrap fixed w-full top-0 z-50" id="mainNav">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="/index.html" class="flex items-center gap-2.5 group flex-shrink-0">
+      <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition">
+      <div>
+        <div class="font-extrabold text-slate-900 text-sm leading-tight tracking-tight">Barangay Sirangan</div>
+        <div class="text-xs text-slate-400 leading-tight">Sorsogon City</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-0.5">
+      <a href="/index.html"         class="nav-link">Home</a>
+      <a href="/about.html"         class="nav-link">About</a>
+      <a href="/services.html"      class="nav-link">Services</a>
+      <a href="/announcements.html" class="nav-link active">Announcements</a>
+      <a href="/appointment.html"   class="nav-link">Appointments</a>
+      <a href="/contact.html"       class="nav-link">Contact</a>
+    </div>
+    <div class="hidden md:flex items-center gap-2">
+      <a href="/track.html" class="nav-cta"><i class="fa-solid fa-magnifying-glass text-xs"></i>Track Document</a>
+    </div>
+    <button id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false" class="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition text-slate-600">
+      <i class="fa-solid fa-bars text-lg" id="menuIcon"></i>
+    </button>
+  </div>
+  <div id="mobileMenu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-5 shadow-lg">
+    <div class="space-y-0.5">
+      <a href="/index.html"         class="mobile-nav-link"><i class="fa-solid fa-house w-4 text-slate-400"></i>Home</a>
+      <a href="/about.html"         class="mobile-nav-link"><i class="fa-solid fa-circle-info w-4 text-slate-400"></i>About</a>
+      <a href="/services.html"      class="mobile-nav-link"><i class="fa-solid fa-briefcase w-4 text-slate-400"></i>Services</a>
+      <a href="/announcements.html" class="mobile-nav-link active"><i class="fa-solid fa-bullhorn w-4 text-blue-600"></i>Announcements</a>
+      <a href="/appointment.html"   class="mobile-nav-link"><i class="fa-solid fa-calendar-check w-4 text-slate-400"></i>Appointments</a>
+      <a href="/contact.html"       class="mobile-nav-link"><i class="fa-solid fa-phone w-4 text-slate-400"></i>Contact</a>
+    </div>
+    <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+      <a href="/request.html" class="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-clipboard-list"></i>Request</a>
+      <a href="/track.html" class="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl text-sm transition"><i class="fa-solid fa-magnifying-glass"></i>Track</a>
+    </div>
+  </div>
+</nav>
+<section class="page-hero pt-16 pb-14 text-white">
+  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-2 text-center">
+    <div class="mb-5"><span class="hero-badge"><i class="fa-solid fa-bullhorn text-[10px]"></i>Community Updates</span></div>
+    <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Announcements</h1>
+    <p class="text-blue-200/80 text-base md:text-lg max-w-lg mx-auto leading-relaxed">Stay updated with news, advisories, and events from Barangay Sirangan.</p>
+  </div>
+</section>
+
+
+<section class="py-10" data-reveal>
+  <div class="max-w-5xl mx-auto px-4">
+    <div class="flex flex-wrap gap-2 mb-8" id="filterTabs">
+      <button class="filter-btn active-filter px-4 py-2 rounded-full text-sm font-semibold border border-transparent transition" data-cat="ALL">All</button>
+      <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition" data-cat="GENERAL">General</button>
+      <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition" data-cat="HEALTH">Health</button>
+      <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition" data-cat="SAFETY">Safety</button>
+      <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition" data-cat="EVENT">Event</button>
+      <button class="filter-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition" data-cat="ADVISORY">Advisory</button>
+    </div>
+    <div id="loadingState" class="space-y-4">
+      <div class="bg-white rounded-3xl h-36 animate-pulse border border-slate-100"></div>
+      <div class="bg-white rounded-3xl h-36 animate-pulse border border-slate-100"></div>
+      <div class="bg-white rounded-3xl h-36 animate-pulse border border-slate-100"></div>
+    </div>
+    <div id="announcementsList" class="hidden space-y-4"></div>
+    <div id="emptyState" class="hidden text-center py-20">
+      <div class="text-6xl mb-4 text-slate-300"><i class="fa-solid fa-envelope-open"></i></div>
+      <h3 class="text-xl font-bold text-slate-600 mb-2">No Announcements Found</h3>
+      <p class="text-slate-400">There are no announcements in this category at the moment.</p>
+    </div>
+  </div>
+</section>
+<footer class="bg-slate-950 text-white pt-14 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-10">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10">
+          <div>
+            <div class="font-bold text-base text-white">Barangay Sirangan</div>
+            <div class="text-slate-400 text-sm">Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+        <p class="text-slate-400 text-sm leading-relaxed">Serving our community with dedication, transparency, and efficiency through modern digital governance.</p>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Links</h4>
+        <nav class="space-y-2 text-sm">
+          <a href="/request.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-clipboard-list w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Request Document</a>
+          <a href="/track.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-magnifying-glass w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Track Request</a>
+          <a href="/announcements.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-bullhorn w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Announcements</a>
+          <a href="/about.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-circle-info w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>About Us</a>
+          <a href="/contact.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-phone w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Contact</a>
+        </nav>
+      </div>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Office Info</h4>
+        <div class="text-sm text-slate-400 space-y-3">
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Office Hours</div>
+            <div>Monday – Friday</div>
+            <div>8:00 AM – 5:00 PM</div>
+            <div class="text-xs text-slate-600 mt-1">Closed weekends &amp; holidays</div>
+          </div>
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Address</div>
+            <div>Brgy. Sirangan Hall</div>
+            <div>Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-slate-800/60 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+      <p>© 2025 Barangay Sirangan, Sorsogon City, Sorsogon. All rights reserved.</p>
+      <a href="/admin/login.html" class="hover:text-slate-300 transition">Admin Login</a>
+    </div>
+  </div>
+</footer>
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  /* ── Nav scroll effect ── */
+  (function () {
+    var nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+  })();
+  /* ── Mobile menu ── */
+  document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+    var menu = document.getElementById('mobileMenu');
+    var icon = document.getElementById('menuIcon');
+    var open = !menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', open);
+    icon.className = open ? 'fa-solid fa-bars text-lg' : 'fa-solid fa-xmark text-lg';
+    this.setAttribute('aria-expanded', String(!open));
+  });
+
+  const CATEGORY_COLORS = {
+    GENERAL: 'bg-blue-100 text-blue-800',
+    HEALTH: 'bg-green-100 text-green-800',
+    SAFETY: 'bg-red-100 text-red-800',
+    EVENT: 'bg-purple-100 text-purple-800',
+    ADVISORY: 'bg-yellow-100 text-yellow-800',
+  };
+
+  let allAnnouncements = [];
+  let activeFilter = 'ALL';
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderAnnouncements(list) {
+    const container = document.getElementById('announcementsList');
+    const empty = document.getElementById('emptyState');
+    if (!list.length) {
+      container.classList.add('hidden');
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    container.classList.remove('hidden');
+    container.innerHTML = list.map(function(a) {
+      var cat = a.category || 'GENERAL';
+      var colorClass = CATEGORY_COLORS[cat] || 'bg-gray-100 text-gray-800';
+      var dateStr = Utils.formatDateTime(a.createdAt || a.date);
+      var content = escapeHtml(a.content || '');
+      var title = escapeHtml(a.title || '');
+      var author = escapeHtml(a.authorName || a.author || 'Barangay Sirangan');
+      var id = a.id || Math.random().toString(36).substr(2);
+      return '<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition">' +
+        '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">' +
+        '<div class="flex items-center gap-3">' +
+        '<span class="text-xs px-3 py-1 rounded-full font-semibold ' + colorClass + '">' + cat + '</span>' +
+        '<span class="text-xs text-gray-400">' + dateStr + '</span>' +
+        '</div>' +
+        '<span class="text-xs text-gray-400">By: ' + author + '</span>' +
+        '</div>' +
+        '<h3 class="text-lg font-bold text-[#1e3a5f] mb-3">' + title + '</h3>' +
+        '<div id="content-' + id + '" class="text-gray-600 text-sm leading-relaxed line-clamp-4">' + content.replace(/\n/g, '<br>') + '</div>' +
+        '<button onclick="toggleExpand(\'' + id + '\', this)" class="mt-3 text-[#1e3a5f] text-sm font-semibold hover:underline" data-expanded="false">Read More ↓</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  function toggleExpand(id, btn) {
+    var el = document.getElementById('content-' + id);
+    var expanded = btn.dataset.expanded === 'true';
+    if (expanded) {
+      el.classList.add('line-clamp-4');
+      btn.textContent = 'Read More ↓';
+      btn.dataset.expanded = 'false';
+    } else {
+      el.classList.remove('line-clamp-4');
+      btn.textContent = 'Show Less ↑';
+      btn.dataset.expanded = 'true';
+    }
+  }
+
+  async function loadAnnouncements() {
+    try {
+      const data = await get('/announcements');
+      allAnnouncements = Array.isArray(data) ? data : (data.announcements || []);
+      allAnnouncements = allAnnouncements.filter(function(a) { return a.published !== false; });
+      document.getElementById('loadingState').classList.add('hidden');
+      renderAnnouncements(allAnnouncements);
+    } catch (e) {
+      document.getElementById('loadingState').innerHTML = '<div class="text-center text-gray-400 py-12 bg-white rounded-2xl border border-gray-100">Could not load announcements. Please try again later.</div>';
+    }
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      activeFilter = this.dataset.cat;
+      document.querySelectorAll('.filter-btn').forEach(function(b) {
+        b.classList.remove('bg-[#1e3a5f]', 'text-white', 'active-filter');
+        b.classList.add('bg-white', 'border', 'border-gray-200', 'text-gray-700');
+      });
+      this.classList.add('bg-[#1e3a5f]', 'text-white', 'active-filter');
+      this.classList.remove('bg-white', 'border', 'border-gray-200', 'text-gray-700');
+      var filtered = activeFilter === 'ALL' ? allAnnouncements : allAnnouncements.filter(function(a) { return a.category === activeFilter; });
+      renderAnnouncements(filtered);
+    });
+  });
+
+  loadAnnouncements();
+</script>
+
+<button id="backToTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+<script src="/js/portal.js"></script>
+</body>
+</html>

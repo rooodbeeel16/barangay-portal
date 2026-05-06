@@ -1,0 +1,850 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barangay Sirangan — Digital Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+
+    /* ── Navigation ── */
+    .nav-wrap {
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid #e8edf3;
+      transition: box-shadow 0.3s ease;
+    }
+    .nav-wrap.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.07); }
+    .nav-link {
+      color: #475569;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      transition: color 0.18s ease, background 0.18s ease;
+    }
+    .nav-link:hover { color: #0f172a; background: #f1f5f9; }
+    .nav-link.active { color: #1d4ed8; background: #eff6ff; font-weight: 600; }
+    .nav-cta {
+      background: #1d4ed8;
+      color: #fff;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .nav-cta:hover { background: #1e40af; box-shadow: 0 4px 14px rgba(29,78,216,0.32); transform: translateY(-1px); }
+
+    /* ── Hero ── */
+    .hero-section {
+      background: linear-gradient(160deg, #0c1f3f 0%, #1a3a6e 45%, #1d4ed8 100%);
+      min-height: 88vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-mesh {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 15% 85%, rgba(245,158,11,0.08) 0%, transparent 45%),
+        radial-gradient(circle at 85% 15%, rgba(99,102,241,0.10) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 56px 56px;
+      pointer-events: none;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.3);
+      color: #fbbf24;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+    }
+    .hero-stat {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 16px 22px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .hero-stat:hover { background: rgba(255,255,255,0.11); transform: translateY(-2px); }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: #f59e0b;
+      color: #1a1a1a;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      font-size: 0.9375rem;
+    }
+    .btn-primary:hover { background: #fbbf24; box-shadow: 0 8px 28px rgba(245,158,11,0.4); transform: translateY(-2px); }
+    .btn-outline {
+      background: rgba(255,255,255,0.08);
+      color: #e2e8f0;
+      border: 1px solid rgba(255,255,255,0.18);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      font-size: 0.9375rem;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); transform: translateY(-2px); }
+    .btn-ghost {
+      background: transparent;
+      color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.15);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      font-size: 0.9375rem;
+    }
+    .btn-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.06); }
+
+    /* ── Section label ── */
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 5px 14px;
+      border-radius: 100px;
+    }
+
+    /* ── Service Cards ── */
+    .svc-card {
+      background: #fff;
+      border: 1px solid #e8edf3;
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+    }
+    .svc-card:hover {
+      border-color: #c7d7f8;
+      box-shadow: 0 8px 32px rgba(29,78,216,0.09);
+      transform: translateY(-4px);
+    }
+    .svc-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+      transition: transform 0.22s ease;
+    }
+    .svc-card:hover .svc-icon { transform: scale(1.1); }
+    .svc-req { background: #f8fafc; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; }
+
+    /* Icon color sets */
+    .ic-blue   { background: #eff6ff; color: #2563eb; }
+    .ic-green  { background: #f0fdf4; color: #16a34a; }
+    .ic-purple { background: #faf5ff; color: #7c3aed; }
+    .ic-amber  { background: #fffbeb; color: #d97706; }
+    .ic-red    { background: #fff5f5; color: #dc2626; }
+
+    /* ── Announcement cards ── */
+    .ann-card {
+      background: #fff;
+      border: 1px solid #e8edf3;
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .ann-card:hover { border-color: #c7d7f8; box-shadow: 0 6px 24px rgba(0,0,0,0.07); transform: translateY(-3px); }
+
+    /* ── Step cards ── */
+    .step-card {
+      background: #fff;
+      border: 1px solid #e8edf3;
+      border-radius: 20px;
+      padding: 32px 28px;
+      text-align: center;
+      transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+    }
+    .step-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); transform: translateY(-4px); }
+    .step-card:hover.step-blue  { border-color: #bfdbfe; }
+    .step-card:hover.step-amber { border-color: #fde68a; }
+    .step-card:hover.step-green { border-color: #a7f3d0; }
+
+    /* ── Connector line between steps ── */
+    .step-connector {
+      position: absolute;
+      top: 50%;
+      right: -28px;
+      width: 28px;
+      height: 2px;
+      background: linear-gradient(90deg, #e2e8f0, #c7d7f8);
+      transform: translateY(-50%);
+    }
+
+    /* ── Fade-in animation for hero ── */
+    .fade-up { animation: fadeUp 0.65s ease forwards; opacity: 0; }
+    .d1 { animation-delay: 0.05s; }
+    .d2 { animation-delay: 0.2s; }
+    .d3 { animation-delay: 0.35s; }
+    .d4 { animation-delay: 0.5s; }
+    .d5 { animation-delay: 0.65s; }
+
+    /* ── Trust bar ── */
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.65);
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+    .trust-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      flex-shrink: 0;
+    }
+
+    /* ── CTA section ── */
+    .cta-section {
+      background: linear-gradient(135deg, #0c1f3f 0%, #1a3a6e 60%, #2563eb 100%);
+    }
+
+    /* ── Mobile menu ── */
+    .mobile-nav-link {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 16px;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #334155;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .mobile-nav-link:hover { background: #f1f5f9; color: #0f172a; }
+    .mobile-nav-link.active { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+
+    /* ── Help card (dark) ── */
+    .help-card {
+      background: linear-gradient(145deg, #0c1f3f 0%, #1a3a6e 55%, #2563eb 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 antialiased">
+
+<!-- ═══════════════════════ NAVIGATION ═══════════════════════ -->
+<nav class="nav-wrap fixed w-full top-0 z-50" id="mainNav">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+
+    <!-- Brand -->
+    <a href="/index.html" class="flex items-center gap-2.5 group flex-shrink-0">
+      <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo"
+           class="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition">
+      <div>
+        <div class="font-extrabold text-slate-900 text-sm leading-tight tracking-tight">BARANGAY SIRANGAN</div>
+        <div class="text-xs text-slate-400 leading-tight">East Disctrict, Sorsogon City</div>
+      </div>
+    </a>
+
+    <!-- Desktop links -->
+    <div class="hidden md:flex items-center gap-0.5">
+      <a href="/index.html"         class="nav-link active">Home</a>
+      <a href="/about.html"         class="nav-link">About</a>
+      <a href="/services.html"      class="nav-link">Services</a>
+      <a href="/announcements.html" class="nav-link">Announcements</a>
+      <a href="/appointment.html"   class="nav-link">Appointments</a>
+      <a href="/contact.html"       class="nav-link">Contact</a>
+    </div>
+
+    <!-- Desktop CTA -->
+    <div class="hidden md:flex items-center gap-2">
+      <a href="/request.html" class="nav-cta">
+        <i class="fa-solid fa-clipboard-list text-xs"></i>Request Document
+      </a>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false"
+            class="md:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition text-slate-600">
+      <i class="fa-solid fa-bars text-lg" id="menuIcon"></i>
+    </button>
+  </div>
+
+  <!-- Mobile menu panel -->
+  <div id="mobileMenu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-5 shadow-lg">
+    <div class="space-y-0.5">
+      <a href="/index.html"         class="mobile-nav-link active"><i class="fa-solid fa-house w-4 text-blue-600"></i>Home</a>
+      <a href="/about.html"         class="mobile-nav-link"><i class="fa-solid fa-circle-info w-4 text-slate-400"></i>About</a>
+      <a href="/services.html"      class="mobile-nav-link"><i class="fa-solid fa-briefcase w-4 text-slate-400"></i>Services</a>
+      <a href="/announcements.html" class="mobile-nav-link"><i class="fa-solid fa-bullhorn w-4 text-slate-400"></i>Announcements</a>
+      <a href="/appointment.html"   class="mobile-nav-link"><i class="fa-solid fa-calendar-check w-4 text-slate-400"></i>Appointments</a>
+      <a href="/contact.html"       class="mobile-nav-link"><i class="fa-solid fa-phone w-4 text-slate-400"></i>Contact</a>
+    </div>
+    <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+      <a href="/request.html" class="flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-3 rounded-xl text-sm transition">
+        <i class="fa-solid fa-clipboard-list"></i>Request
+      </a>
+      <a href="/track.html" class="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl text-sm transition">
+        <i class="fa-solid fa-magnifying-glass"></i>Track
+      </a>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section class="hero-section pt-16 text-center">
+  <div class="hero-grid"></div>
+  <div class="hero-mesh"></div>
+
+  <div class="relative w-full max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28">
+
+    <div class="flex flex-col items-center justify-center max-w-3xl mx-auto">
+
+      <!-- Badge -->
+      <div class="mb-5 fade-up d1">
+        <span class="hero-badge">
+          <i class="fa-solid fa-shield-halved text-[10px]"></i>
+          Official Digital Portal
+        </span>
+      </div>
+
+      <!-- Heading -->
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] tracking-tight mb-5 fade-up d2">
+        Welcome to<br>
+        <span class="text-amber-400">Barangay Sirangan</span>
+      </h1>
+
+      <!-- Description -->
+      <p class="text-base md:text-lg text-blue-200/80 mb-10 leading-relaxed fade-up d3">
+        Sorsogon City, Sorsogon — Your one-stop portal for barangay documents, announcements, and services.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center fade-up d3">
+
+        <a href="/request.html"
+           class="btn-primary flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold">
+          <i class="fa-solid fa-clipboard-list"></i>
+          Request a Document
+        </a>
+
+        <a href="/track.html"
+           class="btn-outline flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          Track Your Request
+        </a>
+
+        <a href="/services.html"
+           class="btn-ghost flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold">
+          <i class="fa-solid fa-list"></i>
+          View Services
+        </a>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ SERVICES ═══════════════════════ -->
+<section class="py-20 md:py-24 bg-slate-50" id="services" data-reveal>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
+    <!-- Header -->
+    <div class="text-center mb-14">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-4">
+        <i class="fa-solid fa-briefcase text-[10px]"></i>
+        Our Services
+      </div>
+
+      <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+        Official Barangay Documents
+      </h2>
+
+      <p class="text-slate-500 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+        Fast, official, and reliable document services for residents of Barangay Sirangan.
+      </p>
+    </div>
+
+    <!-- Grid -->
+<!-- Grid Wrapper -->
+<div class="space-y-6">
+
+  <!-- ROW 1: 3 CARDS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Barangay Clearance -->
+    <div class="group bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition">
+          <i class="fa-solid fa-file-lines"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Barangay Clearance</h3>
+      </div>
+
+      <p class="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
+        Official proof of good standing and residency within the barangay.
+      </p>
+
+      <a href="/request.html?type=BARANGAY_CLEARANCE"
+         class="w-full text-center bg-slate-900 hover:bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+        Request Now
+      </a>
+    </div>
+
+    <!-- Residency -->
+    <div class="group bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition">
+          <i class="fa-solid fa-house"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Certificate of Residency</h3>
+      </div>
+
+      <p class="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
+        Confirms you are a verified resident of Barangay Sirangan.
+      </p>
+
+      <a href="/request.html?type=CERTIFICATE_OF_RESIDENCY"
+         class="w-full text-center bg-slate-900 hover:bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+        Request Now
+      </a>
+    </div>
+
+    <!-- Indigency -->
+    <div class="group bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-110 transition">
+          <i class="fa-solid fa-handshake"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Certificate of Indigency</h3>
+      </div>
+
+      <p class="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
+        For financial assistance, scholarships, and medical support needs.
+      </p>
+
+      <a href="/request.html?type=CERTIFICATE_OF_INDIGENCY"
+         class="w-full text-center bg-slate-900 hover:bg-purple-600 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+        Request Now
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: 2 CENTERED CARDS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-5xl mx-auto">
+
+    <!-- Business -->
+    <div class="group bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition">
+          <i class="fa-solid fa-building"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Business Endorsement</h3>
+      </div>
+
+      <p class="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
+        Required document for securing business permits at City Hall.
+      </p>
+
+      <a href="/request.html?type=BUSINESS_PERMIT_ENDORSEMENT"
+         class="w-full text-center bg-slate-900 hover:bg-amber-600 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+        Request Now
+      </a>
+    </div>
+
+    <!-- Incident -->
+    <div class="group bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center group-hover:scale-110 transition">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Incident Report</h3>
+      </div>
+
+      <p class="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
+        Report disputes, complaints, or incidents officially recorded by the barangay.
+      </p>
+
+      <a href="/request.html?type=INCIDENT_REPORT"
+         class="w-full text-center bg-slate-900 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+        Request Now
+      </a>
+    </div>
+
+  </div>
+
+</div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════ ANNOUNCEMENTS ═══════════════════════ -->
+<section class="py-20 md:py-24 bg-slate-50" data-reveal>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between sm:items-end gap-6 mb-12">
+
+      <div>
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold mb-4">
+          <i class="fa-solid fa-bullhorn text-[10px]"></i>
+          Latest Updates
+        </div>
+
+        <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">
+          Announcements
+        </h2>
+
+        <p class="text-slate-500 text-sm md:text-base max-w-md leading-relaxed">
+          Important news, updates, and activities from Barangay Sirangan.
+        </p>
+      </div>
+
+      <a href="/announcements.html"
+         class="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">
+        View All
+        <i class="fa-solid fa-arrow-right text-xs"></i>
+      </a>
+
+    </div>
+
+    <!-- Grid -->
+    <div id="announcementsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Skeleton loading cards -->
+      <div class="bg-white rounded-2xl border border-slate-100 p-5 animate-pulse">
+        <div class="h-40 bg-slate-100 rounded-xl mb-4"></div>
+        <div class="h-4 bg-slate-100 rounded w-3/4 mb-2"></div>
+        <div class="h-3 bg-slate-100 rounded w-1/2"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-100 p-5 animate-pulse">
+        <div class="h-40 bg-slate-100 rounded-xl mb-4"></div>
+        <div class="h-4 bg-slate-100 rounded w-3/4 mb-2"></div>
+        <div class="h-3 bg-slate-100 rounded w-1/2"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-100 p-5 animate-pulse">
+        <div class="h-40 bg-slate-100 rounded-xl mb-4"></div>
+        <div class="h-4 bg-slate-100 rounded w-3/4 mb-2"></div>
+        <div class="h-3 bg-slate-100 rounded w-1/2"></div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════ HOW IT WORKS ═══════════════════════ -->
+<section class="py-20 md:py-24 bg-white" data-reveal>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
+    <!-- Header -->
+    <div class="text-center mb-14">
+      <div class="section-label bg-emerald-50 text-emerald-700 mb-4">
+        <i class="fa-solid fa-list-check text-[10px]"></i>Simple Process
+      </div>
+      <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">How It Works</h2>
+      <p class="text-slate-500 text-base">Get your documents in 3 simple steps</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+      <!-- Step 1 -->
+      <div class="step-card step-blue relative">
+        <div class="relative inline-block mb-5">
+          <div class="w-16 h-16 ic-blue rounded-2xl flex items-center justify-center text-2xl mx-auto">
+            <i class="fa-solid fa-clipboard-list"></i>
+          </div>
+          <div class="absolute -top-1.5 -right-1.5 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow-md">1</div>
+        </div>
+        <h3 class="text-lg font-extrabold text-slate-900 mb-2">Submit Request</h3>
+        <p class="text-slate-500 text-sm leading-relaxed mb-6">Fill out the online form with your personal details and the document you need. No registration required.</p>
+        <div class="pt-4 border-t border-slate-100">
+          <a href="/request.html" class="text-blue-600 text-sm font-bold hover:underline inline-flex items-center gap-1.5">
+            Start Here <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card step-amber relative">
+        <div class="relative inline-block mb-5">
+          <div class="w-16 h-16 ic-amber rounded-2xl flex items-center justify-center text-2xl mx-auto">
+            <i class="fa-solid fa-qrcode"></i>
+          </div>
+          <div class="absolute -top-1.5 -right-1.5 w-7 h-7 bg-amber-500 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow-md">2</div>
+        </div>
+        <h3 class="text-lg font-extrabold text-slate-900 mb-2">Get Tracking ID</h3>
+        <p class="text-slate-500 text-sm leading-relaxed mb-6">Receive a unique tracking ID and QR code immediately after submission to monitor your request status.</p>
+        <div class="pt-4 border-t border-slate-100">
+          <a href="/track.html" class="text-amber-600 text-sm font-bold hover:underline inline-flex items-center gap-1.5">
+            Track Now <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card step-green relative">
+        <div class="relative inline-block mb-5">
+          <div class="w-16 h-16 ic-green rounded-2xl flex items-center justify-center text-2xl mx-auto">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div class="absolute -top-1.5 -right-1.5 w-7 h-7 bg-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow-md">3</div>
+        </div>
+        <h3 class="text-lg font-extrabold text-slate-900 mb-2">Track &amp; Receive</h3>
+        <p class="text-slate-500 text-sm leading-relaxed mb-6">Track your document status online and pick it up at the barangay hall when it is ready for release.</p>
+        <div class="pt-4 border-t border-slate-100">
+          <a href="/about.html" class="text-emerald-600 text-sm font-bold hover:underline inline-flex items-center gap-1.5">
+            Learn More <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-12">
+      <a href="/request.html"
+         class="inline-flex items-center gap-2.5 bg-blue-700 hover:bg-blue-800 text-white px-10 py-4 rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5">
+        <i class="fa-solid fa-rocket"></i>Get Started Now
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════ CTA BANNER ═══════════════════════ -->
+<section class="cta-section py-20" data-reveal>
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 text-center text-white">
+    <div class="w-14 h-14 bg-amber-400/15 border border-amber-400/25 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-6">
+      <i class="fa-solid fa-shield-halved text-amber-400"></i>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-extrabold mb-4 tracking-tight">Ready to Request Your Document?</h2>
+    <p class="text-blue-200/80 text-base mb-10 leading-relaxed">
+      Join hundreds of residents who use our digital portal for fast, convenient, and transparent barangay services.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="/request.html" class="btn-primary justify-center">
+        <i class="fa-solid fa-clipboard-list"></i>Request Now
+      </a>
+      <a href="/contact.html" class="btn-outline justify-center">
+        <i class="fa-solid fa-phone"></i>Contact Us
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="bg-slate-950 text-white pt-16 pb-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+
+      <!-- Brand col -->
+      <div class="sm:col-span-2 lg:col-span-2">
+        <div class="flex items-center gap-3 mb-4">
+          <img src="/assets/logo/sirangan-bg.png" alt="Sirangan Logo"
+               class="w-11 h-11 rounded-full object-cover ring-2 ring-white/10">
+          <div>
+            <div class="font-bold text-lg text-white">Barangay Sirangan</div>
+            <div class="text-slate-400 text-sm">Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+        <p class="text-slate-400 text-sm leading-relaxed max-w-sm mb-6">
+          Serving our community with dedication, transparency, and efficiency through modern digital governance and accessible public services.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <a href="/request.html"
+             class="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors duration-200">
+            <i class="fa-solid fa-clipboard-list"></i>Request Document
+          </a>
+          <a href="/track.html"
+             class="inline-flex items-center gap-2 bg-white/8 hover:bg-white/15 text-slate-300 hover:text-white px-4 py-2.5 rounded-xl text-xs font-semibold border border-white/10 transition-colors duration-200">
+            <i class="fa-solid fa-magnifying-glass"></i>Track Request
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick links -->
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5">Quick Links</h4>
+        <nav class="space-y-2 text-sm">
+          <a href="/request.html"       class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-clipboard-list w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Request Document</a>
+          <a href="/track.html"         class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-magnifying-glass w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Track Request</a>
+          <a href="/announcements.html" class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-bullhorn w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Announcements</a>
+          <a href="/appointment.html"   class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-calendar-check w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Appointments</a>
+          <a href="/about.html"         class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-circle-info w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>About Us</a>
+          <a href="/contact.html"       class="flex items-center gap-2.5 text-slate-400 hover:text-white transition group"><i class="fa-solid fa-phone w-4 text-slate-600 group-hover:text-amber-400 transition text-xs"></i>Contact</a>
+        </nav>
+      </div>
+
+      <!-- Office info -->
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5">Office Info</h4>
+        <div class="text-sm text-slate-400 space-y-4">
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Office Hours</div>
+            <div>Monday – Friday</div>
+            <div>8:00 AM – 5:00 PM</div>
+            <div class="text-xs text-slate-600 mt-1">Closed weekends &amp; holidays</div>
+          </div>
+          <div>
+            <div class="text-white text-xs font-semibold mb-1">Address</div>
+            <div>Brgy. Sirangan Hall</div>
+            <div>Sorsogon City, Sorsogon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-800/60 pt-7 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+      <p>© 2025 Barangay Sirangan, Sorsogon City, Sorsogon. All rights reserved.</p>
+      <a href="/admin/login.html" class="hover:text-slate-300 transition">Admin Login</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script>
+  /* ── Nav scroll effect ── */
+  (function () {
+    var nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+  })();
+
+  /* ── Mobile menu ── */
+  document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+    var menu = document.getElementById('mobileMenu');
+    var icon = document.getElementById('menuIcon');
+    var open = !menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', open);
+    icon.className = open ? 'fa-solid fa-bars text-lg' : 'fa-solid fa-xmark text-lg';
+    this.setAttribute('aria-expanded', String(!open));
+  });
+
+  /* ── Category styles ── */
+  const CATEGORY_COLORS = {
+    GENERAL:  'bg-blue-50 text-blue-700',
+    HEALTH:   'bg-emerald-50 text-emerald-700',
+    SAFETY:   'bg-red-50 text-red-700',
+    EVENT:    'bg-purple-50 text-purple-700',
+    ADVISORY: 'bg-amber-50 text-amber-700',
+  };
+  const CATEGORY_ICONS = {
+    GENERAL:  'fa-circle-info',
+    HEALTH:   'fa-heart-pulse',
+    SAFETY:   'fa-shield-halved',
+    EVENT:    'fa-calendar-days',
+    ADVISORY: 'fa-triangle-exclamation',
+  };
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function loadAnnouncements() {
+    try {
+      const data = await get('/announcements');
+      const list = Array.isArray(data) ? data : (data.announcements || []);
+      const container = document.getElementById('announcementsList');
+      if (!list.length) {
+        container.innerHTML = '<div class="col-span-3 text-center text-slate-400 py-16 bg-white rounded-2xl border border-slate-100"><i class="fa-solid fa-bullhorn text-3xl mb-3 opacity-20 block"></i><p class="text-sm font-medium">No announcements at this time.</p></div>';
+        return;
+      }
+      container.innerHTML = list.filter(a => a.published !== false).slice(0, 3).map(a => {
+        const cat = a.category || 'GENERAL';
+        const colorClass = CATEGORY_COLORS[cat] || 'bg-slate-100 text-slate-700';
+        const icon = CATEGORY_ICONS[cat] || 'fa-circle-info';
+        return `
+        <div class="ann-card group">
+          <div class="flex justify-between items-start mb-3.5">
+            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg font-bold ${colorClass}">
+              <i class="fa-solid ${icon} text-[9px]"></i>${cat}
+            </span>
+            <span class="text-xs text-slate-400 font-medium">${Utils.formatDate(a.createdAt || a.date)}</span>
+          </div>
+          <h3 class="font-extrabold text-slate-900 mb-2 text-[0.9375rem] leading-tight">${escapeHtml(a.title)}</h3>
+          <p class="text-slate-500 text-sm line-clamp-3 flex-1 leading-relaxed">${escapeHtml(a.content)}</p>
+          <a href="/announcements.html"
+             class="mt-5 pt-4 border-t border-slate-100 text-blue-600 text-xs font-bold hover:underline inline-flex items-center gap-1.5 group-hover:gap-2.5 transition-all duration-200">
+            Read more <i class="fa-solid fa-arrow-right text-[9px]"></i>
+          </a>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      document.getElementById('announcementsList').innerHTML =
+        '<div class="col-span-3 text-center text-slate-400 py-16 bg-white rounded-2xl border border-slate-100"><i class="fa-solid fa-wifi-slash text-2xl mb-3 opacity-20 block"></i><p class="text-sm font-medium">Could not load announcements.</p></div>';
+    }
+  }
+
+  async function loadStats() {
+    try {
+      const data = await get('/config/stats');
+      if (data.total    !== undefined) document.getElementById('statTotal').textContent    = data.total.toLocaleString();
+      if (data.pending  !== undefined) document.getElementById('statPending').textContent  = data.pending.toLocaleString();
+      if (data.released !== undefined) document.getElementById('statReleased').textContent = data.released.toLocaleString();
+    } catch (e) { /* Keep dashes */ }
+  }
+
+  loadAnnouncements();
+  loadStats();
+</script>
+
+<button id="backToTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+<script src="/js/portal.js"></script>
+</body>
+</html>

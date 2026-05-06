@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archived Appointments — Barangay Sirangan Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/admin.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    /* Page-specific modal overrides — archive uses .open toggle pattern */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:60; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.open { display:flex; }
+    @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+    .modal-box { animation: modalIn 0.2s ease forwards; }
+  </style>
+</head>
+<body>
+
+<!-- ── Delete Archive Record Modal ── -->
+<div id="deleteArchiveModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteArchiveModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-trash text-red-500 text-lg"></i>
+      </div>
+      <h3 id="deleteArchiveModalTitle" class="text-base font-bold text-gray-800">Delete Archived Record</h3>
+    </div>
+    <p class="text-gray-500 text-sm mb-2">This will <strong>permanently delete</strong> this archived appointment record.</p>
+    <p class="text-xs text-gray-400 mb-6">This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button onclick="closeDeleteModal()" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button onclick="confirmDeleteArchive()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-trash mr-1"></i>Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Purge Confirm Modal ── -->
+<div id="purgeModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="purgeModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-broom text-orange-500 text-lg"></i>
+      </div>
+      <h3 id="purgeModalTitle" class="text-base font-bold text-gray-800">Purge Expired Records</h3>
+    </div>
+    <p class="text-gray-500 text-sm mb-2">This will permanently delete all archived records whose 3-month retention period has expired.</p>
+    <p class="text-xs text-gray-400 mb-6">This action cannot be undone.</p>
+    <div class="flex gap-3">
+      <button onclick="closePurgeModal()" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button onclick="confirmPurge()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-broom mr-1"></i>Purge Expired</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Layout ── -->
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-[#0b1929] text-white flex flex-col flex-shrink-0 fixed h-full z-40" style="box-shadow:4px 0 24px rgba(0,0,0,.18)">
+    <div class="px-5 py-5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <img src="/assets/logo/sirangan-bg.png" alt="Logo" class="w-9 h-9 rounded-xl object-cover" style="box-shadow:0 0 0 2px rgba(251,191,36,.35)">
+          <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1929] pulse-dot"></span>
+        </div>
+        <div>
+          <div class="font-bold text-sm text-white leading-tight">Brgy. Sirangan</div>
+          <div class="text-[10px] text-blue-300/70 font-medium tracking-wide uppercase mt-0.5">Admin Portal</div>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
+      <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
+      <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
+      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
+      <a href="/admin/appointments.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
+      <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
+      <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
+      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+    </nav>
+    <div class="px-4 py-3.5 border-t border-white/10">
+      <div class="flex items-center gap-2.5 px-1">
+        <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0" id="sidebarAvatar">?</div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold text-white truncate" id="sidebarName">Loading…</div>
+          <div class="text-[10px] text-white/35 mt-0.5" id="sidebarRole">—</div>
+        </div>
+        <button onclick="AuthService.logout()" title="Sign out" class="w-6 h-6 flex items-center justify-center text-white/30 hover:text-red-400 transition rounded"><i class="fa-solid fa-right-from-bracket text-xs"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="ml-64 flex-1 overflow-y-auto flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200/70 px-6 py-3.5 sticky top-0 z-30" style="box-shadow:0 1px 0 rgba(0,0,0,.05)">
+      <div class="flex items-center justify-between">
+        <div class="anim-down" style="animation-delay:.04s">
+          <div class="flex items-center gap-2 mb-0.5">
+            <a href="/admin/appointments.html" class="text-gray-400 hover:text-gray-600 text-xs transition flex items-center gap-1"><i class="fa-solid fa-arrow-left text-[10px]"></i> Back to Appointments</a>
+          </div>
+          <h1 class="text-lg font-bold text-gray-900 leading-tight">Archived Appointments</h1>
+          <p class="text-[11px] text-gray-400 font-medium mt-0.5">Archived records are automatically deleted 3 months after archiving.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <div id="notifContainer"></div>
+          <button onclick="openPurgeModal()" class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+            <i class="fa-solid fa-broom"></i> Purge Expired
+          </button>
+          <div class="relative" id="profileDropdown">
+            <button onclick="toggleProfileDropdown()" class="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-gray-100 transition-all duration-150">
+              <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] text-white flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0" id="profileAvatar">?</div>
+              <div class="text-left hidden sm:block">
+                <div class="text-xs font-semibold text-gray-800 leading-tight" id="profileName"></div>
+                <div class="text-[10px] text-gray-400" id="profileRoleTag"></div>
+              </div>
+              <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200" id="profileChevron"></i>
+            </button>
+            <div id="profileMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl py-2 z-50" style="box-shadow:0 16px 40px -8px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.07)">
+              <div class="px-4 py-2.5 border-b border-gray-50 mb-1">
+                <div class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Signed in as</div>
+                <div class="text-xs font-semibold text-gray-800 truncate mt-0.5" id="profileMenuEmail"></div>
+              </div>
+              <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
+              <a href="/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-house w-4 text-gray-400 text-xs"></i> Barangay Portal</a>
+              <div class="border-t border-gray-50 my-1.5"></div>
+              <button onclick="AuthService.logout()" class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><i class="fa-solid fa-right-from-bracket w-4 text-xs"></i> Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-6 flex-1">
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold text-[#1e3a5f]" id="statTotal">—</div>
+          <div class="text-xs text-gray-500 mt-0.5">Total Archived</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold text-orange-500" id="statExpiringSoon">—</div>
+          <div class="text-xs text-gray-500 mt-0.5">Expiring in 7 days</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold text-red-600" id="statExpired">—</div>
+          <div class="text-xs text-gray-500 mt-0.5">Expired (overdue)</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+          <div class="text-2xl font-bold text-gray-500" id="statSafe">—</div>
+          <div class="text-xs text-gray-500 mt-0.5">Safe (>7 days)</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <select id="filterStatus" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
+            <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="RESCHEDULED">Rescheduled</option>
+            <option value="DECLINED">Declined</option>
+          </select>
+          <input type="text" id="filterSearch" placeholder="Search by name or email…"
+            class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
+          <div class="flex gap-2">
+            <button onclick="applyFilters()" class="flex-1 bg-[#1e3a5f] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">Apply</button>
+            <button onclick="clearFilters()" class="border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+              <tr>
+                <th class="px-4 py-3 text-left">Resident</th>
+                <th class="px-4 py-3 text-left">Contact / Email</th>
+                <th class="px-4 py-3 text-left">Purpose</th>
+                <th class="px-4 py-3 text-left">Original Date &amp; Time</th>
+                <th class="px-4 py-3 text-left">Status</th>
+                <th class="px-4 py-3 text-left">Archived On</th>
+                <th class="px-4 py-3 text-left">Auto-deletes On</th>
+                <th class="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="archiveTable">
+              <tr><td colspan="8" class="px-5 py-4">
+                <div class="space-y-2.5">
+                  <div class="skeleton h-4 rounded"></div>
+                  <div class="skeleton h-4 rounded w-11/12"></div>
+                  <div class="skeleton h-4 rounded"></div>
+                  <div class="skeleton h-4 rounded w-10/12"></div>
+                  <div class="skeleton h-4 rounded w-11/12"></div>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 border-t border-gray-100 text-xs text-gray-400" id="archiveInfo"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/notifications.js"></script>
+<script>
+  function toggleProfileDropdown() {
+    var menu = document.getElementById('profileMenu');
+    var chevron = document.getElementById('profileChevron');
+    var hidden = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', !hidden);
+    chevron.style.transform = hidden ? 'rotate(180deg)' : '';
+  }
+  document.addEventListener('click', function(e) {
+    var dd = document.getElementById('profileDropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('profileMenu').classList.add('hidden');
+      document.getElementById('profileChevron').style.transform = '';
+    }
+  });
+
+  function loadPageData() { loadArchive(); }
+
+  firebase.auth().onAuthStateChanged(async function (fbUser) {
+    if (!fbUser) { localStorage.removeItem('authToken'); localStorage.removeItem('user'); window.location.href = '/admin/login.html'; return; }
+    try {
+      var freshToken = await fbUser.getIdToken(true);
+      var idTokenResult = await fbUser.getIdTokenResult();
+      var role = idTokenResult.claims.role || 'staff';
+      var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('authToken', freshToken);
+      var userData = { uid: fbUser.uid, email: fbUser.email, name: fbUser.displayName || '', role: role, photoUrl: fbUser.photoURL || storedUser.photoUrl || '' };
+      localStorage.setItem('user', JSON.stringify(userData));
+      var initials = (userData.name || '?').split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase()||'?';
+      var avatarHTML = userData.photoUrl ? '<img src="'+userData.photoUrl.replace(/"/g,'&quot;')+'" class="w-full h-full object-cover" alt="Profile">' : initials;
+      document.getElementById('profileAvatar').innerHTML = avatarHTML;
+      document.getElementById('profileName').textContent = userData.name;
+      document.getElementById('profileRoleTag').textContent = cap(role);
+      if (document.getElementById('profileMenuEmail')) document.getElementById('profileMenuEmail').textContent = userData.email;
+      var sa = document.getElementById('sidebarAvatar');
+      if (userData.photoUrl) { sa.innerHTML = '<img src="'+userData.photoUrl.replace(/"/g,'&quot;')+'" class="w-full h-full object-cover rounded-lg" alt="">'; } else { sa.textContent = initials; }
+      document.getElementById('sidebarName').textContent = userData.name;
+      document.getElementById('sidebarRole').textContent = cap(role);
+      loadPageData();
+    } catch(e) { window.location.href = '/admin/login.html'; }
+  });
+  function cap(str) { return str ? str.charAt(0).toUpperCase()+str.slice(1) : ''; }
+
+  function esc(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  var allRecords = [];
+  var pendingDeleteId = null;
+
+  // ── Status badge ────────────────────────────────────────────────────
+  function statusBadge(status) {
+    var map = {
+      PENDING:     'bg-yellow-100 text-yellow-800 border border-yellow-200',
+      APPROVED:    'bg-green-100 text-green-800 border border-green-200',
+      DECLINED:    'bg-red-100 text-red-700 border border-red-200',
+      RESCHEDULED: 'bg-blue-100 text-blue-800 border border-blue-200',
+    };
+    var icons = {
+      PENDING:'fa-clock', APPROVED:'fa-circle-check', DECLINED:'fa-circle-xmark', RESCHEDULED:'fa-calendar-xmark'
+    };
+    var cls  = map[status]  || 'bg-gray-100 text-gray-700';
+    var icon = icons[status] || 'fa-circle';
+    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ' + cls + '"><i class="fa-solid ' + icon + ' text-[10px]"></i>' + esc(status) + '</span>';
+  }
+
+  // ── Expiry helpers ───────────────────────────────────────────────────
+  function formatISODate(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+    } catch { return iso; }
+  }
+
+  function expiryClass(deleteAfter) {
+    if (!deleteAfter) return '';
+    var now     = Date.now();
+    var expires = new Date(deleteAfter).getTime();
+    if (expires <= now)                      return 'bg-red-50';          // expired
+    if (expires - now <= 7 * 24 * 3600 * 1000) return 'bg-orange-50';    // within 7 days
+    return '';
+  }
+
+  function expiryBadge(deleteAfter) {
+    if (!deleteAfter) return esc(deleteAfter);
+    var now     = Date.now();
+    var expires = new Date(deleteAfter).getTime();
+    var label   = formatISODate(deleteAfter);
+    if (expires <= now)
+      return '<span class="inline-flex items-center gap-1 text-xs font-semibold text-red-600"><i class="fa-solid fa-circle-exclamation text-[10px]"></i>' + label + '</span>';
+    if (expires - now <= 7 * 24 * 3600 * 1000)
+      return '<span class="inline-flex items-center gap-1 text-xs font-semibold text-orange-600"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i>' + label + '</span>';
+    return '<span class="text-xs text-gray-600">' + label + '</span>';
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────
+  function renderRecords(items) {
+    var now     = Date.now();
+    var sevenDays = 7 * 24 * 3600 * 1000;
+    var expired      = 0;
+    var expiringSoon = 0;
+    var safe         = 0;
+    items.forEach(function(r) {
+      var exp = r.deleteAfter ? new Date(r.deleteAfter).getTime() : 0;
+      if (exp && exp <= now)              expired++;
+      else if (exp && exp - now <= sevenDays) expiringSoon++;
+      else                                safe++;
+    });
+    document.getElementById('statTotal').textContent       = items.length;
+    document.getElementById('statExpired').textContent     = expired;
+    document.getElementById('statExpiringSoon').textContent = expiringSoon;
+    document.getElementById('statSafe').textContent        = safe;
+    document.getElementById('archiveInfo').textContent     = items.length + ' record(s)';
+
+    if (!items.length) {
+      document.getElementById('archiveTable').innerHTML =
+        '<tr><td colspan="8" class="text-center py-12 text-gray-400"><i class="fa-solid fa-box-archive text-2xl mb-2 opacity-30 block"></i>No archived records found.</td></tr>';
+      return;
+    }
+
+    document.getElementById('archiveTable').innerHTML = items.map(function(r) {
+      var id      = r.id || '';
+      var purpose = r.purpose || '—';
+      var short   = purpose.length > 60 ? purpose.substring(0, 60) + '…' : purpose;
+      var rowCls  = expiryClass(r.deleteAfter);
+      var archivedOnStr  = '';
+      if (r.archivedAt) {
+        try {
+          var aDate = r.archivedAt.seconds
+            ? new Date(r.archivedAt.seconds * 1000)
+            : new Date(r.archivedAt);
+          archivedOnStr = aDate.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+        } catch { archivedOnStr = String(r.archivedAt); }
+      } else {
+        archivedOnStr = '—';
+      }
+
+      return '<tr class="border-t border-gray-50 hover:bg-gray-50 transition ' + rowCls + '">' +
+        '<td class="px-4 py-3"><div class="font-semibold text-xs text-gray-800">' + esc(r.name || '—') + '</div></td>' +
+        '<td class="px-4 py-3"><div class="text-xs text-gray-700">' + esc(r.contact || '—') + '</div><div class="text-xs text-gray-400 truncate max-w-[160px]">' + esc(r.email || '—') + '</div></td>' +
+        '<td class="px-4 py-3 max-w-[180px]"><div class="text-xs text-gray-600 leading-relaxed" title="' + esc(purpose) + '">' + esc(short) + '</div></td>' +
+        '<td class="px-4 py-3 whitespace-nowrap"><div class="text-xs font-semibold text-gray-800">' + esc(r.date || '—') + '</div><div class="text-xs text-gray-400">' + esc(r.time || '—') + '</div></td>' +
+        '<td class="px-4 py-3">' + statusBadge(r.status || 'PENDING') + '</td>' +
+        '<td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">' + archivedOnStr + '</td>' +
+        '<td class="px-4 py-3 whitespace-nowrap">' + expiryBadge(r.deleteAfter) + '</td>' +
+        '<td class="px-4 py-3">' +
+          (id ? '<button onclick="openDeleteModal(\'' + id + '\')" title="Delete forever" class="text-xs bg-gray-100 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded-lg transition inline-flex items-center gap-1"><i class="fa-solid fa-trash text-[10px]"></i>Delete</button>' : '—') +
+        '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ── Load data ────────────────────────────────────────────────────────
+  async function loadArchive() {
+    try {
+      var data = await get('/appointments/general/archive');
+      allRecords = Array.isArray(data) ? data : (data.appointments || []);
+      renderRecords(allRecords);
+    } catch(e) {
+      document.getElementById('archiveTable').innerHTML =
+        '<tr><td colspan="8" class="text-center py-8 text-red-400">Failed to load archived appointments.</td></tr>';
+    }
+  }
+
+  // ── Filters ──────────────────────────────────────────────────────────
+  function applyFilters() {
+    var status = document.getElementById('filterStatus').value;
+    var search = document.getElementById('filterSearch').value.toLowerCase().trim();
+    var filtered = allRecords.filter(function(r) {
+      var matchStatus = !status || r.status === status;
+      var matchSearch = !search ||
+        (r.name  && r.name.toLowerCase().includes(search)) ||
+        (r.email && r.email.toLowerCase().includes(search));
+      return matchStatus && matchSearch;
+    });
+    renderRecords(filtered);
+  }
+
+  function clearFilters() {
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterSearch').value = '';
+    renderRecords(allRecords);
+  }
+
+  // ── Delete archived record modal ─────────────────────────────────────
+  function openDeleteModal(id) {
+    pendingDeleteId = id;
+    document.getElementById('deleteArchiveModal').classList.add('open');
+  }
+  function closeDeleteModal() {
+    document.getElementById('deleteArchiveModal').classList.remove('open');
+    pendingDeleteId = null;
+  }
+  async function confirmDeleteArchive() {
+    try {
+      await del('/appointments/general/archive/' + pendingDeleteId);
+      Utils.showToast('Record permanently deleted.', 'success');
+      closeDeleteModal();
+      loadArchive();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // ── Purge expired modal ───────────────────────────────────────────────
+  function openPurgeModal() {
+    document.getElementById('purgeModal').classList.add('open');
+  }
+  function closePurgeModal() {
+    document.getElementById('purgeModal').classList.remove('open');
+  }
+  async function confirmPurge() {
+    try {
+      var result = await post('/appointments/general/archive/purge-expired', {});
+      var count = result.purged || 0;
+      Utils.showToast(count > 0 ? count + ' expired record(s) purged.' : 'No expired records found.', 'success');
+      closePurgeModal();
+      loadArchive();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // ── Close modals on overlay click ────────────────────────────────────
+  // ── Init ───────────────────────────────────────────────────────────────────
+  document.getElementById('deleteArchiveModal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
+  document.getElementById('purgeModal').addEventListener('click', function(e) { if (e.target === this) closePurgeModal(); });
+</script>
+</body>
+</html>

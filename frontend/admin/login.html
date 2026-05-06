@@ -1,0 +1,280 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Barangay Sirangan Admin</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <style>
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(59,130,246,0.08), transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* LOADER RING */
+    .loader-ring {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #2563eb;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* LOGO PULSE */
+    .pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+    }
+
+    /* DOTS ANIMATION */
+    .dots::after {
+      content: '';
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+      100% { content: ''; }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center font-['Inter'] bg-gray-50">
+
+<!-- 🔵 PAGE LOADING -->
+<div id="pageLoading"
+     class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+
+  <div class="relative flex items-center justify-center">
+    <div class="loader-ring"></div>
+
+    <img src="/assets/logo/sirangan-bg.png"
+         class="w-10 h-10 absolute pulse rounded-full" />
+  </div>
+
+  <p class="mt-4 text-gray-700 text-sm font-medium">
+    Loading Barangay System<span class="dots"></span>
+  </p>
+
+</div>
+
+<!-- 🔵 LOGIN LOADING -->
+<div id="loadingOverlay"
+     class="hidden fixed inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+
+  <div class="relative flex items-center justify-center">
+    <div class="loader-ring"></div>
+
+    <img src="/assets/logo/sirangan-bg.png"
+         class="w-10 h-10 absolute pulse rounded-full" />
+  </div>
+
+  <p class="mt-4 text-gray-700 text-sm font-medium">
+    Signing you in<span class="dots"></span>
+  </p>
+
+</div>
+
+<!-- MAIN CARD -->
+<div id="mainCard"
+     class="relative z-10 w-full max-w-5xl">
+
+  <div class="grid grid-cols-1 md:grid-cols-2 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+
+    <!-- LEFT -->
+<div class="hidden md:flex flex-col items-center justify-center bg-white text-gray-800 p-10 border-r border-gray-200">
+
+  <img src="/assets/logo/sirangan-bg.png" class="w-50 h-50 mb-5" />
+
+  <h1 class="text-xl font-bold text-center">
+    Barangay Sirangan
+  </h1>
+  <p class="text-sm text-gray-500 text-center">
+    East District, Sorsogon City
+  </p>
+
+</div>
+
+    <!-- RIGHT -->
+    <div class="p-10 bg-white mb-4  flex flex-col justify-center">
+
+      <h2 class="text-2xl font-bold text-gray-800 mb-1">Sign In</h2>
+      <p class="text-gray-500 text-sm mb-6">Enter your credentials to continue</p>
+
+      <div id="loginError"
+           class="hidden bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 text-sm mb-4">
+      </div>
+
+      <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
+
+        <div>
+          <label class="text-sm text-gray-700">Email Address</label>
+          <input type="email" id="loginEmail" required
+            class="w-full mt-1 px-4 py-3 border border-gray-300 rounded-lg
+                   focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+            placeholder="staff@barangay.gov.ph">
+        </div>
+
+        <div>
+          <label class="text-sm text-gray-700">Password</label>
+
+          <div class="relative mt-1">
+            <input type="password" id="loginPassword" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg
+                     focus:ring-2 focus:ring-blue-500 outline-none text-sm pr-10"
+              placeholder="••••••••">
+
+            <button type="button" onclick="togglePwd()"
+              class="absolute right-3 top-3 text-gray-400 hover:text-blue-600">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="loginBtn"
+          class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-sm
+                 hover:bg-blue-700 transition shadow-md">
+          Sign In
+        </button>
+
+      </form>
+
+      <div class="mt-6 text-center border-t pt-4 border-gray-200">
+        <a href="/index.html" class="text-sm text-gray-500 hover:text-blue-600">
+          ← Resident Portal
+        </a>
+      </div>
+
+      <p class="text-xs text-gray-400 text-center mt-5">
+        Barangay Sirangan Digital Portal
+      </p>
+
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+
+<script>
+  var alreadyChecking = false;
+
+  // PAGE LOAD LOADER
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      document.getElementById("pageLoading").style.display = "none";
+    }, 900);
+  });
+
+  function showLoading(show) {
+    document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+    document.getElementById('mainCard').classList.toggle('opacity-50', show);
+  }
+
+  try {
+    firebase.auth().onAuthStateChanged(async function (user) {
+
+      if (user && !alreadyChecking) {
+        alreadyChecking = true;
+        showLoading(true);
+
+        try {
+          const token = await user.getIdToken(true);
+          const idTokenResult = await user.getIdTokenResult();
+
+          localStorage.setItem('authToken', token);
+          localStorage.setItem('user', JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName || user.email,
+            role: idTokenResult.claims.role || 'staff',
+          }));
+
+        } catch (_) {}
+
+        window.location.href = '/admin/dashboard.html';
+      }
+
+    });
+  } catch (e) {
+    console.warn(e.message);
+  }
+
+  function togglePwd() {
+    const inp = document.getElementById('loginPassword');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    alreadyChecking = true;
+
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('loginError');
+
+    errEl.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+
+    showLoading(true);
+
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+      await AuthService.login(email, password);
+      window.location.href = '/admin/dashboard.html';
+
+    } catch (err) {
+
+      let msg = err.message || 'Login failed';
+
+      if (msg.includes('user-not-found') ||
+          msg.includes('wrong-password') ||
+          msg.includes('invalid-credential')) {
+        msg = 'Invalid email or password';
+      } else if (msg.includes('too-many-requests')) {
+        msg = 'Too many attempts, try again later';
+      } else if (msg.includes('network')) {
+        msg = 'Network error';
+      }
+
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+      alreadyChecking = false;
+      showLoading(false);
+
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In →';
+    }
+  }
+</script>
+
+</body>
+</html>

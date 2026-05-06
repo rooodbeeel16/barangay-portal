@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barangay Portal System — Project Proposal</title>
+  <style>
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      color: #000;
+      background: #d0d0d0;
+      line-height: 1.6;
+    }
+
+    /* ─── Page / Paper Simulation ──────────────────────────────── */
+    .page {
+      background: #fff;
+      width: 8.5in;
+      min-height: 11in;
+      margin: 0.5in auto;
+      padding: 1in 1.25in 1in 1.25in;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    }
+
+    @media print {
+      body { background: #fff; }
+      .page {
+        width: 100%;
+        margin: 0;
+        padding: 1in 1.25in;
+        box-shadow: none;
+        page-break-after: always;
+      }
+    }
+
+    /* ─── Cover Page ────────────────────────────────────────────── */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 9in;
+      text-align: center;
+      border: 3px double #1A3A6B;
+      padding: 0.5in;
+    }
+
+    .cover-seal {
+      font-size: 64pt;
+      margin-bottom: 0.2in;
+      line-height: 1;
+    }
+
+    .cover-republic {
+      font-size: 10pt;
+      letter-spacing: 0.05em;
+      color: #333;
+      margin-bottom: 0.05in;
+    }
+
+    .cover-title {
+      font-size: 22pt;
+      font-weight: bold;
+      color: #1A3A6B;
+      margin: 0.3in 0 0.1in;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      line-height: 1.25;
+    }
+
+    .cover-subtitle {
+      font-size: 13pt;
+      color: #333;
+      margin-bottom: 0.15in;
+      font-style: italic;
+    }
+
+    .cover-divider {
+      width: 4in;
+      border-top: 2px solid #1A3A6B;
+      margin: 0.2in auto;
+    }
+
+    .cover-meta {
+      font-size: 11pt;
+      color: #222;
+      margin-top: 0.1in;
+      line-height: 1.9;
+    }
+
+    .cover-meta strong { color: #1A3A6B; }
+
+    .cover-footer {
+      margin-top: 0.4in;
+      font-size: 10pt;
+      color: #555;
+      border-top: 1px solid #aaa;
+      padding-top: 0.15in;
+      width: 100%;
+    }
+
+    /* ─── Typography ────────────────────────────────────────────── */
+    h1 {
+      font-size: 16pt;
+      font-weight: bold;
+      color: #1A3A6B;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 2.5px solid #1A3A6B;
+      padding-bottom: 4px;
+      margin: 0.35in 0 0.15in;
+    }
+
+    h2 {
+      font-size: 13pt;
+      font-weight: bold;
+      color: #1A3A6B;
+      margin: 0.25in 0 0.1in;
+    }
+
+    h3 {
+      font-size: 12pt;
+      font-weight: bold;
+      color: #2c4a80;
+      margin: 0.18in 0 0.08in;
+    }
+
+    h4 {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #333;
+      margin: 0.12in 0 0.05in;
+    }
+
+    p {
+      margin-bottom: 0.1in;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin: 0.08in 0 0.12in 0.4in;
+    }
+
+    li {
+      margin-bottom: 0.05in;
+    }
+
+    /* ─── Tables ────────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.15in 0 0.2in;
+      font-size: 11pt;
+    }
+
+    th {
+      background: #1A3A6B;
+      color: #fff;
+      padding: 7px 10px;
+      text-align: left;
+      font-size: 11pt;
+      border: 1px solid #1A3A6B;
+    }
+
+    td {
+      padding: 6px 10px;
+      border: 1px solid #bbb;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td { background: #f0f4fb; }
+    tr:nth-child(odd) td  { background: #fff; }
+
+    .table-caption {
+      font-style: italic;
+      font-size: 10pt;
+      color: #555;
+      margin-top: -0.12in;
+      margin-bottom: 0.15in;
+    }
+
+    /* ─── Call-out Boxes ────────────────────────────────────────── */
+    .note-box {
+      background: #eef3ff;
+      border-left: 4px solid #1A3A6B;
+      padding: 0.1in 0.15in;
+      margin: 0.15in 0;
+      font-size: 11pt;
+    }
+
+    .phase-header {
+      background: #1A3A6B;
+      color: #fff;
+      padding: 6px 12px;
+      font-weight: bold;
+      font-size: 12pt;
+      margin-top: 0.2in;
+    }
+
+    /* ─── Signature Block ───────────────────────────────────────── */
+    .signature-block {
+      margin-top: 0.5in;
+      display: flex;
+      gap: 0.5in;
+      flex-wrap: wrap;
+    }
+
+    .sig-col {
+      flex: 1;
+      min-width: 2.5in;
+    }
+
+    .sig-line {
+      border-top: 1px solid #000;
+      width: 80%;
+      margin-top: 0.5in;
+      margin-bottom: 4px;
+    }
+
+    .sig-label {
+      font-size: 10.5pt;
+      color: #333;
+    }
+
+    /* ─── Page Number Footer ────────────────────────────────────── */
+    .doc-footer {
+      text-align: center;
+      margin-top: 0.4in;
+      font-size: 9pt;
+      color: #888;
+      border-top: 1px solid #ddd;
+      padding-top: 0.1in;
+    }
+
+    /* ─── Misc ──────────────────────────────────────────────────── */
+    .toc li { list-style: none; margin-left: 0; }
+    .toc li::before { content: ""; }
+    .toc a  { color: #1A3A6B; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc .toc-l1 { font-weight: bold; margin-top: 6px; }
+    .toc .toc-l2 { padding-left: 1.2em; }
+    .toc .toc-l3 { padding-left: 2.4em; font-style: italic; }
+
+    .workflow-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0.1in 0;
+      flex-wrap: wrap;
+    }
+
+    .workflow-step {
+      background: #1A3A6B;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 10pt;
+      white-space: nowrap;
+    }
+
+    .workflow-arrow {
+      color: #555;
+      font-size: 14pt;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER PAGE
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-seal">🏛️</div>
+    <div class="cover-republic">
+      Republic of the Philippines<br>
+      [Province / City / Municipality]<br>
+      Barangay [Name of Barangay]
+    </div>
+
+    <div class="cover-divider"></div>
+
+    <div class="cover-title">
+      Barangay Public Services Portal<br>
+      &amp; Document Tracking System
+    </div>
+
+    <div class="cover-subtitle">Project Proposal</div>
+
+    <div class="cover-divider"></div>
+
+    <div class="cover-meta">
+      <strong>Document Type:</strong> Project Proposal / System Proposal<br>
+      <strong>Prepared For:</strong> Barangay [Name] — Barangay Council<br>
+      <strong>Prepared By:</strong> [Developer / Project Team Name]<br>
+      <strong>Date Prepared:</strong> May 2026<br>
+      <strong>Version:</strong> 1.0
+    </div>
+
+    <div class="cover-footer">
+      This document is submitted for review and approval by the Barangay Council and concerned authorities.<br>
+      All information contained herein is confidential and intended solely for official use.
+    </div>
+  </div>
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Cover</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>Table of Contents</h1>
+  <ul class="toc">
+    <li class="toc-l1"><a href="#s1">I. Project Title</a></li>
+    <li class="toc-l1"><a href="#s2">II. Executive Summary</a></li>
+    <li class="toc-l1"><a href="#s3">III. Project Background / Problem Statement</a></li>
+    <li class="toc-l1"><a href="#s4">IV. Project Objectives</a></li>
+    <li class="toc-l2"><a href="#s4a">A. General Objective</a></li>
+    <li class="toc-l2"><a href="#s4b">B. Specific Objectives</a></li>
+    <li class="toc-l1"><a href="#s5">V. Scope of the System</a></li>
+    <li class="toc-l1"><a href="#s6">VI. Target Users</a></li>
+    <li class="toc-l1"><a href="#s7">VII. Key Features and Modules</a></li>
+    <li class="toc-l2"><a href="#s7a">A. Resident Information Management</a></li>
+    <li class="toc-l2"><a href="#s7b">B. Certificate Issuance</a></li>
+    <li class="toc-l2"><a href="#s7c">C. Blotter Management</a></li>
+    <li class="toc-l2"><a href="#s7d">D. Announcement Posting</a></li>
+    <li class="toc-l2"><a href="#s7e">E. Appointment Scheduling</a></li>
+    <li class="toc-l2"><a href="#s7f">F. Complaints and Requests Tracking</a></li>
+    <li class="toc-l2"><a href="#s7g">G. Reports and Analytics</a></li>
+    <li class="toc-l2"><a href="#s7h">H. User Roles and Permissions</a></li>
+    <li class="toc-l2"><a href="#s7i">I. Audit Logs</a></li>
+    <li class="toc-l1"><a href="#s8">VIII. System Workflow Overview</a></li>
+    <li class="toc-l1"><a href="#s9">IX. Technology Stack Recommendation</a></li>
+    <li class="toc-l1"><a href="#s10">X. System Requirements</a></li>
+    <li class="toc-l2"><a href="#s10a">A. Hardware Requirements</a></li>
+    <li class="toc-l2"><a href="#s10b">B. Software Requirements</a></li>
+    <li class="toc-l1"><a href="#s11">XI. Security Features</a></li>
+    <li class="toc-l1"><a href="#s12">XII. Implementation Plan / Development Phases</a></li>
+    <li class="toc-l1"><a href="#s13">XIII. Project Deliverables</a></li>
+    <li class="toc-l1"><a href="#s14">XIV. Expected Benefits</a></li>
+    <li class="toc-l1"><a href="#s15">XV. Budget Estimation</a></li>
+    <li class="toc-l1"><a href="#s16">XVI. Maintenance and Support Plan</a></li>
+    <li class="toc-l1"><a href="#s17">XVII. Conclusion</a></li>
+    <li class="toc-l1"><a href="#s18">XVIII. Prepared By</a></li>
+  </ul>
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page i</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION I — PROJECT TITLE
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s1">I. Project Title</h1>
+
+  <div class="note-box">
+    <strong>Project Title:</strong><br>
+    Barangay Public Services Portal and Document Tracking System (BPSP-DTS)
+  </div>
+
+  <p><strong>Short Title:</strong> Barangay Portal System</p>
+  <p><strong>Classification:</strong> E-Governance / Public Administration / Information System</p>
+  <p><strong>Intended Beneficiary:</strong> Barangay [Name], [Municipality/City], [Province], Philippines</p>
+  <p><strong>Project Duration:</strong> Approximately 12 Weeks (3 Months) from Project Kickoff</p>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION II — EXECUTIVE SUMMARY
+  ═══════════════════════════════════════════════════════════ -->
+  <h1 id="s2">II. Executive Summary</h1>
+
+  <p>
+    The Barangay Public Services Portal and Document Tracking System (BPSP-DTS) is a proposed
+    web-based e-governance platform designed to modernize and streamline the delivery of barangay
+    services in the Philippines. The system aims to eliminate long queues, reduce paper-based
+    transactions, and provide residents with a fast, transparent, and accessible means of
+    requesting barangay documents and services from any internet-connected device.
+  </p>
+  <p>
+    The platform features a publicly accessible resident portal, a comprehensive administrative
+    dashboard for barangay staff, and a real-time document tracking mechanism. Key functionalities
+    include digital certificate request and generation, automated QR-code tracking, appointment
+    scheduling, announcement posting, blotter management, complaint tracking, and detailed
+    reporting and analytics.
+  </p>
+  <p>
+    Developed using industry-standard technologies — Node.js with TypeScript for the backend,
+    HTML5/CSS3/JavaScript for the frontend, Firebase for cloud database and authentication, and
+    pdf-lib for server-side PDF generation — the system is designed to be secure, scalable, and
+    maintainable by local government IT staff or contracted developers.
+  </p>
+  <p>
+    This proposal outlines the full scope, objectives, features, technical specifications,
+    implementation timeline, budget estimates, and expected benefits of the BPSP-DTS project.
+    It is submitted for review and approval by the Barangay Council and authorized officials.
+  </p>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 1</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION III — PROJECT BACKGROUND
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s3">III. Project Background / Problem Statement</h1>
+
+  <h2>3.1 Background</h2>
+  <p>
+    The barangay is the smallest political unit in the Philippines and serves as the primary
+    point of contact between the government and ordinary citizens. Residents regularly transact
+    with their barangay hall for a wide range of services, including the issuance of Barangay
+    Clearances, Certificates of Residency, Certificates of Indigency, Business Permit
+    Endorsements, and other official documents.
+  </p>
+  <p>
+    Despite the critical role barangays play in governance, most barangay halls continue to
+    rely entirely on manual, paper-based processes. Document requests are handwritten or typed
+    on individual forms, filed in physical folders, and retrieved manually by staff. There is
+    no digital trail, no unified database of residents, and no mechanism for residents to track
+    the status of their requests without physically visiting the barangay hall.
+  </p>
+  <p>
+    The national government, through the Philippine Development Plan and the Ease of Doing
+    Business Act (Republic Act No. 11032), has called for the digitization of government
+    services to reduce bureaucratic red tape and improve the quality of public service delivery.
+    In line with these mandates, there is a compelling and urgent need for local-level digital
+    solutions tailored to the barangay context.
+  </p>
+
+  <h2>3.2 Problem Statement</h2>
+  <p>The current manual processes employed by most barangays present the following significant problems:</p>
+  <ol>
+    <li>
+      <strong>Inefficient Service Delivery:</strong> Residents must personally visit the barangay hall
+      during office hours to request documents, resulting in long queues and unproductive waiting
+      time — a situation that worsened significantly during and after the COVID-19 pandemic.
+    </li>
+    <li>
+      <strong>Lack of Transparency and Traceability:</strong> Once a document request is submitted,
+      residents have no way to monitor its status. There is no tracking mechanism, leading to
+      repeated follow-up visits and frustration.
+    </li>
+    <li>
+      <strong>Poor Records Management:</strong> Paper-based records are vulnerable to loss, damage,
+      and tampering. Filing and retrieval of records is time-consuming and prone to human error.
+    </li>
+    <li>
+      <strong>No Centralized Resident Database:</strong> Resident information is scattered across
+      various logbooks and forms, making it difficult to verify residency, validate data, or
+      generate accurate reports for the barangay council.
+    </li>
+    <li>
+      <strong>Limited Communication Channels:</strong> Announcements and notices from the barangay
+      are disseminated through physical posters or word of mouth, limiting their reach and timeliness.
+    </li>
+    <li>
+      <strong>Inadequate Audit Trail:</strong> There is no digital record of who processed which
+      document, when it was processed, or what changes were made — making accountability difficult
+      to enforce.
+    </li>
+    <li>
+      <strong>No Appointment System:</strong> Walk-in transactions are unscheduled and unpredictable,
+      causing bottlenecks especially during peak periods (e.g., enrollment season, pre-election
+      registration).
+    </li>
+  </ol>
+  <p>
+    These problems collectively result in poor citizen satisfaction, administrative inefficiency, and
+    a failure to meet the standards of modern public service delivery. A digital solution is not merely
+    a convenience — it is a necessity for governance reform at the barangay level.
+  </p>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 2</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION IV — PROJECT OBJECTIVES
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s4">IV. Project Objectives</h1>
+
+  <h2 id="s4a">A. General Objective</h2>
+  <p>
+    The general objective of this project is to design, develop, and deploy a comprehensive
+    web-based Barangay Public Services Portal and Document Tracking System (BPSP-DTS) that will
+    digitize, streamline, and improve the delivery of barangay services to residents, while providing
+    barangay officials and staff with an efficient administrative platform for managing requests,
+    records, and communications.
+  </p>
+
+  <h2 id="s4b">B. Specific Objectives</h2>
+  <ol>
+    <li>
+      To develop a publicly accessible resident portal that allows residents to submit document
+      requests online without the need to visit the barangay hall in person.
+    </li>
+    <li>
+      To implement a real-time Document Tracking System (DTS) using unique tracking IDs and QR codes,
+      enabling residents to monitor the status of their requests at any time.
+    </li>
+    <li>
+      To create a centralized resident database integrated with document request records, ensuring
+      accurate, up-to-date, and easily retrievable resident information.
+    </li>
+    <li>
+      To automate the generation and printing of official barangay documents (Clearances, Certificates
+      of Residency, Certificates of Indigency, and other certifications) in PDF format with barangay
+      letterhead, official signatures, and QR code verification.
+    </li>
+    <li>
+      To provide an appointment scheduling module that allows residents to book visits to the barangay
+      hall and allows staff to manage walk-in and scheduled transactions efficiently.
+    </li>
+    <li>
+      To establish an official announcement and notification system that enables barangay officials to
+      communicate important information to residents through the portal, with optional email notifications.
+    </li>
+    <li>
+      To implement a blotter and complaint management module that digitizes the recording, tracking,
+      and resolution of barangay blotter cases and resident complaints.
+    </li>
+    <li>
+      To generate comprehensive reports and analytics dashboards that provide barangay officials with
+      data-driven insights on service demand, document issuance, population statistics, and
+      operational performance.
+    </li>
+    <li>
+      To enforce role-based access control (RBAC) ensuring that each user (Barangay Captain,
+      Secretary, Staff, IT Administrator) can only access data and perform actions appropriate to
+      their role.
+    </li>
+    <li>
+      To maintain a full audit log of all system activities, ensuring accountability, data integrity,
+      and traceability of all transactions.
+    </li>
+  </ol>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 3</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION V — SCOPE
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s5">V. Scope of the System</h1>
+
+  <h2>5.1 Inclusions</h2>
+  <p>The BPSP-DTS system shall include the following within its scope:</p>
+  <ul>
+    <li>Public-facing portal accessible via any modern web browser on desktop, tablet, or mobile devices.</li>
+    <li>Online document request submission for all standard barangay certificates and clearances.</li>
+    <li>Automated tracking ID (format: <strong>BRY-YYYY-XXXXX</strong>) and QR code generation per request.</li>
+    <li>Real-time request status tracking: Pending → Received → Processing → For Release → Released / Rejected.</li>
+    <li>Administrative dashboard for barangay staff and officials.</li>
+    <li>Walk-in request encoding by authorized barangay staff.</li>
+    <li>PDF generation and printing of official barangay documents with letterhead and QR verification.</li>
+    <li>Appointment scheduling with date/time slot management.</li>
+    <li>Announcement and news posting visible to the public portal.</li>
+    <li>Blotter entry recording, management, and status tracking.</li>
+    <li>Resident profile and database management.</li>
+    <li>Role-based user management with defined access levels.</li>
+    <li>Audit log of all system transactions and administrative actions.</li>
+    <li>Basic email notification to residents upon status updates.</li>
+    <li>Reporting module with exportable data summaries.</li>
+    <li>Secure cloud-based database (Firebase Firestore).</li>
+    <li>Secure file uploads for supporting documents and ID photos.</li>
+  </ul>
+
+  <h2>5.2 Exclusions</h2>
+  <p>The following are explicitly outside the scope of this proposal:</p>
+  <ul>
+    <li>SMS notifications (may be considered in future phases subject to additional budget).</li>
+    <li>Integration with national government databases (e.g., PSA, PhilSys, COMELEC).</li>
+    <li>Online payment processing for document fees (may be added in a future phase).</li>
+    <li>Native mobile application (Android/iOS) development — the web portal is mobile-responsive.</li>
+    <li>Hardware procurement, internet service subscription, or on-site infrastructure setup (unless separately contracted).</li>
+    <li>Legal process management beyond barangay-level jurisdiction.</li>
+    <li>Payroll, budgeting, or financial management features.</li>
+  </ul>
+
+  <h2>5.3 Boundaries</h2>
+  <p>
+    The system is designed to serve a single barangay per deployment instance. Multi-barangay
+    deployment is technically feasible through separate instances or a future multi-tenant
+    architecture upgrade, but is not included in the current scope.
+  </p>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 4</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION VI — TARGET USERS
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s6">VI. Target Users</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>User Type</th>
+        <th>Description</th>
+        <th>Primary Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Barangay Residents</strong><br>(General Public)</td>
+        <td>Any individual who resides within the barangay and requires barangay services.</td>
+        <td>Submit document requests online; track request status via tracking ID or QR code; view announcements; schedule appointments.</td>
+      </tr>
+      <tr>
+        <td><strong>Barangay Captain</strong><br>(Punong Barangay)</td>
+        <td>The highest-ranking official of the barangay with full system access.</td>
+        <td>Approve/reject requests; view reports and analytics; sign off on documents; manage all settings; review audit logs.</td>
+      </tr>
+      <tr>
+        <td><strong>Barangay Secretary</strong></td>
+        <td>The barangay official responsible for records, certifications, and official correspondence.</td>
+        <td>Process and approve document requests; encode walk-in requests; manage resident records; update request statuses; print certificates.</td>
+      </tr>
+      <tr>
+        <td><strong>Barangay Kagawad</strong><br>(Councilors)</td>
+        <td>Elected barangay councilors with oversight responsibilities in specific committees.</td>
+        <td>View reports; manage blotter and complaint cases within their committees; post announcements.</td>
+      </tr>
+      <tr>
+        <td><strong>Barangay Staff / Clerk</strong></td>
+        <td>Administrative support staff assigned to process and assist with document requests.</td>
+        <td>Encode walk-in requests; update document status; schedule appointments; manage resident inquiries.</td>
+      </tr>
+      <tr>
+        <td><strong>System Administrator</strong><br>(IT Admin)</td>
+        <td>Technical administrator responsible for system configuration and user management.</td>
+        <td>Manage user accounts and roles; configure system settings; monitor audit logs; manage backup and recovery.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 5</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION VII — KEY FEATURES AND MODULES
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s7">VII. Key Features and Modules</h1>
+
+  <h2 id="s7a">A. Resident Information Management</h2>
+  <p>The system maintains a centralized database of residents. Each resident profile includes:</p>
+  <ul>
+    <li>Full name, birthdate, age, gender, civil status</li>
+    <li>Complete address (Purok/Sitio, street, barangay)</li>
+    <li>Contact number and email address</li>
+    <li>Profile photo (optional, uploaded by resident or encoded by staff)</li>
+    <li>History of all document requests linked to the resident</li>
+    <li>Residency verification status</li>
+  </ul>
+  <p>
+    Barangay staff can search, filter, and edit resident records. The system prevents duplicate
+    entries through name and address matching checks. Resident data serves as the basis for
+    auto-populating document templates during certificate generation.
+  </p>
+
+  <h2 id="s7b">B. Certificate Issuance</h2>
+  <p>
+    The certificate issuance module handles the full lifecycle of barangay document requests —
+    from submission to printing. Supported document types include:
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Certificate / Document</th>
+        <th>Common Purpose</th>
+        <th>Typical Processing Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Barangay Clearance</td>
+        <td>Employment, travel, legal requirements</td>
+        <td>Same day – 1 business day</td>
+      </tr>
+      <tr>
+        <td>Certificate of Residency</td>
+        <td>School enrollment, bank requirements, government transactions</td>
+        <td>Same day – 1 business day</td>
+      </tr>
+      <tr>
+        <td>Certificate of Indigency</td>
+        <td>Medical assistance, social welfare, legal aid</td>
+        <td>1 – 2 business days</td>
+      </tr>
+      <tr>
+        <td>Business Permit Endorsement</td>
+        <td>Business license application</td>
+        <td>1 – 3 business days</td>
+      </tr>
+      <tr>
+        <td>Incident / Blotter Report Certification</td>
+        <td>Police, legal, insurance purposes</td>
+        <td>1 – 2 business days</td>
+      </tr>
+      <tr>
+        <td>Certificate of No Pending Case</td>
+        <td>Employment, travel, legal requirements</td>
+        <td>Same day – 1 business day</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Key features of this module:</p>
+  <ul>
+    <li>Online submission form with input validation (Zod schema validation)</li>
+    <li>Automatic duplicate detection to prevent redundant requests</li>
+    <li>Unique Tracking ID generation (format: <strong>BRY-YYYY-XXXXX</strong>)</li>
+    <li>QR Code generation embedded in each document for authenticity verification</li>
+    <li>Server-side PDF generation using pdf-lib with official barangay letterhead</li>
+    <li>Dual-copy DTS slip generation (Office Copy &amp; Client Copy)</li>
+    <li>Rate-limiting on submissions (5 requests per hour per IP) to prevent abuse</li>
+    <li>Walk-in encoding capability for staff assisting non-digital residents</li>
+  </ul>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 6</div>
+</div>
+
+<div class="page">
+  <h2 id="s7c">C. Blotter Management</h2>
+  <p>The blotter management module digitalizes the traditional barangay blotter record-keeping process. Features include:</p>
+  <ul>
+    <li>Digital blotter entry form with fields for: incident date/time, location, complainant, respondent, nature of complaint, and narrative description</li>
+    <li>Unique blotter case number generation</li>
+    <li>Case status tracking: Open → Under Mediation → Settled / Escalated to Higher Authority</li>
+    <li>Hearing schedule management with date and time logging</li>
+    <li>Party information management (complainant and respondent details)</li>
+    <li>Resolution notes and outcome documentation</li>
+    <li>Search and filter by case number, name, date, or status</li>
+    <li>Blotter certification generation (PDF) for cases requiring official documentation</li>
+    <li>Access restricted to authorized barangay officials only</li>
+  </ul>
+
+  <h2 id="s7d">D. Announcement Posting</h2>
+  <p>The announcement module enables barangay officials to communicate directly with residents through the public portal. Features include:</p>
+  <ul>
+    <li>Rich-text announcement editor with title, body, and optional image attachment</li>
+    <li>Publish/Unpublish toggle for draft and live announcements</li>
+    <li>Scheduled publication date and time</li>
+    <li>Category tagging (e.g., Health &amp; Safety, Events, Government Services, Disaster Preparedness)</li>
+    <li>Public display on the barangay portal homepage and announcements page</li>
+    <li>Optional email notification broadcast to registered residents</li>
+    <li>Archive and search of past announcements by barangay staff</li>
+  </ul>
+
+  <h2 id="s7e">E. Appointment Scheduling</h2>
+  <p>The appointment scheduling module reduces congestion at the barangay hall by allowing residents to book specific time slots for their transactions. Features include:</p>
+  <ul>
+    <li>Online appointment booking form with service type selection</li>
+    <li>Available time slot display with real-time capacity management</li>
+    <li>Appointment reference number generation</li>
+    <li>Email confirmation sent to the resident upon successful booking</li>
+    <li>Admin dashboard for viewing, approving, and managing appointment slots</li>
+    <li>Holiday and office closure blocking (non-working day configuration)</li>
+    <li>Appointment status tracking: Pending → Confirmed → Completed / Cancelled / No-Show</li>
+    <li>Daily and weekly appointment view for staff scheduling</li>
+    <li>Walk-in slot allocation for same-day transactions</li>
+  </ul>
+
+  <h2 id="s7f">F. Complaints and Requests Tracking</h2>
+  <p>Beyond document requests, residents may submit general complaints or service requests to the barangay. This module provides:</p>
+  <ul>
+    <li>Online complaint/request submission with category, description, and photo attachment</li>
+    <li>Unique complaint reference number and tracking mechanism</li>
+    <li>Real-time status updates visible to the complainant</li>
+    <li>Assignment of complaints to specific barangay officials or committees</li>
+    <li>Internal notes and response logging by barangay staff</li>
+    <li>Resolution documentation and case closure</li>
+    <li>Escalation pathway for unresolved cases</li>
+    <li>Search and filter by category, status, date, and assigned official</li>
+  </ul>
+
+  <h2 id="s7g">G. Reports and Analytics</h2>
+  <p>The reporting module provides barangay officials with actionable data for planning and governance. Key reports and analytics features include:</p>
+  <ul>
+    <li><strong>Dashboard Overview:</strong> Total requests by status, appointments today, recent activities, pending items requiring action</li>
+    <li><strong>Document Request Reports:</strong> Requests by document type, date range, processing time, and status</li>
+    <li><strong>Resident Statistics:</strong> Population breakdown by age group, gender, civil status, and purok/sitio</li>
+    <li><strong>Service Performance:</strong> Average processing time per document type, peak request periods, staff processing volume</li>
+    <li><strong>Blotter Reports:</strong> Case count by type, resolution rate, pending cases</li>
+    <li><strong>Appointment Reports:</strong> Booking volume, cancellation rate, no-show rate</li>
+    <li><strong>Export Functionality:</strong> PDF and CSV export of all reports for council presentation</li>
+    <li><strong>Date Range Filtering:</strong> All reports filterable by custom date ranges (daily, weekly, monthly, yearly)</li>
+  </ul>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 7</div>
+</div>
+
+<div class="page">
+  <h2 id="s7h">H. User Roles and Permissions</h2>
+  <p>Role-based access control ensures that each system user can only access functions and data appropriate to their designated role:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Permission / Module</th>
+        <th>Resident</th>
+        <th>Staff / Clerk</th>
+        <th>Secretary</th>
+        <th>Kagawad</th>
+        <th>Captain</th>
+        <th>IT Admin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Submit Document Request</td>
+        <td>✔</td><td>✔</td><td>✔</td><td>—</td><td>—</td><td>—</td>
+      </tr>
+      <tr>
+        <td>Track Request Status</td>
+        <td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔</td>
+      </tr>
+      <tr>
+        <td>Process / Approve Requests</td>
+        <td>—</td><td>✔</td><td>✔</td><td>—</td><td>✔</td><td>—</td>
+      </tr>
+      <tr>
+        <td>Print / Generate PDF Documents</td>
+        <td>—</td><td>✔</td><td>✔</td><td>—</td><td>✔</td><td>—</td>
+      </tr>
+      <tr>
+        <td>Manage Residents Database</td>
+        <td>—</td><td>View</td><td>✔</td><td>—</td><td>✔</td><td>✔</td>
+      </tr>
+      <tr>
+        <td>Manage Appointments</td>
+        <td>Book</td><td>✔</td><td>✔</td><td>—</td><td>✔</td><td>—</td>
+      </tr>
+      <tr>
+        <td>Manage Blotter Records</td>
+        <td>—</td><td>Encode</td><td>✔</td><td>✔</td><td>✔</td><td>—</td>
+      </tr>
+      <tr>
+        <td>Post Announcements</td>
+        <td>—</td><td>—</td><td>✔</td><td>✔</td><td>✔</td><td>—</td>
+      </tr>
+      <tr>
+        <td>View Reports &amp; Analytics</td>
+        <td>—</td><td>Limited</td><td>✔</td><td>Limited</td><td>✔</td><td>✔</td>
+      </tr>
+      <tr>
+        <td>Manage System Users</td>
+        <td>—</td><td>—</td><td>—</td><td>—</td><td>✔</td><td>✔</td>
+      </tr>
+      <tr>
+        <td>View Audit Logs</td>
+        <td>—</td><td>—</td><td>—</td><td>—</td><td>✔</td><td>✔</td>
+      </tr>
+      <tr>
+        <td>System Configuration</td>
+        <td>—</td><td>—</td><td>—</td><td>—</td><td>✔</td><td>✔</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="s7i">I. Audit Logs</h2>
+  <p>Every significant action performed within the system is automatically recorded in an immutable audit log. Logged events include:</p>
+  <ul>
+    <li>User login and logout events (with IP address and timestamp)</li>
+    <li>Document request creation, status updates, and approvals/rejections</li>
+    <li>PDF document generation and printing events</li>
+    <li>Resident record creation, modification, and deletion</li>
+    <li>User account creation, role changes, and deactivation</li>
+    <li>Announcement publishing and unpublishing</li>
+    <li>Blotter entry creation and status changes</li>
+    <li>System configuration changes</li>
+    <li>Failed authentication attempts</li>
+  </ul>
+  <p>
+    Each audit log entry contains: the action performed, the user who performed it, the target record
+    affected, the timestamp, and relevant details. Audit logs are searchable and filterable by date,
+    user, and action type. They are read-only to all users except the System Administrator.
+  </p>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 8</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION VIII — WORKFLOW OVERVIEW
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s8">VIII. System Workflow Overview</h1>
+
+  <h2>8.1 Document Request Workflow (Online)</h2>
+  <div class="workflow-row">
+    <span class="workflow-step">Resident fills<br>online form</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">System validates<br>inputs</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Tracking ID +<br>QR Code generated</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Firestore record<br>created (PENDING)</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Email notification<br>sent to resident</span>
+  </div>
+  <div class="workflow-row">
+    <span class="workflow-step">Staff reviews<br>request (RECEIVED)</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Staff processes<br>(PROCESSING)</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Document generated<br>(FOR RELEASE)</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Resident claims<br>document (RELEASED)</span>
+  </div>
+
+  <h2>8.2 Request Status Workflow</h2>
+  <div class="workflow-row">
+    <span class="workflow-step" style="background:#78350f;">PENDING</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step" style="background:#1d4ed8;">RECEIVED</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step" style="background:#1d4ed8;">PROCESSING</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step" style="background:#0369a1;">FOR RELEASE</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step" style="background:#15803d;">RELEASED</span>
+  </div>
+  <div class="workflow-row">
+    <span style="font-style:italic;font-size:11pt;color:#555;">At any stage, staff may update status to:</span>
+    <span class="workflow-step" style="background:#b91c1c;">REJECTED</span>
+    <span style="font-size:11pt;color:#555;">(with reason noted)</span>
+  </div>
+
+  <h2>8.3 Walk-In Transaction Workflow</h2>
+  <div class="workflow-row">
+    <span class="workflow-step">Resident visits<br>barangay hall</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Staff encodes<br>request in system</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Tracking ID<br>issued to resident</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">Same processing<br>workflow applies</span>
+    <span class="workflow-arrow">→</span>
+    <span class="workflow-step">DTS Slip<br>printed &amp; given</span>
+  </div>
+
+  <h2>8.4 Tracking ID Format</h2>
+  <div class="note-box">
+    <strong>Format:</strong> &nbsp; <code style="font-size:13pt; letter-spacing:2px;">BRY-2026-00001</code><br><br>
+    <strong>Components:</strong>
+    <ul style="margin-top:6px;">
+      <li><strong>BRY</strong> — Barangay prefix (configurable per barangay)</li>
+      <li><strong>2026</strong> — Year of request submission (auto-generated)</li>
+      <li><strong>00001</strong> — Sequential 5-digit request number (auto-incremented)</li>
+    </ul>
+    This ID is unique per request and embedded as a scannable QR code in every document.
+  </div>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 9</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION IX — TECHNOLOGY STACK
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s9">IX. Technology Stack Recommendation</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Layer</th>
+        <th>Technology</th>
+        <th>Version</th>
+        <th>Purpose / Rationale</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend</strong></td>
+        <td>HTML5, CSS3, JavaScript (Vanilla)</td>
+        <td>ES2022+</td>
+        <td>Lightweight public portal; fast load times on low-bandwidth connections common in barangay areas.</td>
+      </tr>
+      <tr>
+        <td><strong>Admin UI Styling</strong></td>
+        <td>Custom CSS + Shared Stylesheets</td>
+        <td>—</td>
+        <td>Responsive, brand-consistent design without external CSS framework dependency.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend Runtime</strong></td>
+        <td>Node.js</td>
+        <td>v20 LTS</td>
+        <td>Non-blocking I/O ideal for concurrent request handling. LTS version ensures long-term stability.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend Framework</strong></td>
+        <td>Express.js</td>
+        <td>v4.x</td>
+        <td>Lightweight, mature, and well-documented HTTP framework for Node.js.</td>
+      </tr>
+      <tr>
+        <td><strong>Language</strong></td>
+        <td>TypeScript</td>
+        <td>v5.x</td>
+        <td>Static typing reduces runtime errors, improves maintainability, and enforces strict data contracts.</td>
+      </tr>
+      <tr>
+        <td><strong>Database</strong></td>
+        <td>Firebase Firestore</td>
+        <td>v12.x SDK</td>
+        <td>NoSQL cloud database; real-time sync; scalable with no server management overhead; generous free tier.</td>
+      </tr>
+      <tr>
+        <td><strong>Authentication</strong></td>
+        <td>Firebase Authentication</td>
+        <td>v12.x SDK</td>
+        <td>Secure, managed authentication with email/password, token-based session management, and built-in brute-force protection.</td>
+      </tr>
+      <tr>
+        <td><strong>File Storage</strong></td>
+        <td>Firebase Storage</td>
+        <td>v12.x SDK</td>
+        <td>Secure cloud storage for uploaded IDs, profile photos, and generated PDFs.</td>
+      </tr>
+      <tr>
+        <td><strong>PDF Generation</strong></td>
+        <td>pdf-lib</td>
+        <td>v1.17.x</td>
+        <td>Server-side PDF creation with custom fonts, layouts, QR codes, and barangay letterhead.</td>
+      </tr>
+      <tr>
+        <td><strong>QR Code</strong></td>
+        <td>qrcode (npm)</td>
+        <td>v1.5.x</td>
+        <td>Generates scannable QR codes embedded in documents for authenticity verification.</td>
+      </tr>
+      <tr>
+        <td><strong>Email Service</strong></td>
+        <td>Nodemailer</td>
+        <td>v6.x</td>
+        <td>SMTP-based transactional email for status notifications and appointment confirmations.</td>
+      </tr>
+      <tr>
+        <td><strong>Input Validation</strong></td>
+        <td>Zod</td>
+        <td>v3.x</td>
+        <td>Runtime schema validation on all API inputs; prevents malformed or malicious data from reaching the database.</td>
+      </tr>
+      <tr>
+        <td><strong>Security</strong></td>
+        <td>Helmet.js + express-rate-limit</td>
+        <td>v7.x / v7.x</td>
+        <td>HTTP security headers (XSS, CSRF, clickjacking protection) and rate limiting to prevent DoS and brute-force attacks.</td>
+      </tr>
+      <tr>
+        <td><strong>File Upload</strong></td>
+        <td>Multer</td>
+        <td>v1.4.x</td>
+        <td>Secure multipart/form-data file uploads with size limits and file type validation.</td>
+      </tr>
+      <tr>
+        <td><strong>Hosting</strong></td>
+        <td>Firebase Hosting / Any Node.js VPS</td>
+        <td>—</td>
+        <td>Static frontend on Firebase Hosting; backend on a VPS (e.g., Railway, Render, DigitalOcean, or on-premise server).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 10</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION X — SYSTEM REQUIREMENTS
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s10">X. System Requirements</h1>
+
+  <h2 id="s10a">A. Hardware Requirements</h2>
+
+  <h3>For Barangay Staff (Administrative Workstations)</h3>
+  <table>
+    <thead>
+      <tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Processor (CPU)</td><td>Intel Core i3 / AMD Ryzen 3 (2.0 GHz)</td><td>Intel Core i5 / AMD Ryzen 5 (3.0 GHz or higher)</td></tr>
+      <tr><td>RAM</td><td>4 GB</td><td>8 GB or higher</td></tr>
+      <tr><td>Storage</td><td>256 GB HDD</td><td>512 GB SSD</td></tr>
+      <tr><td>Display</td><td>15.6-inch, 1366 × 768</td><td>21.5-inch Full HD (1920 × 1080)</td></tr>
+      <tr><td>Printer</td><td>Any A4 inkjet or laser printer</td><td>Laser printer with A4 capability (for official documents)</td></tr>
+      <tr><td>Internet Connection</td><td>5 Mbps stable broadband</td><td>10 Mbps or higher (fiber or LTE)</td></tr>
+      <tr><td>UPS</td><td>600 VA UPS (recommended)</td><td>1000 VA UPS with AVR</td></tr>
+    </tbody>
+  </table>
+
+  <h3>For Residents (End User Devices)</h3>
+  <table>
+    <thead>
+      <tr><th>Device Type</th><th>Requirements</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Desktop / Laptop</td><td>Any modern PC with a web browser (Chrome, Firefox, Edge, Safari) and internet connection</td></tr>
+      <tr><td>Smartphone / Tablet</td><td>Android 8.0+ or iOS 13+; mobile web browser; 2G/3G/4G/LTE or Wi-Fi connection</td></tr>
+    </tbody>
+  </table>
+
+  <h3>For Server Deployment</h3>
+  <table>
+    <thead>
+      <tr><th>Component</th><th>Minimum (Cloud / VPS)</th><th>Recommended</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>vCPU</td><td>1 vCPU</td><td>2 vCPU</td></tr>
+      <tr><td>RAM</td><td>1 GB</td><td>2 GB</td></tr>
+      <tr><td>Storage</td><td>20 GB SSD</td><td>50 GB SSD</td></tr>
+      <tr><td>OS</td><td>Ubuntu 22.04 LTS / Windows Server 2019</td><td>Ubuntu 22.04 LTS (recommended)</td></tr>
+      <tr><td>Network</td><td>100 Mbps uplink</td><td>1 Gbps uplink</td></tr>
+    </tbody>
+  </table>
+  <p class="table-caption">Note: Firebase Firestore, Firebase Authentication, and Firebase Storage are cloud-managed services and require no on-premise server hardware. A VPS is only needed for the Node.js/Express backend API if not hosted on a managed cloud platform.</p>
+
+  <h2 id="s10b">B. Software Requirements</h2>
+  <table>
+    <thead>
+      <tr><th>Software</th><th>Purpose</th><th>License</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Node.js v20 LTS</td><td>Backend runtime</td><td>Free / Open Source (MIT)</td></tr>
+      <tr><td>npm (Node Package Manager)</td><td>Dependency management</td><td>Free / Open Source</td></tr>
+      <tr><td>TypeScript v5.x</td><td>Typed JavaScript for backend</td><td>Free / Open Source (Apache 2.0)</td></tr>
+      <tr><td>Firebase (Google Cloud)</td><td>Database, Auth, Storage, Hosting</td><td>Free (Spark Plan) / Pay-as-you-go (Blaze Plan)</td></tr>
+      <tr><td>Google Chrome / Firefox</td><td>Staff and resident web browser</td><td>Free</td></tr>
+      <tr><td>Git</td><td>Version control</td><td>Free / Open Source (GPL-2.0)</td></tr>
+      <tr><td>VS Code (or any IDE)</td><td>Development environment</td><td>Free / Open Source</td></tr>
+      <tr><td>Postman (for testing)</td><td>API testing during development</td><td>Free</td></tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 11</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION XI — SECURITY FEATURES
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s11">XI. Security Features</h1>
+
+  <h2>A. Authentication</h2>
+  <ul>
+    <li><strong>Firebase Authentication</strong> — Industry-standard token-based authentication using JSON Web Tokens (JWT). All admin sessions are secured with Firebase ID tokens verified server-side on every API request.</li>
+    <li><strong>Email and Password Authentication</strong> — Admin and staff accounts use email/password with enforced password complexity requirements.</li>
+    <li><strong>Token Expiry and Refresh</strong> — Firebase ID tokens expire automatically (default: 1 hour) and are refreshed seamlessly via the Firebase SDK without requiring re-login during active sessions.</li>
+    <li><strong>Failed Login Lockout</strong> — Firebase's built-in brute-force protection temporarily blocks accounts with repeated failed login attempts.</li>
+    <li><strong>Secure Session Management</strong> — Admin sessions managed via HTTP-only cookies where applicable; no sensitive tokens stored in localStorage.</li>
+  </ul>
+
+  <h2>B. Role-Based Access Control (RBAC)</h2>
+  <ul>
+    <li>Every API endpoint is protected by authentication middleware, which verifies the Firebase ID token before processing any request.</li>
+    <li>Custom role claims are embedded in Firebase Auth tokens and verified server-side to restrict access based on the user's assigned role.</li>
+    <li>Frontend pages and navigation items are conditionally rendered based on the authenticated user's role, preventing unauthorized access to admin-only pages.</li>
+    <li>The principle of least privilege is applied — users are granted only the minimum permissions required for their function.</li>
+  </ul>
+
+  <h2>C. Data Encryption</h2>
+  <ul>
+    <li><strong>In Transit:</strong> All data transmissions are encrypted using HTTPS/TLS 1.2 or higher. No plaintext transmission of sensitive data.</li>
+    <li><strong>At Rest:</strong> Firebase Firestore and Firebase Storage automatically encrypt all stored data at rest using AES-256 encryption managed by Google Cloud.</li>
+    <li><strong>Passwords:</strong> User passwords are never stored in the application database. Firebase Authentication handles password hashing using industry-standard algorithms (bcrypt).</li>
+    <li><strong>Sensitive Fields:</strong> Contact numbers, email addresses, and personal identification data in Firestore are accessible only to authorized server-side code via the Firebase Admin SDK.</li>
+  </ul>
+
+  <h2>D. API Security (OWASP Top 10 Compliance)</h2>
+  <ul>
+    <li><strong>Input Validation (Zod):</strong> All API inputs are strictly validated against defined schemas. Any input that does not match the schema is rejected with a 400 error — preventing injection attacks and malformed data.</li>
+    <li><strong>Helmet.js:</strong> Sets secure HTTP response headers including Content-Security-Policy, X-Frame-Options (clickjacking protection), X-XSS-Protection, Strict-Transport-Security, and X-Content-Type-Options.</li>
+    <li><strong>Rate Limiting:</strong> API endpoints have configurable rate limits. The document submission endpoint is limited to 5 requests per hour per IP to prevent abuse and DoS attacks.</li>
+    <li><strong>CORS Policy:</strong> Cross-Origin Resource Sharing is configured to allow requests only from the authorized frontend domain.</li>
+    <li><strong>File Upload Validation:</strong> Multer enforces a file type whitelist (JPEG, PNG, PDF only) and maximum file size limits on all upload endpoints.</li>
+    <li><strong>No SQL Injection Risk:</strong> Firebase Firestore uses NoSQL document queries with typed SDKs — traditional SQL injection attacks are not applicable.</li>
+  </ul>
+
+  <h2>E. Backup and Recovery</h2>
+  <ul>
+    <li><strong>Automated Firestore Backups:</strong> Firebase Firestore supports scheduled export to Google Cloud Storage. Daily automated backups are recommended and configurable.</li>
+    <li><strong>Manual Export:</strong> Administrators can trigger manual Firestore exports at any time via the Firebase Console or the Admin SDK.</li>
+    <li><strong>Point-in-Time Recovery:</strong> Firestore's export mechanism supports point-in-time restoration, allowing recovery of data to any prior backup snapshot.</li>
+    <li><strong>Code and Configuration Backup:</strong> All source code is version-controlled using Git and stored in a private repository (GitHub/GitLab).</li>
+    <li><strong>Disaster Recovery Plan:</strong> A documented disaster recovery procedure will be provided, including steps for data restoration, backend redeployment, and service continuity.</li>
+  </ul>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 12</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION XII — IMPLEMENTATION PLAN
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s12">XII. Implementation Plan / Development Phases</h1>
+
+  <p>
+    The project is divided into three (3) development phases spanning twelve (12) weeks.
+    Each phase concludes with dedicated testing and deployment to ensure stable, incremental
+    delivery of features.
+  </p>
+
+  <!-- PHASE 1 -->
+  <div class="phase-header">Phase 1: Setup and Authentication (Weeks 1–4)</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th>Focus Area</th>
+        <th>Key Deliverables</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Week 1</strong></td>
+        <td>Project Setup + UI Layout + Database Setup</td>
+        <td>
+          <ul>
+            <li>Development environment setup (Node.js, TypeScript, Git)</li>
+            <li>Firebase project creation (Firestore, Auth, Storage)</li>
+            <li>Database schema design and Firestore collection structure</li>
+            <li>Backend scaffold (Express + TypeScript)</li>
+            <li>Frontend layout scaffold (HTML/CSS — public portal + admin shell)</li>
+            <li>Environment variable configuration (.env)</li>
+            <li>Base navigation, header, footer, and shared CSS</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 2</strong></td>
+        <td>Authentication System (Login / Register / Admin Setup)</td>
+        <td>
+          <ul>
+            <li>Firebase Authentication integration (email/password)</li>
+            <li>Admin login page (frontend)</li>
+            <li>Auth middleware (server-side token verification)</li>
+            <li>Admin account bootstrap script (first-time setup)</li>
+            <li>Session management (token storage, auto-refresh)</li>
+            <li>Logout functionality</li>
+            <li>Protected route enforcement on all admin pages</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 3</strong></td>
+        <td>Role-Based Access Control + User Management</td>
+        <td>
+          <ul>
+            <li>Custom role claims setup in Firebase Auth</li>
+            <li>Role definitions: Captain, Secretary, Kagawad, Staff, IT Admin</li>
+            <li>Admin user management page (create, edit, deactivate users)</li>
+            <li>Role-based page and API access control</li>
+            <li>Staff profile management (name, position, photo)</li>
+            <li>Password reset and change functionality</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 4</strong></td>
+        <td>Testing + Deployment for Phase 1</td>
+        <td>
+          <ul>
+            <li>Authentication flow testing (all user roles)</li>
+            <li>RBAC validation testing (access control verification)</li>
+            <li>Security header verification (Helmet.js, CORS)</li>
+            <li>Backend deployment to staging environment</li>
+            <li>Frontend deployment to Firebase Hosting (staging)</li>
+            <li>Phase 1 review and sign-off documentation</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PHASE 2 -->
+  <div class="phase-header" style="margin-top:0.2in;">Phase 2: Core Modules (Weeks 5–8)</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th>Focus Area</th>
+        <th>Key Deliverables</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Week 5</strong></td>
+        <td>Resident Information Management</td>
+        <td>
+          <ul>
+            <li>Resident profile data model and Firestore schema</li>
+            <li>Admin resident listing page with search and filter</li>
+            <li>Resident profile creation and edit forms</li>
+            <li>Profile photo upload (Multer + Firebase Storage)</li>
+            <li>Resident record history (linked document requests)</li>
+            <li>Duplicate detection mechanism (name + address matching)</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 6</strong></td>
+        <td>Certificate Request &amp; Generation Module</td>
+        <td>
+          <ul>
+            <li>Public-facing document request submission form</li>
+            <li>Zod input validation on all request fields</li>
+            <li>Tracking ID generation (BRY-YYYY-XXXXX format)</li>
+            <li>QR Code generation and embedding</li>
+            <li>Firestore request record creation (status: PENDING)</li>
+            <li>Admin request management dashboard (list, filter, update status)</li>
+            <li>Walk-in encoding form for barangay staff</li>
+            <li>Server-side PDF generation (pdf-lib) with letterhead and QR code</li>
+            <li>DTS slip PDF (Office Copy + Client Copy)</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 7</strong></td>
+        <td>Announcement Module + Notification System</td>
+        <td>
+          <ul>
+            <li>Announcement creation and management form (admin)</li>
+            <li>Publish/Unpublish controls with scheduled publishing</li>
+            <li>Public announcements page (resident-facing)</li>
+            <li>Email notification service (Nodemailer SMTP)</li>
+            <li>Status update email notifications to residents</li>
+            <li>Appointment confirmation emails</li>
+            <li>Tracking ID delivery email (with QR code image)</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 8</strong></td>
+        <td>Testing + Deployment for Phase 2</td>
+        <td>
+          <ul>
+            <li>End-to-end document request workflow testing</li>
+            <li>PDF generation quality verification</li>
+            <li>QR code scan verification</li>
+            <li>Email notification delivery testing</li>
+            <li>Rate limiting and duplicate detection testing</li>
+            <li>Staging deployment update</li>
+            <li>Phase 2 review and sign-off documentation</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 13</div>
+</div>
+
+<div class="page">
+  <!-- PHASE 3 -->
+  <div class="phase-header">Phase 3: Advanced Features (Weeks 9–12)</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th>Focus Area</th>
+        <th>Key Deliverables</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Week 9</strong></td>
+        <td>Blotter and Complaint Management</td>
+        <td>
+          <ul>
+            <li>Blotter entry form and Firestore schema</li>
+            <li>Blotter case number generation</li>
+            <li>Blotter listing with search, filter, and status management</li>
+            <li>Case detail view with hearing schedule and resolution notes</li>
+            <li>Blotter certification PDF generation</li>
+            <li>Public complaint/request submission form</li>
+            <li>Complaint tracking by reference number</li>
+            <li>Admin complaint management (assignment, status, response)</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 10</strong></td>
+        <td>Appointment Scheduling</td>
+        <td>
+          <ul>
+            <li>Public appointment booking form</li>
+            <li>Service type selection and time slot availability display</li>
+            <li>Appointment Firestore schema and reference number generation</li>
+            <li>Admin appointment management dashboard</li>
+            <li>Time slot capacity and holiday blocking configuration</li>
+            <li>Appointment status management (Confirm, Complete, Cancel, No-Show)</li>
+            <li>Email confirmation to resident upon successful booking</li>
+            <li>Daily and weekly appointment calendar view for staff</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 11</strong></td>
+        <td>Reporting and Analytics</td>
+        <td>
+          <ul>
+            <li>Admin dashboard summary cards (total requests, pending items, today's appointments)</li>
+            <li>Document request reports (by type, status, date range)</li>
+            <li>Resident population statistics breakdown</li>
+            <li>Service performance metrics (average processing time)</li>
+            <li>Blotter and complaint summary reports</li>
+            <li>Appointment volume and no-show reports</li>
+            <li>Audit log viewer with search and filter</li>
+            <li>PDF and CSV export for all reports</li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Week 12</strong></td>
+        <td>Final Testing, Optimization, and Full Deployment</td>
+        <td>
+          <ul>
+            <li>Full end-to-end system testing across all modules</li>
+            <li>Cross-browser and cross-device compatibility testing</li>
+            <li>Performance optimization (API response times, page load speed)</li>
+            <li>Security audit (OWASP Top 10 checklist review)</li>
+            <li>Data entry and migration assistance (initial resident data import)</li>
+            <li>Production deployment (backend + frontend)</li>
+            <li>Firestore security rules review and hardening</li>
+            <li>User acceptance testing (UAT) with barangay staff</li>
+            <li>Admin and staff system training session</li>
+            <li>System documentation (user manual + technical guide)</li>
+            <li>Backup and recovery procedure documentation</li>
+            <li>Go-live and post-deployment monitoring</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:0.25in;">Implementation Timeline Summary</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>Weeks</th>
+        <th>Focus</th>
+        <th>Status Milestone</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Phase 1</td>
+        <td>Week 1 – Week 4</td>
+        <td>Setup, Authentication, RBAC, User Management</td>
+        <td>System foundation operational; all users can log in</td>
+      </tr>
+      <tr>
+        <td>Phase 2</td>
+        <td>Week 5 – Week 8</td>
+        <td>Resident Management, Certificates, Announcements, Notifications</td>
+        <td>Core service delivery functional; document requests live</td>
+      </tr>
+      <tr>
+        <td>Phase 3</td>
+        <td>Week 9 – Week 12</td>
+        <td>Blotter, Appointments, Reports, Final Testing &amp; Deployment</td>
+        <td>Full system deployed; staff trained; production go-live</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 14</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION XIII — PROJECT DELIVERABLES
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s13">XIII. Project Deliverables</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Deliverable</th>
+        <th>Description</th>
+        <th>Delivery Phase</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Fully Functional Web Application</td>
+        <td>Deployed and operational BPSP-DTS system accessible via web browser, including all modules described in Section VII.</td>
+        <td>Phase 3 (Week 12)</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Admin Dashboard</td>
+        <td>Complete administrative interface for barangay staff and officials with role-based access.</td>
+        <td>Phase 1–3</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Public Resident Portal</td>
+        <td>Publicly accessible portal for residents to submit requests, track status, view announcements, and book appointments.</td>
+        <td>Phase 2 (Week 6)</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>PDF Document Templates</td>
+        <td>Server-side generated PDF templates for all supported certificate types with barangay letterhead, signature fields, and QR verification.</td>
+        <td>Phase 2 (Week 6)</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Source Code Repository</td>
+        <td>Full, well-structured source code in a private Git repository. Transferred to the barangay or designated IT custodian upon project completion.</td>
+        <td>Phase 3 (Week 12)</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Technical Documentation</td>
+        <td>System architecture document, API documentation, database schema reference, and environment setup guide for future developers.</td>
+        <td>Phase 3 (Week 12)</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>User Manual</td>
+        <td>Step-by-step user guide for barangay staff and officials covering all system functions. Written in Filipino and English.</td>
+        <td>Phase 3 (Week 12)</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>Training Session</td>
+        <td>On-site or virtual training session for designated barangay staff and officials on system operation and administration.</td>
+        <td>Phase 3 (Week 12)</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>Backup &amp; Recovery Procedure</td>
+        <td>Written documented procedure for data backup, restoration, and disaster recovery.</td>
+        <td>Phase 3 (Week 12)</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>Post-Deployment Support</td>
+        <td>30-day post-go-live technical support for bug fixes, configuration issues, and staff questions (see Section XVI).</td>
+        <td>Post-Launch</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION XIV — EXPECTED BENEFITS
+  ═══════════════════════════════════════════════════════════ -->
+  <h1 id="s14">XIV. Expected Benefits</h1>
+
+  <h2>A. For Residents</h2>
+  <ul>
+    <li>Eliminate the need to take a leave from work or school to queue at the barangay hall for routine document requests.</li>
+    <li>24/7 online access to submit document requests from any device with internet access.</li>
+    <li>Real-time visibility into the status of their requests — reducing anxiety and repeated follow-up visits.</li>
+    <li>Email notifications on status changes and document readiness for pick-up.</li>
+    <li>Access to up-to-date barangay announcements, events, and public information through the portal.</li>
+    <li>Convenient appointment booking to avoid long waiting times at the barangay hall.</li>
+  </ul>
+
+  <h2>B. For Barangay Officials and Staff</h2>
+  <ul>
+    <li>Significant reduction in manual paperwork and physical file management workload.</li>
+    <li>Faster processing of document requests through a streamlined, digital workflow.</li>
+    <li>Centralized, searchable resident database accessible to authorized staff at any time.</li>
+    <li>Automated generation of professional, standardized PDF documents — eliminating manual typing errors.</li>
+    <li>Data-driven decision making through comprehensive reports and analytics.</li>
+    <li>Clear audit trail of all transactions — improving accountability and reducing disputes.</li>
+    <li>Improved communication with residents through the official announcement channel.</li>
+  </ul>
+
+  <h2>C. For the Barangay as a Governance Unit</h2>
+  <ul>
+    <li>Enhanced credibility and public trust through modern, transparent, and efficient service delivery.</li>
+    <li>Alignment with the national mandate for e-governance and the Ease of Doing Business Act (RA 11032).</li>
+    <li>Digital preservation of records — resistant to damage from fire, flood, and theft.</li>
+    <li>Scalable infrastructure that can accommodate population growth and increased service demand.</li>
+    <li>Contribution to the broader digitization goals of the local government unit (LGU).</li>
+    <li>Potential recognition as a model barangay for digital governance at the municipal or provincial level.</li>
+  </ul>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 15</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION XV — BUDGET ESTIMATION
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s15">XV. Budget Estimation (Optional but Recommended)</h1>
+
+  <p>
+    The following budget estimates are provided as a general reference. Actual costs may vary depending
+    on specific requirements, scope adjustments, and negotiations between the barangay and the development
+    team. All amounts are in Philippine Pesos (PHP).
+  </p>
+
+  <h2>A. Development Costs</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Estimated Cost (PHP)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>System Analysis &amp; Design</td>
+        <td>Requirements gathering, system architecture design, UI/UX wireframing, database schema design</td>
+        <td style="text-align:right;">₱ 5,000 – ₱ 15,000</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Frontend Development</td>
+        <td>Public portal (all pages), admin dashboard (all modules), responsive design</td>
+        <td style="text-align:right;">₱ 15,000 – ₱ 35,000</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Backend Development</td>
+        <td>REST API (all routes), Firebase integration, PDF generation, QR code, email service, authentication, RBAC</td>
+        <td style="text-align:right;">₱ 20,000 – ₱ 45,000</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Testing &amp; Quality Assurance</td>
+        <td>Unit testing, integration testing, UAT, security audit, browser compatibility testing</td>
+        <td style="text-align:right;">₱ 5,000 – ₱ 10,000</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Deployment &amp; Configuration</td>
+        <td>Production environment setup, domain configuration, SSL certificate, Firebase production setup</td>
+        <td style="text-align:right;">₱ 3,000 – ₱ 8,000</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>Documentation &amp; Training</td>
+        <td>User manual (Filipino/English), technical documentation, staff training session (up to 1 day)</td>
+        <td style="text-align:right;">₱ 3,000 – ₱ 8,000</td>
+      </tr>
+      <tr>
+        <td colspan="3"><strong>Subtotal — Development</strong></td>
+        <td style="text-align:right;"><strong>₱ 51,000 – ₱ 121,000</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>B. Recurring Operational Costs (Annual)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Estimated Annual Cost (PHP)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Domain Name</td>
+        <td>Custom domain (e.g., barangay-[name].gov.ph or .com.ph) — optional; Firebase Hosting provides a free subdomain</td>
+        <td style="text-align:right;">₱ 500 – ₱ 1,500 / year</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Firebase Hosting / Backend Hosting</td>
+        <td>Firebase Spark Plan is free; if Blaze Plan or VPS required: ₱ 500–₱ 3,000/month depending on traffic</td>
+        <td style="text-align:right;">₱ 0 – ₱ 36,000 / year</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Email Service (SMTP)</td>
+        <td>Transactional email service (Gmail SMTP / SendGrid free tier). Free for low-volume usage (&lt;500 emails/day)</td>
+        <td style="text-align:right;">₱ 0 – ₱ 3,000 / year</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Internet Connectivity</td>
+        <td>Barangay hall internet subscription (if not already in place)</td>
+        <td style="text-align:right;">₱ 12,000 – ₱ 24,000 / year</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Maintenance &amp; Support</td>
+        <td>Annual maintenance contract for bug fixes, minor updates, and technical support</td>
+        <td style="text-align:right;">₱ 12,000 – ₱ 36,000 / year</td>
+      </tr>
+      <tr>
+        <td colspan="3"><strong>Subtotal — Annual Operations</strong></td>
+        <td style="text-align:right;"><strong>₱ 24,500 – ₱ 100,500 / year</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="table-caption">
+    Note: Costs may be significantly reduced by utilizing free tiers of cloud services (Firebase Spark Plan, Gmail SMTP).
+    The barangay may also apply for LGU ICT grants or DICT assistance for funding digitization projects.
+  </p>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 16</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION XVI — MAINTENANCE AND SUPPORT PLAN
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s16">XVI. Maintenance and Support Plan</h1>
+
+  <h2>A. Post-Deployment Support Period (Included)</h2>
+  <p>
+    Upon successful deployment and system go-live (Week 12), the development team commits to providing
+    a thirty (30) day post-deployment support period at no additional charge. This includes:
+  </p>
+  <ul>
+    <li>Priority bug fixes for any critical system errors discovered during the first 30 days of operation</li>
+    <li>Technical assistance for barangay staff via email or messaging during business hours</li>
+    <li>Minor configuration adjustments (e.g., updating official signatures, updating document templates)</li>
+    <li>Performance monitoring and initial optimization adjustments</li>
+  </ul>
+
+  <h2>B. Annual Maintenance Contract (Recommended)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Description</th>
+        <th>Frequency</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Bug Fixes</td>
+        <td>Resolution of reported bugs and system errors within agreed response times (critical: 24 hours; non-critical: 5 business days)</td>
+        <td>As needed</td>
+      </tr>
+      <tr>
+        <td>Security Patches</td>
+        <td>Updates to address newly discovered vulnerabilities in dependencies or the system codebase</td>
+        <td>As released / Quarterly review</td>
+      </tr>
+      <tr>
+        <td>Dependency Updates</td>
+        <td>Update of Node.js packages, Firebase SDK, and other libraries to maintain security and compatibility</td>
+        <td>Quarterly</td>
+      </tr>
+      <tr>
+        <td>Database Backup Monitoring</td>
+        <td>Verification that automated Firestore backups are completing successfully; test restoration drill</td>
+        <td>Monthly</td>
+      </tr>
+      <tr>
+        <td>Minor Feature Updates</td>
+        <td>Small enhancements and configuration changes (e.g., new document type, updated form fields). Up to 10 hours/year included.</td>
+        <td>As requested</td>
+      </tr>
+      <tr>
+        <td>Technical Support</td>
+        <td>Email/messaging support for staff questions and troubleshooting during business hours (Mon–Fri, 8AM–5PM)</td>
+        <td>Ongoing</td>
+      </tr>
+      <tr>
+        <td>Annual System Review</td>
+        <td>Comprehensive system health check, performance review, security audit, and recommendations for the following year</td>
+        <td>Annual</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>C. Barangay IT Responsibilities</h2>
+  <ul>
+    <li>Designate a trained System Administrator (IT Admin) from barangay staff or the municipality's IT department</li>
+    <li>Maintain stable internet connectivity at the barangay hall</li>
+    <li>Ensure all staff use the system according to established procedures</li>
+    <li>Report bugs and issues promptly to the development team through the agreed communication channel</li>
+    <li>Maintain valid login credentials and enforce password security practices among staff</li>
+    <li>Regularly review user accounts and deactivate the accounts of resigned or transferred staff</li>
+  </ul>
+
+  <h2>D. Upgrade Pathway</h2>
+  <p>The system architecture is designed to accommodate future enhancements. Potential future upgrades include:</p>
+  <ul>
+    <li>SMS Notification Integration (for residents without email)</li>
+    <li>Online Payment Processing for document fees</li>
+    <li>Native Mobile Application (Android/iOS) via React Native or Capacitor</li>
+    <li>Integration with LGU or National Government databases (PhilSys, COMELEC)</li>
+    <li>Multi-barangay / municipal-level deployment</li>
+    <li>AI-powered chatbot for resident inquiries</li>
+    <li>Digital signature integration for paperless document signing</li>
+  </ul>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 17</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION XVII — CONCLUSION
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1 id="s17">XVII. Conclusion</h1>
+
+  <p>
+    The Barangay Public Services Portal and Document Tracking System (BPSP-DTS) represents a
+    transformative step toward modern, efficient, and transparent local governance in the Philippines.
+    By digitizing the core service delivery functions of the barangay — document issuance, request
+    tracking, appointment scheduling, blotter management, and resident communication — the system
+    directly addresses the long-standing inefficiencies and limitations of the traditional, paper-based
+    barangay service model.
+  </p>
+  <p>
+    The proposed system is not simply a software application; it is an investment in the quality of
+    life of every resident in the barangay. When residents can submit a request from home at midnight
+    and check its status the following morning without leaving their families, the government becomes
+    truly accessible. When barangay staff can process requests in minutes instead of hours, and when
+    officials can see real-time data on service demand and performance, governance becomes
+    evidence-based and proactive.
+  </p>
+  <p>
+    The project is technically sound, built on proven, open-source technologies with a strong security
+    posture aligned with OWASP best practices. It is financially viable with low recurring operational
+    costs, particularly given Firebase's generous free tier. It is administratively straightforward,
+    with a clear twelve-week implementation roadmap, well-defined deliverables, and a comprehensive
+    post-deployment support plan.
+  </p>
+  <p>
+    This proposal is submitted with the sincere intention of contributing to the modernization of
+    barangay governance, in alignment with the Republic's commitment to e-governance and the
+    principles of transparency, accountability, and participatory governance enshrined in the Local
+    Government Code of 1991 (Republic Act No. 7160) and the Ease of Doing Business and Efficient
+    Government Service Delivery Act of 2018 (Republic Act No. 11032).
+  </p>
+  <p>
+    The proponents respectfully request the Honorable Barangay Council and concerned officials to
+    review this proposal favorably and to authorize the commencement of the project at the earliest
+    opportunity. We stand ready to present and discuss this proposal in person at any scheduled meeting
+    convenient to the Council.
+  </p>
+  <p>
+    We look forward to the honor of serving Barangay [Name] and its residents through this meaningful
+    initiative.
+  </p>
+
+  <br>
+  <p style="text-align:center;font-style:italic;color:#555;">
+    "Technology in the service of the people — for a barangay that works for everyone."
+  </p>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION XVIII — PREPARED BY
+  ═══════════════════════════════════════════════════════════ -->
+  <h1 id="s18" style="margin-top:0.5in;">XVIII. Prepared By</h1>
+
+  <div class="signature-block">
+    <div class="sig-col">
+      <div class="sig-line"></div>
+      <div class="sig-label">
+        <strong>[Full Name]</strong><br>
+        Project Lead / Lead Developer<br>
+        [Organization / Freelancer]<br>
+        Contact: [Email Address]<br>
+        Date: ___________________
+      </div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-line"></div>
+      <div class="sig-label">
+        <strong>[Full Name]</strong><br>
+        Project Adviser / Co-Proponent<br>
+        [Institution / Role]<br>
+        Contact: [Email Address]<br>
+        Date: ___________________
+      </div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:0.5in;">Noted and Endorsed By:</h2>
+  <div class="signature-block">
+    <div class="sig-col">
+      <div class="sig-line"></div>
+      <div class="sig-label">
+        <strong>[Name of Barangay Captain]</strong><br>
+        Punong Barangay<br>
+        Barangay [Name], [Municipality], [Province]<br>
+        Date: ___________________
+      </div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-line"></div>
+      <div class="sig-label">
+        <strong>[Name of Barangay Secretary]</strong><br>
+        Barangay Secretary<br>
+        Barangay [Name], [Municipality], [Province]<br>
+        Date: ___________________
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:0.6in; border:1.5px solid #1A3A6B; padding:0.2in 0.3in; background:#f8faff;">
+    <p style="margin:0; font-size:11pt; text-align:center;">
+      <strong>For Official Use Only</strong><br>
+      Resolution No.: _____________ &nbsp;|&nbsp; Date Approved: _____________<br>
+      Approved / Disapproved / Deferred by the Barangay Council<br>
+      <em>Remarks: ___________________________________________</em>
+    </p>
+  </div>
+
+  <div class="doc-footer">Barangay Public Services Portal &amp; Document Tracking System — Project Proposal | Page 18</div>
+</div>
+
+</body>
+</html>

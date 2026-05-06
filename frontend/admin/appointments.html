@@ -1,0 +1,978 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointments — Barangay Sirangan Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/admin.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    /* Page-specific modal overrides — appointments uses .open toggle pattern */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:60; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.open { display:flex; }
+    @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+    .modal-box { animation: modalIn 0.2s ease forwards; }
+  </style>
+</head>
+<body>
+
+<!-- ── Decline Modal ── -->
+<div id="declineModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="declineModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-times-circle text-red-500 text-lg"></i>
+      </div>
+      <h3 id="declineModalTitle" class="text-base font-bold text-gray-800">Decline Appointment</h3>
+    </div>
+    <p class="text-gray-500 text-sm mb-4">Please provide a reason. The resident will be notified.</p>
+    <label class="block text-xs font-bold text-gray-600 mb-1.5">Reason <span class="text-red-500">*</span></label>
+    <textarea id="declineReason" rows="3" maxlength="500" placeholder="e.g. Schedule fully booked on that date. Please rebook for another day."
+      class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none mb-1"></textarea>
+    <p class="text-xs text-red-500 mb-4 hidden" id="declineReasonErr">Please enter a reason before declining.</p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('decline')" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button onclick="confirmDecline()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">Decline Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Reschedule Modal ── -->
+<div id="rescheduleModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="rescheduleModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-calendar-xmark text-blue-500 text-lg"></i>
+      </div>
+      <h3 id="rescheduleModalTitle" class="text-base font-bold text-gray-800">Reschedule Appointment</h3>
+    </div>
+    <p class="text-gray-500 text-sm mb-5">Select a new date and time for this appointment request.</p>
+    <div class="space-y-4 mb-5">
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-1.5">New Date <span class="text-red-500">*</span></label>
+        <input type="date" id="reschedDate" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-1.5">New Time <span class="text-red-500">*</span></label>
+        <select id="reschedTime" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" style="-webkit-appearance:none;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2394a3b8%27 stroke-width=%272%27%3E%3Cpolyline points=%276 9 12 15 18 9%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;">
+          <option value="">Select time…</option>
+          <option>8:00 AM</option>
+          <option>9:00 AM</option>
+          <option>10:00 AM</option>
+          <option>11:00 AM</option>
+          <option>1:00 PM</option>
+          <option>2:00 PM</option>
+          <option>3:00 PM</option>
+          <option>4:00 PM</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-1.5">Note to Resident <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input type="text" id="reschedNote" maxlength="200" placeholder="Brief note about the schedule change…"
+          class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+    </div>
+    <p class="text-xs text-red-500 mb-4 hidden" id="reschedErr">Please select both a new date and time.</p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('reschedule')" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button onclick="confirmReschedule()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">Confirm Reschedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Approve Modal ── -->
+<div id="approveModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="approveModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-circle-check text-green-500 text-lg"></i>
+      </div>
+      <h3 id="approveModalTitle" class="text-base font-bold text-gray-800">Approve Appointment</h3>
+    </div>
+    <p class="text-gray-500 text-sm mb-6">Are you sure you want to approve this appointment request? The resident will be notified.</p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('approve')" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button onclick="confirmApprove()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Delete Modal ── -->
+<div id="deleteModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-trash text-red-500 text-lg"></i>
+      </div>
+      <h3 id="deleteModalTitle" class="text-base font-bold text-gray-800">Delete Appointment</h3>
+    </div>
+    <p class="text-gray-500 text-sm mb-2">This will <strong>permanently delete</strong> the appointment request. This action cannot be undone.</p>
+    <p class="text-xs text-gray-400 mb-6">If you want to keep a record, use Archive instead.</p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('delete')" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button onclick="confirmDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-trash mr-1"></i>Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Archive Modal ── -->
+<div id="archiveModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="archiveModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="fa-solid fa-box-archive text-amber-500 text-lg"></i>
+      </div>
+      <h3 id="archiveModalTitle" class="text-base font-bold text-gray-800">Archive Appointment</h3>
+    </div>
+    <p class="text-gray-500 text-sm mb-2">This appointment request will be moved to the archive.</p>
+    <p class="text-xs text-gray-400 mb-6">Archived records are automatically and permanently deleted after <strong>3 months</strong>.</p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('archive')" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button onclick="confirmArchive()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-box-archive mr-1"></i>Archive</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Pickup Confirm Modal ── -->
+<div id="pickupConfirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pickupConfirmTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div id="pickupConfirmIcon" class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-green-100">
+        <i id="pickupConfirmIconEl" class="fa-solid fa-circle-check text-green-500 text-lg"></i>
+      </div>
+      <h3 id="pickupConfirmTitle" class="text-base font-bold text-gray-800">Confirm Action</h3>
+    </div>
+    <p id="pickupConfirmMsg" class="text-gray-500 text-sm mb-6"></p>
+    <div class="flex gap-3">
+      <button onclick="closeModal('pickupConfirm')" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">Cancel</button>
+      <button id="pickupConfirmBtn" onclick="confirmPickupAction()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Details Modal ── -->
+<div id="detailsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="detailsModalTitle">
+  <div class="modal-box bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-[#1e3a5f] to-[#2a4f80] p-5 flex items-start justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-calendar-check text-white text-lg"></i>
+        </div>
+        <div>
+          <h3 id="detailsModalTitle" class="text-base font-bold text-white">Appointment Details</h3>
+          <div id="detailsStatusBadge" class="mt-1.5"></div>
+        </div>
+      </div>
+      <button onclick="closeModal('details')" class="text-white/60 hover:text-white transition ml-4 mt-0.5 p-1 rounded-lg hover:bg-white/10">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <!-- Body -->
+    <div class="p-5 space-y-4 max-h-[55vh] overflow-y-auto">
+      <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+        <div>
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Full Name</div>
+          <div id="dName" class="text-sm font-semibold text-gray-800">—</div>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Contact</div>
+          <div id="dContact" class="text-sm text-gray-700">—</div>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Email</div>
+          <div id="dEmail" class="text-sm text-gray-700 break-all">—</div>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Date &amp; Time</div>
+          <div id="dDateTime" class="text-sm text-gray-700">—</div>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Purpose</div>
+        <div id="dPurpose" class="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-xl p-3 whitespace-pre-wrap">—</div>
+      </div>
+      <div id="dDeclineBlock" class="hidden">
+        <div class="text-xs font-bold text-red-400 uppercase tracking-wide mb-1">Decline Reason</div>
+        <div id="dDeclineReason" class="text-sm text-red-700 italic bg-red-50 rounded-xl p-3">—</div>
+      </div>
+      <div id="dReschedBlock" class="hidden">
+        <div class="text-xs font-bold text-blue-400 uppercase tracking-wide mb-1">Reschedule Note</div>
+        <div id="dReschedNote" class="text-sm text-blue-700 italic bg-blue-50 rounded-xl p-3">—</div>
+      </div>
+    </div>
+    <!-- Footer actions -->
+    <div class="border-t border-gray-100 px-5 py-4">
+      <div id="detailsActions" class="flex gap-2 flex-wrap justify-end"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Layout ── -->
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-[#0b1929] text-white flex flex-col flex-shrink-0 fixed h-full z-40" style="box-shadow:4px 0 24px rgba(0,0,0,.18)">
+    <div class="px-5 py-5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <img src="/assets/logo/sirangan-bg.png" alt="Logo" class="w-9 h-9 rounded-xl object-cover" style="box-shadow:0 0 0 2px rgba(251,191,36,.35)">
+          <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1929] pulse-dot"></span>
+        </div>
+        <div>
+          <div class="font-bold text-sm text-white leading-tight">Brgy. Sirangan</div>
+          <div class="text-[10px] text-blue-300/70 font-medium tracking-wide uppercase mt-0.5">Admin Portal</div>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
+      <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
+      <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
+      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
+      <a href="/admin/appointments.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
+      <a href="/admin/blotter.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
+      <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
+      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+    </nav>
+    <div class="px-4 py-3.5 border-t border-white/10">
+      <div class="flex items-center gap-2.5 px-1">
+        <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0" id="sidebarAvatar">?</div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold text-white truncate" id="sidebarName">Loading…</div>
+          <div class="text-[10px] text-white/35 mt-0.5" id="sidebarRole">—</div>
+        </div>
+        <button onclick="AuthService.logout()" title="Sign out" class="w-6 h-6 flex items-center justify-center text-white/30 hover:text-red-400 transition rounded"><i class="fa-solid fa-right-from-bracket text-xs"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="ml-64 flex-1 overflow-y-auto flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200/70 px-6 py-3.5 flex justify-between items-center sticky top-0 z-30" style="box-shadow:0 1px 0 rgba(0,0,0,.05)">
+      <div class="anim-down" style="animation-delay:.04s">
+        <h1 class="text-lg font-bold text-gray-900 leading-tight">Appointments</h1>
+        <p class="text-[11px] text-gray-400 font-medium mt-0.5">Manage appointment requests and document pickup schedules</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <div id="notifContainer"></div>
+        <div class="relative" id="profileDropdown">
+          <button onclick="toggleProfileDropdown()" class="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-gray-100 transition-all duration-150">
+            <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] text-white flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0" id="profileAvatar">?</div>
+            <div class="text-left hidden sm:block">
+              <div class="text-xs font-semibold text-gray-800 leading-tight" id="profileName"></div>
+              <div class="text-[10px] text-gray-400" id="profileRoleTag"></div>
+            </div>
+            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200" id="profileChevron"></i>
+          </button>
+          <div id="profileMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl py-2 z-50" style="box-shadow:0 16px 40px -8px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.07)">
+            <div class="px-4 py-2.5 border-b border-gray-50 mb-1">
+              <div class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Signed in as</div>
+              <div class="text-xs font-semibold text-gray-800 truncate mt-0.5" id="profileMenuEmail"></div>
+            </div>
+            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
+            <a href="/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-house w-4 text-gray-400 text-xs"></i> Barangay Portal</a>
+            <div class="border-t border-gray-50 my-1.5"></div>
+            <button onclick="AuthService.logout()" class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><i class="fa-solid fa-right-from-bracket w-4 text-xs"></i> Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-6 space-y-5 flex-1">
+      <!-- Tabs -->
+      <div class="flex border-b border-gray-200 mb-6 gap-1">
+        <button id="tab1Btn" onclick="switchTab(1)"
+          class="px-5 py-3 text-sm font-semibold border-b-2 border-[#1e3a5f] text-[#1e3a5f] -mb-px transition">
+          <i class="fa-solid fa-calendar-check mr-1.5"></i>Appointment Requests
+          <span id="tab1Badge" class="ml-1.5 bg-yellow-100 text-yellow-700 text-xs font-bold px-1.5 py-0.5 rounded-full"></span>
+        </button>
+      </div>
+
+      <!-- ════════════ TAB 1: Appointment Requests ════════════ -->
+      <div id="tab1">
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-[#1e3a5f]" id="r_statTotal">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Total</div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-yellow-600" id="r_statPending">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Pending</div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-green-600" id="r_statApproved">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Approved</div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-blue-600" id="r_statRescheduled">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Rescheduled</div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-red-500" id="r_statDeclined">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Declined</div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <select id="r_filterStatus" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
+              <option value="">All Statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="RESCHEDULED">Rescheduled</option>
+              <option value="DECLINED">Declined</option>
+            </select>
+            <input type="text" id="r_filterSearch" placeholder="Search by name or email…"
+              class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
+            <div class="flex gap-2">
+              <button onclick="applyRequestFilters()" class="flex-1 bg-[#1e3a5f] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">Apply</button>
+              <button onclick="clearRequestFilters()" class="border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">Clear</button>
+            </div>
+          </div>
+        </div>
+        <!-- View Archive link -->
+        <div class="flex justify-end mb-3">
+          <a href="/admin/appointments-archive.html" class="inline-flex items-center gap-1.5 text-sm text-amber-600 hover:text-amber-800 font-semibold hover:underline transition">
+            <i class="fa-solid fa-box-archive"></i>View Archived Appointments
+          </a>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                <tr>
+                  <th class="px-4 py-3 text-left">Resident</th>
+                  <th class="px-4 py-3 text-left">Contact / Email</th>
+                  <th class="px-4 py-3 text-left">Purpose</th>
+                  <th class="px-4 py-3 text-left">Date &amp; Time</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                  <th class="px-4 py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="r_table">
+                <tr><td colspan="6" class="px-5 py-4">
+                  <div class="space-y-2.5">
+                    <div class="skeleton h-4 rounded"></div>
+                    <div class="skeleton h-4 rounded w-11/12"></div>
+                    <div class="skeleton h-4 rounded"></div>
+                    <div class="skeleton h-4 rounded w-10/12"></div>
+                    <div class="skeleton h-4 rounded w-11/12"></div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
+            <span class="text-xs text-gray-400" id="r_info"></span>
+            <div id="r_pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════ TAB 2: Document Pickups ════════════ -->
+      <div id="tab2" class="hidden">
+
+        <!-- Date filter -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4 flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Filter by Date</label>
+            <input type="date" id="dateFilter" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]">
+          </div>
+          <div class="flex gap-2">
+            <button onclick="loadByDate()" class="bg-[#1e3a5f] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">Filter</button>
+            <button onclick="clearDateFilter()" class="border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition">All</button>
+          </div>
+          <span id="aptDateLabel" class="text-sm text-gray-500"></span>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-[#1e3a5f]" id="statTotal">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Total</div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-yellow-600" id="statScheduled">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Scheduled</div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-green-600" id="statCompleted">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Completed</div>
+          </div>
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <div class="text-2xl font-bold text-red-500" id="statCancelled">—</div>
+            <div class="text-xs text-gray-500 mt-0.5">Cancelled</div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                <tr>
+                  <th class="px-4 py-3 text-left">Date &amp; Time</th>
+                  <th class="px-4 py-3 text-left">Resident</th>
+                  <th class="px-4 py-3 text-left">Tracking ID</th>
+                  <th class="px-4 py-3 text-left">Document</th>
+                  <th class="px-4 py-3 text-left">Status</th>
+                  <th class="px-4 py-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="aptTable">
+                <tr><td colspan="6" class="px-5 py-4">
+                  <div class="space-y-2.5">
+                    <div class="skeleton h-4 rounded"></div>
+                    <div class="skeleton h-4 rounded w-11/12"></div>
+                    <div class="skeleton h-4 rounded"></div>
+                    <div class="skeleton h-4 rounded w-10/12"></div>
+                    <div class="skeleton h-4 rounded w-11/12"></div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
+            <span class="text-xs text-gray-400" id="aptInfo"></span>
+            <div id="apt_pagination"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/notifications.js"></script>
+<script>
+  function toggleProfileDropdown() {
+    var menu = document.getElementById('profileMenu');
+    var chevron = document.getElementById('profileChevron');
+    var hidden = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', !hidden);
+    chevron.style.transform = hidden ? 'rotate(180deg)' : '';
+  }
+  document.addEventListener('click', function(e) {
+    var dd = document.getElementById('profileDropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('profileMenu').classList.add('hidden');
+      document.getElementById('profileChevron').style.transform = '';
+    }
+  });
+
+  function loadPageData() { _initLoad(); }
+
+  firebase.auth().onAuthStateChanged(async function (fbUser) {
+    if (!fbUser) { localStorage.removeItem('authToken'); localStorage.removeItem('user'); window.location.href = '/admin/login.html'; return; }
+    try {
+      var freshToken = await fbUser.getIdToken(true);
+      var idTokenResult = await fbUser.getIdTokenResult();
+      var role = idTokenResult.claims.role || 'staff';
+      var storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('authToken', freshToken);
+      var userData = { uid: fbUser.uid, email: fbUser.email, name: fbUser.displayName || '', role: role, photoUrl: fbUser.photoURL || storedUser.photoUrl || '' };
+      localStorage.setItem('user', JSON.stringify(userData));
+      var initials = (userData.name || '?').split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase()||'?';
+      var avatarHTML = userData.photoUrl ? '<img src="'+userData.photoUrl.replace(/"/g,'&quot;')+'" class="w-full h-full object-cover" alt="Profile">' : initials;
+      document.getElementById('profileAvatar').innerHTML = avatarHTML;
+      document.getElementById('profileName').textContent = userData.name;
+      document.getElementById('profileRoleTag').textContent = cap(role);
+      if (document.getElementById('profileMenuEmail')) document.getElementById('profileMenuEmail').textContent = userData.email;
+      var sa = document.getElementById('sidebarAvatar');
+      if (userData.photoUrl) { sa.innerHTML = '<img src="'+userData.photoUrl.replace(/"/g,'&quot;')+'" class="w-full h-full object-cover rounded-lg" alt="">'; } else { sa.textContent = initials; }
+      document.getElementById('sidebarName').textContent = userData.name;
+      document.getElementById('sidebarRole').textContent = cap(role);
+      loadPageData();
+    } catch(e) { window.location.href = '/admin/login.html'; }
+  });
+  function cap(str) { return str ? str.charAt(0).toUpperCase()+str.slice(1) : ''; }
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function esc(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  var DOC_LABELS = {
+    BARANGAY_CLEARANCE:'Clearance', CERTIFICATE_OF_RESIDENCY:'Residency',
+    CERTIFICATE_OF_INDIGENCY:'Indigency', BUSINESS_PERMIT_ENDORSEMENT:'Business Permit', INCIDENT_REPORT:'Incident Report'
+  };
+
+  // ── Tab switching ─────────────────────────────────────────────────────
+  function switchTab(n) {
+    document.getElementById('tab1').classList.toggle('hidden', n !== 1);
+    document.getElementById('tab2').classList.toggle('hidden', n !== 2);
+    var t1 = document.getElementById('tab1Btn');
+    var t2 = document.getElementById('tab2Btn');
+    if (n === 1) {
+      t1.className = 'px-5 py-3 text-sm font-semibold border-b-2 border-[#1e3a5f] text-[#1e3a5f] -mb-px transition';
+      t2.className = 'px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px transition';
+    } else {
+      t2.className = 'px-5 py-3 text-sm font-semibold border-b-2 border-[#1e3a5f] text-[#1e3a5f] -mb-px transition';
+      t1.className = 'px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px transition';
+    }
+  }
+
+  // ── Pagination helper ─────────────────────────────────────────────────
+  var PG_BTN  = 'min-w-[32px] h-8 px-2 rounded-lg text-xs font-semibold flex items-center justify-center transition ';
+  var PG_ACT  = PG_BTN + 'bg-[#1e3a5f] text-white';
+  var PG_NORM = PG_BTN + 'border border-gray-200 text-gray-600 hover:bg-gray-100';
+  var PG_DIS  = PG_BTN + 'border border-gray-100 text-gray-300 cursor-not-allowed';
+
+  function renderPagination(containerId, current, total, gotoFn) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (total <= 1) { el.innerHTML = ''; return; }
+    var maxV = 5, half = Math.floor(maxV / 2);
+    var start = Math.max(1, current - half);
+    var end   = Math.min(total, start + maxV - 1);
+    if (end - start < maxV - 1) start = Math.max(1, end - maxV + 1);
+    var h = '<div class="flex items-center gap-1">';
+    h += current > 1
+      ? '<button onclick="' + gotoFn + '(' + (current-1) + ')" class="' + PG_NORM + '"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>'
+      : '<button disabled class="' + PG_DIS  + '"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>';
+    if (start > 1) { h += '<button onclick="' + gotoFn + '(1)" class="' + PG_NORM + '">1</button>'; if (start > 2) h += '<span class="text-gray-400 text-xs px-1">…</span>'; }
+    for (var p = start; p <= end; p++)
+      h += '<button onclick="' + gotoFn + '(' + p + ')" class="' + (p === current ? PG_ACT : PG_NORM) + '">' + p + '</button>';
+    if (end < total) { if (end < total - 1) h += '<span class="text-gray-400 text-xs px-1">…</span>'; h += '<button onclick="' + gotoFn + '(' + total + ')" class="' + PG_NORM + '">' + total + '</button>'; }
+    h += current < total
+      ? '<button onclick="' + gotoFn + '(' + (current+1) + ')" class="' + PG_NORM + '"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>'
+      : '<button disabled class="' + PG_DIS  + '"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>';
+    h += '</div>';
+    el.innerHTML = h;
+  }
+
+  // ══════════════════ TAB 1: Appointment Requests ══════════════════════
+  var allRequests    = [];
+  var r_displayItems = [];
+  var r_currentPage  = 1;
+  var R_PAGE_SIZE    = 10;
+  var pendingId      = null;  // id of row being actioned
+
+  function statusBadge(status) {
+    var map = {
+      PENDING:     'bg-yellow-100 text-yellow-800 border border-yellow-200',
+      APPROVED:    'bg-green-100 text-green-800 border border-green-200',
+      DECLINED:    'bg-red-100 text-red-700 border border-red-200',
+      RESCHEDULED: 'bg-blue-100 text-blue-800 border border-blue-200',
+    };
+    var icons = {
+      PENDING:'fa-clock', APPROVED:'fa-circle-check', DECLINED:'fa-circle-xmark', RESCHEDULED:'fa-calendar-xmark'
+    };
+    var cls  = map[status]  || 'bg-gray-100 text-gray-700';
+    var icon = icons[status] || 'fa-circle';
+    return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ' + cls + '"><i class="fa-solid ' + icon + ' text-[10px]"></i>' + esc(status) + '</span>';
+  }
+
+  function renderRequests(items) {
+    var total       = items.length;
+    var pending     = items.filter(function(i){ return i.status==='PENDING'; }).length;
+    var approved    = items.filter(function(i){ return i.status==='APPROVED'; }).length;
+    var rescheduled = items.filter(function(i){ return i.status==='RESCHEDULED'; }).length;
+    var declined    = items.filter(function(i){ return i.status==='DECLINED'; }).length;
+    document.getElementById('r_statTotal').textContent       = total;
+    document.getElementById('r_statPending').textContent     = pending;
+    document.getElementById('r_statApproved').textContent    = approved;
+    document.getElementById('r_statRescheduled').textContent = rescheduled;
+    document.getElementById('r_statDeclined').textContent    = declined;
+    var badge = document.getElementById('tab1Badge');
+    badge.textContent   = pending > 0 ? pending : '';
+    badge.style.display = pending > 0 ? '' : 'none';
+    r_displayItems = items;
+    r_currentPage  = 1;
+    r_renderPage();
+  }
+
+  function r_renderPage() {
+    var total      = r_displayItems.length;
+    var totalPages = Math.ceil(total / R_PAGE_SIZE);
+    var start      = (r_currentPage - 1) * R_PAGE_SIZE;
+    var end        = Math.min(start + R_PAGE_SIZE, total);
+    document.getElementById('r_info').textContent = total
+      ? 'Showing ' + (start + 1) + '–' + end + ' of ' + total + ' record(s)' : '0 records';
+    renderPagination('r_pagination', r_currentPage, totalPages, 'r_goToPage');
+
+    if (!total) {
+      document.getElementById('r_table').innerHTML = '<tr><td colspan="6" class="text-center py-12 text-gray-400"><i class="fa-solid fa-calendar-xmark text-2xl mb-2 opacity-30 block"></i>No appointment requests found.</td></tr>';
+      return;
+    }
+
+    var items = r_displayItems.slice(start, end);
+    if (!items.length) {
+      // page overshot after delete — go back one
+      r_currentPage = Math.max(1, r_currentPage - 1);
+      r_renderPage(); return;
+    }
+
+    document.getElementById('r_table').innerHTML = items.map(function(a) {
+      var id      = a.id || '';
+      var purpose = a.purpose || '—';
+      var purposeShort = purpose.length > 70 ? purpose.substring(0, 70) + '…' : purpose;
+      var aptDate = a.date || '—';
+      var aptTime = a.time || '—';
+      var status = a.status || 'PENDING';
+
+      // Status-based action buttons (stop propagation so row click doesn't fire)
+      var B = {
+        approve:    'inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-sm',
+        reschedule: 'inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-300 bg-white hover:bg-blue-50 text-blue-600 transition',
+        decline:    'inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-orange-300 bg-white hover:bg-orange-50 text-orange-600 transition',
+        archive:    'inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-amber-300 bg-white hover:bg-amber-50 text-amber-600 transition',
+        del:        'inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-red-300 bg-white hover:bg-red-50 text-red-600 transition',
+      };
+      var actions = '<div class="flex gap-2 flex-wrap items-center" onclick="event.stopPropagation()">';
+      if (status === 'PENDING' || status === 'RESCHEDULED') {
+        actions += '<button onclick="openApprove(\'' + id + '\')" class="' + B.approve + '"><i class="fa-solid fa-check text-[10px]"></i>Approve</button>';
+        actions += '<button onclick="openReschedule(\'' + id + '\')" class="' + B.reschedule + '"><i class="fa-solid fa-rotate-right text-[10px]"></i>Reschedule</button>';
+        actions += '<button onclick="openDecline(\'' + id + '\')" class="' + B.decline + '"><i class="fa-solid fa-ban text-[10px]"></i>Decline</button>';
+      } else if (status === 'APPROVED') {
+        actions += '<button onclick="openReschedule(\'' + id + '\')" class="' + B.reschedule + '"><i class="fa-solid fa-rotate-right text-[10px]"></i>Reschedule</button>';
+        actions += '<button onclick="openArchive(\'' + id + '\')" class="' + B.archive + '"><i class="fa-solid fa-box-archive text-[10px]"></i>Archive</button>';
+        actions += '<button onclick="openDelete(\'' + id + '\')" class="' + B.del + '"><i class="fa-solid fa-trash text-[10px]"></i>Delete</button>';
+      } else {
+        // DECLINED — archive or delete only
+        actions += '<button onclick="openArchive(\'' + id + '\')" class="' + B.archive + '"><i class="fa-solid fa-box-archive text-[10px]"></i>Archive</button>';
+        actions += '<button onclick="openDelete(\'' + id + '\')" class="' + B.del + '"><i class="fa-solid fa-trash text-[10px]"></i>Delete</button>';
+      }
+      actions += '</div>';
+
+      var declineNote = status === 'DECLINED' && a.declineReason
+        ? '<div class="text-xs text-red-500 mt-0.5 italic">' + esc(a.declineReason) + '</div>' : '';
+      var reschedNote = status === 'RESCHEDULED' && a.rescheduleNote
+        ? '<div class="text-xs text-blue-500 mt-0.5 italic">' + esc(a.rescheduleNote) + '</div>' : '';
+
+      return '<tr class="border-t border-gray-50 hover:bg-blue-50/40 cursor-pointer transition" onclick="openDetails(\'' + id + '\')">' +
+        '<td class="px-4 py-3"><div class="font-semibold text-xs text-gray-800">' + esc(a.name || '—') + '</div></td>' +
+        '<td class="px-4 py-3"><div class="text-xs text-gray-700">' + esc(a.contact || '—') + '</div><div class="text-xs text-gray-400 truncate max-w-[160px]">' + esc(a.email || '—') + '</div></td>' +
+        '<td class="px-4 py-3 max-w-[180px]"><div class="text-xs text-gray-600 leading-relaxed" title="' + esc(purpose) + '">' + esc(purposeShort) + '</div></td>' +
+        '<td class="px-4 py-3 whitespace-nowrap"><div class="text-xs font-semibold text-gray-800">' + esc(aptDate) + '</div><div class="text-xs text-gray-400">' + esc(aptTime) + '</div></td>' +
+        '<td class="px-4 py-3">' + statusBadge(status) + declineNote + reschedNote + '</td>' +
+        '<td class="px-4 py-3">' + (id ? actions : '—') + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function r_goToPage(p) { r_currentPage = p; r_renderPage(); }
+
+  async function loadRequests() {
+    try {
+      var data = await get('/appointments/general');
+      allRequests = Array.isArray(data) ? data : (data.appointments || []);
+      renderRequests(allRequests);
+    } catch(e) {
+      document.getElementById('r_table').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load appointment requests.</td></tr>';
+    }
+  }
+
+  function applyRequestFilters() {
+    var status = document.getElementById('r_filterStatus').value;
+    var search = document.getElementById('r_filterSearch').value.toLowerCase().trim();
+    var filtered = allRequests.filter(function(a) {
+      var matchStatus = !status || a.status === status;
+      var matchSearch = !search ||
+        (a.name  && a.name.toLowerCase().includes(search)) ||
+        (a.email && a.email.toLowerCase().includes(search));
+      return matchStatus && matchSearch;
+    });
+    r_currentPage = 1;
+    renderRequests(filtered);
+  }
+
+  function clearRequestFilters() {
+    document.getElementById('r_filterStatus').value = '';
+    document.getElementById('r_filterSearch').value = '';
+    r_currentPage = 1;
+    renderRequests(allRequests);
+  }
+
+  // Details modal
+  function openDetails(id) {
+    var a = allRequests.find(function(r) { return r.id === id; });
+    if (!a) return;
+    var status = a.status || 'PENDING';
+    document.getElementById('dName').textContent    = a.name    || '—';
+    document.getElementById('dContact').textContent = a.contact || '—';
+    document.getElementById('dEmail').textContent   = a.email   || '—';
+    document.getElementById('dDateTime').innerHTML  =
+      '<span class="font-semibold">' + esc(a.date || '—') + '</span>' +
+      (a.time ? '<span class="text-gray-400 ml-1.5">' + esc(a.time) + '</span>' : '');
+    document.getElementById('dPurpose').textContent = a.purpose || '—';
+    var dDeclineBlock = document.getElementById('dDeclineBlock');
+    var dReschedBlock = document.getElementById('dReschedBlock');
+    if (status === 'DECLINED' && a.declineReason) {
+      document.getElementById('dDeclineReason').textContent = a.declineReason;
+      dDeclineBlock.classList.remove('hidden');
+    } else { dDeclineBlock.classList.add('hidden'); }
+    if (status === 'RESCHEDULED' && a.rescheduleNote) {
+      document.getElementById('dReschedNote').textContent = a.rescheduleNote;
+      dReschedBlock.classList.remove('hidden');
+    } else { dReschedBlock.classList.add('hidden'); }
+    document.getElementById('detailsStatusBadge').innerHTML = statusBadge(status);
+    var DB = {
+      approve:    'inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-sm',
+      reschedule: 'inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border border-blue-300 bg-white hover:bg-blue-50 text-blue-600 transition',
+      decline:    'inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border border-orange-300 bg-white hover:bg-orange-50 text-orange-600 transition',
+      archive:    'inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border border-amber-300 bg-white hover:bg-amber-50 text-amber-600 transition',
+      del:        'inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white transition shadow-sm',
+    };
+    var btns = '';
+    if (status === 'PENDING' || status === 'RESCHEDULED') {
+      btns += '<button onclick="closeModal(\'details\'); openApprove(\'' + id + '\')" class="' + DB.approve + '"><i class="fa-solid fa-check"></i>Approve</button>';
+      btns += '<button onclick="closeModal(\'details\'); openReschedule(\'' + id + '\')" class="' + DB.reschedule + '"><i class="fa-solid fa-rotate-right"></i>Reschedule</button>';
+      btns += '<button onclick="closeModal(\'details\'); openDecline(\'' + id + '\')" class="' + DB.decline + '"><i class="fa-solid fa-ban"></i>Decline</button>';
+    } else if (status === 'APPROVED') {
+      btns += '<button onclick="closeModal(\'details\'); openReschedule(\'' + id + '\')" class="' + DB.reschedule + '"><i class="fa-solid fa-rotate-right"></i>Reschedule</button>';
+      btns += '<button onclick="closeModal(\'details\'); openArchive(\'' + id + '\')" class="' + DB.archive + '"><i class="fa-solid fa-box-archive"></i>Archive</button>';
+      btns += '<button onclick="closeModal(\'details\'); openDelete(\'' + id + '\')" class="' + DB.del + '"><i class="fa-solid fa-trash"></i>Delete</button>';
+    } else {
+      btns += '<button onclick="closeModal(\'details\'); openArchive(\'' + id + '\')" class="' + DB.archive + '"><i class="fa-solid fa-box-archive"></i>Archive</button>';
+      btns += '<button onclick="closeModal(\'details\'); openDelete(\'' + id + '\')" class="' + DB.del + '"><i class="fa-solid fa-trash"></i>Delete</button>';
+    }
+    document.getElementById('detailsActions').innerHTML = btns;
+    document.getElementById('detailsModal').classList.add('open');
+  }
+
+  // Approve modal
+  function openApprove(id) {
+    pendingId = id;
+    document.getElementById('approveModal').classList.add('open');
+  }
+  async function confirmApprove() {
+    try {
+      await patch('/appointments/general/' + pendingId, { action: 'APPROVE' });
+      Utils.showToast('Appointment approved.', 'success');
+      closeModal('approve');
+      loadRequests();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // Delete modal
+  function openDelete(id) {
+    pendingId = id;
+    document.getElementById('deleteModal').classList.add('open');
+  }
+  async function confirmDelete() {
+    try {
+      await del('/appointments/general/' + pendingId);
+      Utils.showToast('Appointment deleted.', 'success');
+      closeModal('delete');
+      loadRequests();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // Archive modal
+  function openArchive(id) {
+    pendingId = id;
+    document.getElementById('archiveModal').classList.add('open');
+  }
+  async function confirmArchive() {
+    try {
+      await post('/appointments/general/' + pendingId + '/archive', {});
+      Utils.showToast('Appointment archived.', 'success');
+      closeModal('archive');
+      loadRequests();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // Decline modal
+  function openDecline(id) {
+    pendingId = id;
+    document.getElementById('declineReason').value = '';
+    document.getElementById('declineReasonErr').classList.add('hidden');
+    document.getElementById('declineModal').classList.add('open');
+  }
+  function closeModal(which) {
+    document.getElementById(which + 'Modal').classList.remove('open');
+    pendingId = null;
+  }
+  async function confirmDecline() {
+    var reason = document.getElementById('declineReason').value.trim();
+    var errEl  = document.getElementById('declineReasonErr');
+    if (!reason) { errEl.classList.remove('hidden'); return; }
+    errEl.classList.add('hidden');
+    try {
+      await patch('/appointments/general/' + pendingId, { action: 'DECLINE', reason: reason });
+      Utils.showToast('Appointment declined.', 'success');
+      closeModal('decline');
+      loadRequests();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // Reschedule modal
+  function openReschedule(id) {
+    pendingId = id;
+    document.getElementById('reschedDate').value = '';
+    document.getElementById('reschedTime').value = '';
+    document.getElementById('reschedNote').value = '';
+    document.getElementById('reschedErr').classList.add('hidden');
+    document.getElementById('rescheduleModal').classList.add('open');
+  }
+  async function confirmReschedule() {
+    var newDate = document.getElementById('reschedDate').value;
+    var newTime = document.getElementById('reschedTime').value;
+    var note    = document.getElementById('reschedNote').value.trim();
+    var errEl   = document.getElementById('reschedErr');
+    if (!newDate || !newTime) { errEl.classList.remove('hidden'); return; }
+    errEl.classList.add('hidden');
+    try {
+      await patch('/appointments/general/' + pendingId, { action: 'RESCHEDULE', newDate: newDate, newTime: newTime, reason: note });
+      Utils.showToast('Appointment rescheduled.', 'success');
+      closeModal('reschedule');
+      loadRequests();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // Close modals on overlay click
+  document.getElementById('approveModal').addEventListener('click', function(e) { if (e.target === this) closeModal('approve'); });
+  document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target === this) closeModal('delete'); });
+  document.getElementById('archiveModal').addEventListener('click', function(e) { if (e.target === this) closeModal('archive'); });
+  document.getElementById('declineModal').addEventListener('click', function(e) { if (e.target === this) closeModal('decline'); });
+  document.getElementById('rescheduleModal').addEventListener('click', function(e) { if (e.target === this) closeModal('reschedule'); });
+  document.getElementById('pickupConfirmModal').addEventListener('click', function(e) { if (e.target === this) closeModal('pickupConfirm'); });
+  document.getElementById('detailsModal').addEventListener('click', function(e) { if (e.target === this) closeModal('details'); });
+
+  // ══════════════════ TAB 2: Document Pickups ══════════════════════════
+  async function loadAllAppointments() {
+    document.getElementById('aptDateLabel').textContent = '';
+    try {
+      var data = await get('/appointments');
+      renderAppointments(Array.isArray(data) ? data : (data.appointments || []));
+    } catch(e) {
+      document.getElementById('aptTable').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load appointments.</td></tr>';
+    }
+  }
+
+  async function loadByDate() {
+    var date = document.getElementById('dateFilter').value;
+    if (!date) { loadAllAppointments(); return; }
+    document.getElementById('aptDateLabel').textContent = 'Showing: ' + date;
+    try {
+      var data = await get('/appointments/by-date/' + date);
+      renderAppointments(Array.isArray(data) ? data : (data.appointments || []));
+    } catch(e) {
+      document.getElementById('aptTable').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load.</td></tr>';
+    }
+  }
+
+  function clearDateFilter() {
+    document.getElementById('dateFilter').value = '';
+    loadAllAppointments();
+  }
+
+  var apt_displayItems = [];
+  var apt_currentPage  = 1;
+  var APT_PAGE_SIZE    = 10;
+
+  function renderAppointments(items) {
+    var total     = items.length;
+    var scheduled = items.filter(function(i){ return i.status === 'SCHEDULED'; }).length;
+    var completed = items.filter(function(i){ return i.status === 'COMPLETED'; }).length;
+    var cancelled = items.filter(function(i){ return i.status === 'CANCELLED'; }).length;
+    document.getElementById('statTotal').textContent     = total;
+    document.getElementById('statScheduled').textContent = scheduled;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statCancelled').textContent = cancelled;
+    apt_displayItems = items.slice().sort(function(a, b) {
+      return new Date(b.date || b.appointmentDate) - new Date(a.date || a.appointmentDate);
+    });
+    apt_currentPage = 1;
+    apt_renderPage();
+  }
+
+  function apt_renderPage() {
+    var total      = apt_displayItems.length;
+    var totalPages = Math.ceil(total / APT_PAGE_SIZE);
+    var start      = (apt_currentPage - 1) * APT_PAGE_SIZE;
+    var end        = Math.min(start + APT_PAGE_SIZE, total);
+    document.getElementById('aptInfo').textContent = total
+      ? 'Showing ' + (start + 1) + '–' + end + ' of ' + total + ' appointment(s)' : '0 appointments';
+    renderPagination('apt_pagination', apt_currentPage, totalPages, 'apt_goToPage');
+
+    if (!total) {
+      document.getElementById('aptTable').innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">No appointments found.</td></tr>';
+      return;
+    }
+
+    var items = apt_displayItems.slice(start, end);
+    if (!items.length) { apt_currentPage = Math.max(1, apt_currentPage - 1); apt_renderPage(); return; }
+    document.getElementById('aptTable').innerHTML = items.map(function(a) {
+      var id       = a.id || '';
+      var aptDate  = a.date || a.appointmentDate || '';
+      var aptTime  = a.time || a.appointmentTime || '';
+      var name     = esc(a.residentName || a.name || '—');
+      var tracking = a.trackingId || '—';
+      var docLabel = DOC_LABELS[a.documentType] || esc(a.documentType || '—');
+      var status   = a.status || 'SCHEDULED';
+      var sCls     = status === 'COMPLETED' ? 'bg-green-100 text-green-700' : status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
+      return '<tr class="border-t border-gray-50 hover:bg-gray-50 transition">' +
+        '<td class="px-4 py-3 whitespace-nowrap"><div class="font-semibold text-xs text-gray-800">' + esc(aptDate) + '</div><div class="text-xs text-gray-400">' + esc(aptTime) + '</div></td>' +
+        '<td class="px-4 py-3 text-xs font-medium text-gray-800">' + name + '</td>' +
+        '<td class="px-4 py-3 font-mono text-xs text-[#1e3a5f]"><a href="/admin/request-detail.html?id=' + esc(a.requestId || '') + '" class="hover:underline">' + esc(tracking) + '</a></td>' +
+        '<td class="px-4 py-3 text-xs text-gray-600">' + docLabel + '</td>' +
+        '<td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ' + sCls + '">' + esc(status) + '</span></td>' +
+        '<td class="px-4 py-3"><div class="flex gap-2">' +
+          (id && status === 'SCHEDULED' ? '<button onclick="openPickupConfirm(\'' + id + '\',\'COMPLETED\')" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-sm"><i class="fa-solid fa-check text-[10px]"></i>Complete</button>' : '') +
+          (id && status === 'SCHEDULED' ? '<button onclick="openPickupConfirm(\'' + id + '\',\'CANCELLED\')" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-red-300 bg-white hover:bg-red-50 text-red-600 transition"><i class="fa-solid fa-ban text-[10px]"></i>Cancel</button>' : '') +
+        '</div></td></tr>';
+    }).join('');
+  }
+
+  function apt_goToPage(p) { apt_currentPage = p; apt_renderPage(); }
+
+  var pendingPickupId = null;
+  var pendingPickupStatus = null;
+
+  function openPickupConfirm(id, status) {
+    pendingPickupId = id;
+    pendingPickupStatus = status;
+    var isComplete = status === 'COMPLETED';
+    var iconDiv = document.getElementById('pickupConfirmIcon');
+    var iconEl  = document.getElementById('pickupConfirmIconEl');
+    iconDiv.className = 'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ' + (isComplete ? 'bg-green-100' : 'bg-red-100');
+    iconEl.className  = 'fa-solid ' + (isComplete ? 'fa-circle-check text-green-500' : 'fa-ban text-red-500') + ' text-lg';
+    document.getElementById('pickupConfirmTitle').textContent = isComplete ? 'Complete Pickup' : 'Cancel Pickup';
+    document.getElementById('pickupConfirmMsg').textContent   = isComplete
+      ? 'Mark this appointment as completed? This confirms the resident has picked up their document.'
+      : 'Cancel this pickup appointment? This action cannot be undone.';
+    var btn = document.getElementById('pickupConfirmBtn');
+    btn.className = 'flex-1 ' + (isComplete ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700') + ' text-white py-2.5 rounded-xl text-sm font-semibold transition';
+    document.getElementById('pickupConfirmModal').classList.add('open');
+  }
+
+  async function confirmPickupAction() {
+    try {
+      await patch('/appointments/' + pendingPickupId, { status: pendingPickupStatus });
+      Utils.showToast('Marked as ' + pendingPickupStatus + '.', 'success');
+      closeModal('pickupConfirm');
+      var dateVal = document.getElementById('dateFilter').value;
+      if (dateVal) loadByDate(); else loadAllAppointments();
+    } catch(e) { Utils.showToast('Failed: ' + (e.message || ''), 'error'); }
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  var _highlightId = new URLSearchParams(window.location.search).get('highlight');
+
+  async function _initLoad() {
+    await Promise.all([loadRequests(), loadAllAppointments()]);
+    if (_highlightId) {
+      // Open details modal for the highlighted appointment request
+      setTimeout(function() { openDetails(_highlightId); }, 200);
+    }
+  }
+
+</script>
+</body>
+</html>

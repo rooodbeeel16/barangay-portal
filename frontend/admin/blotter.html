@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="../assets/logo/sirangan-bg.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blotter Management — Barangay Sirangan Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/shared.css">
+  <link rel="stylesheet" href="/assets/admin.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <style>
+    :root {
+      --c-primary: #1e3a5f;
+      --c-accent:  #f59e0b;
+      --c-success: #22c55e;
+      --c-error:   #ef4444;
+    }
+
+    /* ── Blotter status pills ── */
+    .s-open            { background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; }
+    .s-under-mediation { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+    .s-settled         { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+    .s-escalated       { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+    .s-escalated-returned { background:#ede9fe; color:#5b21b6; border:1px solid #ddd6fe; }
+    .s-dismissed       { background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb; }
+
+    /* ── Stat cards accent bar ── */
+    .stat-accent { width:4px; border-radius:4px; flex-shrink:0; }
+
+    /* ── Section headers in modal ── */
+    .form-section-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* ── Char counter ── */
+    .char-counter { font-size: 11px; color: #94a3b8; text-align: right; margin-top: 4px; }
+    .char-counter.warn  { color: #f59e0b; }
+    .char-counter.limit { color: #ef4444; }
+
+    /* ── Table row hover ── */
+    .blotter-row td { transition: background .12s ease; }
+    .blotter-row:hover td { background: #f8fafc; }
+
+    /* ── Modal form inputs ── */
+    .f-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+      transition: border-color .15s, box-shadow .15s;
+      outline: none;
+      background: #fff;
+    }
+    .f-input:focus {
+      border-color: #1e3a5f;
+      box-shadow: 0 0 0 3px rgba(30,58,95,.08);
+    }
+    .f-input.error { border-color: #ef4444; }
+    .f-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 5px;
+    }
+    .f-req { color: #ef4444; margin-left: 2px; }
+
+    /* ── Delete confirm modal ── */
+    #deleteModal { animation: none; }
+
+    /* ── Anim helpers ── */
+    .anim-up   { animation: fadeUp .35s ease both; }
+    .anim-down { animation: fadeDown .3s ease both; }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+
+    /* ── Empty & error states ── */
+    .empty-state { padding: 60px 20px; text-align: center; color: #94a3b8; }
+    .empty-state i { font-size: 40px; margin-bottom: 12px; display: block; opacity: .4; }
+
+    /* ── Modal scroll ── */
+    .modal-body-scroll { max-height: calc(100vh - 200px); overflow-y: auto; padding-right: 4px; }
+    .modal-body-scroll::-webkit-scrollbar { width: 5px; }
+    .modal-body-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+    .modal-body-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ════════════════════════════
+       SIDEBAR
+  ════════════════════════════ -->
+  <aside class="w-64 bg-[#0b1929] text-white flex flex-col flex-shrink-0 fixed h-full z-40" style="box-shadow:4px 0 24px rgba(0,0,0,.18)">
+    <div class="px-5 py-5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="relative flex-shrink-0">
+          <img src="/assets/logo/sirangan-bg.png" alt="Logo" class="w-9 h-9 rounded-xl object-cover" style="box-shadow:0 0 0 2px rgba(251,191,36,.35)">
+          <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0b1929] pulse-dot"></span>
+        </div>
+        <div>
+          <div class="font-bold text-sm text-white leading-tight">Brgy. Sirangan</div>
+          <div class="text-[10px] text-blue-300/70 font-medium tracking-wide uppercase mt-0.5">Admin Portal</div>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <p class="px-3 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">Main</p>
+      <a href="/admin/dashboard.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span> Dashboard</a>
+      <a href="/admin/requests.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span> Requests</a>
+      <a href="/admin/residents.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-users"></i></span> Residents</a>
+      <a href="/admin/announcements.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-bullhorn"></i></span> Announcements</a>
+      <a href="/admin/appointments.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-calendar-days"></i></span> Appointments</a>
+      <a href="/admin/blotter.html" class="nav-link active"><span class="nav-icon"><i class="fa-solid fa-book"></i></span> Blotter</a>
+      <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold text-white/25 uppercase tracking-[.12em]">System</p>
+      <a href="/admin/audit-logs.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-pen-to-square"></i></span> Audit Logs</a>
+      <a href="/admin/settings.html" class="nav-link"><span class="nav-icon"><i class="fa-solid fa-gear"></i></span> Settings</a>
+    </nav>
+    <div class="px-4 py-3.5 border-t border-white/10">
+      <div class="flex items-center gap-2.5 px-1">
+        <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] flex items-center justify-center text-xs font-bold text-white overflow-hidden flex-shrink-0" id="sidebarAvatar">?</div>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold text-white truncate" id="sidebarName">Loading…</div>
+          <div class="text-[10px] text-white/35 mt-0.5" id="sidebarRole">—</div>
+        </div>
+        <button onclick="AuthService.logout()" title="Sign out" class="w-6 h-6 flex items-center justify-center text-white/30 hover:text-red-400 transition rounded"><i class="fa-solid fa-right-from-bracket text-xs"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════ -->
+  <main class="ml-64 flex-1 overflow-y-auto flex flex-col min-h-screen">
+
+    <!-- ── Top Header Bar ── -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200/70 px-6 py-3.5 flex justify-between items-center sticky top-0 z-30" style="box-shadow:0 1px 0 rgba(0,0,0,.05)">
+      <div class="anim-down" style="animation-delay:.04s">
+        <h1 class="text-lg font-bold text-gray-900 leading-tight">Blotter Management</h1>
+        <p class="text-[11px] text-gray-400 font-medium mt-0.5">File, track and manage barangay blotter cases</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <div id="notifContainer"></div>
+        <button onclick="openCreateModal()" class="inline-flex items-center gap-2 bg-[#1e3a5f] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-800 transition-all duration-150">
+          <i class="fa-solid fa-plus"></i> File New Blotter Case
+        </button>
+        <!-- Profile Dropdown -->
+        <div class="relative" id="profileDropdown">
+          <button onclick="toggleProfileDropdown()" class="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-gray-100 transition-all duration-150">
+            <div class="w-8 h-8 rounded-lg bg-[#1e3a5f] text-white flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0" id="profileAvatar">?</div>
+            <div class="text-left hidden sm:block">
+              <div class="text-xs font-semibold text-gray-800 leading-tight" id="profileName"></div>
+              <div class="text-[10px] text-gray-400" id="profileRoleTag"></div>
+            </div>
+            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400 transition-transform duration-200" id="profileChevron"></i>
+          </button>
+          <div id="profileMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl py-2 z-50" style="box-shadow:0 16px 40px -8px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.07)">
+            <div class="px-4 py-2.5 border-b border-gray-50 mb-1">
+              <div class="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Signed in as</div>
+              <div class="text-xs font-semibold text-gray-800 truncate mt-0.5" id="profileMenuEmail"></div>
+            </div>
+            <a href="/admin/settings.html" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-gear w-4 text-gray-400 text-xs"></i> Settings</a>
+            <a href="/index.html" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 mx-1.5 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition"><i class="fa-solid fa-house w-4 text-gray-400 text-xs"></i> Barangay Portal</a>
+            <div class="border-t border-gray-50 my-1.5"></div>
+            <button onclick="AuthService.logout()" class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"><i class="fa-solid fa-right-from-bracket w-4 text-xs"></i> Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-6 space-y-5 flex-1">
+
+      <!-- ── Stats Bar ── -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 anim-up" style="animation-delay:.06s">
+        <!-- Total -->
+        <div class="stat-card flex items-center gap-3 cursor-default" onclick="setStatusFilter('')">
+          <div class="stat-accent h-10 bg-[#1e3a5f]"></div>
+          <div>
+            <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Total Cases</div>
+            <div class="text-2xl font-bold text-gray-900 mt-0.5" id="statTotal">—</div>
+          </div>
+        </div>
+        <!-- Open -->
+        <div class="stat-card flex items-center gap-3 cursor-pointer" onclick="setStatusFilter('OPEN')">
+          <div class="stat-accent h-10 bg-blue-600"></div>
+          <div>
+            <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Open</div>
+            <div class="text-2xl font-bold text-blue-700 mt-0.5" id="statOpen">—</div>
+          </div>
+        </div>
+        <!-- Under Mediation -->
+        <div class="stat-card flex items-center gap-3 cursor-pointer" onclick="setStatusFilter('UNDER_MEDIATION')">
+          <div class="stat-accent h-10 bg-amber-500"></div>
+          <div>
+            <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Mediation</div>
+            <div class="text-2xl font-bold text-amber-600 mt-0.5" id="statMediation">—</div>
+          </div>
+        </div>
+        <!-- Settled -->
+        <div class="stat-card flex items-center gap-3 cursor-pointer" onclick="setStatusFilter('SETTLED')">
+          <div class="stat-accent h-10 bg-green-500"></div>
+          <div>
+            <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Settled</div>
+            <div class="text-2xl font-bold text-green-600 mt-0.5" id="statSettled">—</div>
+          </div>
+        </div>
+        <!-- Escalated -->
+        <div class="stat-card flex items-center gap-3 cursor-pointer" onclick="setStatusFilter('ESCALATED')">
+          <div class="stat-accent h-10 bg-red-500"></div>
+          <div>
+            <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Escalated</div>
+            <div class="text-2xl font-bold text-red-600 mt-0.5" id="statEscalated">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Filter Bar ── -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 anim-up" style="animation-delay:.1s">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <select id="filterStatus" class="f-input" onchange="">
+            <option value="">All Statuses</option>
+            <option value="OPEN">Open</option>
+            <option value="UNDER_MEDIATION">Under Mediation</option>
+            <option value="SETTLED">Settled</option>
+            <option value="ESCALATED">Escalated</option>
+            <option value="ESCALATED_RETURNED">Escalated (Returned)</option>
+            <option value="DISMISSED">Dismissed</option>
+          </select>
+          <input type="date" id="filterDateFrom" class="f-input" placeholder="Date From">
+          <input type="date" id="filterDateTo"   class="f-input" placeholder="Date To">
+          <input type="text" id="filterSearch" class="f-input" placeholder="Case no., name, nature…" oninput="if(this.value===''){ loadCases(); }">
+          <div class="flex gap-2">
+            <button onclick="applyFilters()" class="flex-1 bg-[#1e3a5f] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition">
+              <i class="fa-solid fa-filter mr-1.5 text-xs"></i>Apply
+            </button>
+            <button onclick="resetFilters()" class="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition" title="Reset filters">
+              <i class="fa-solid fa-rotate-left text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Cases Table ── -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden anim-up" style="animation-delay:.14s">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+              <tr>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Case No.</th>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Complainant</th>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Respondent</th>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Nature of Complaint</th>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Status</th>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Date Filed</th>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Book Page</th>
+                <th class="px-4 py-3 text-left font-semibold tracking-wide">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="blotterTableBody">
+              <!-- Skeleton loaded by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+          <span id="resultCount">—</span>
+        </div>
+      </div>
+
+    </div><!-- /p-6 -->
+  </main>
+</div><!-- /flex -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     CREATE BLOTTER MODAL
+══════════════════════════════════════════════════════ -->
+<div id="createModal" class="admin-modal" aria-modal="true" role="dialog">
+  <div class="admin-modal-panel w-full max-w-3xl mx-auto">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#0b1929] rounded-t-[20px]">
+      <div>
+        <h2 class="text-base font-bold text-white"><i class="fa-solid fa-book mr-2 text-amber-400"></i>File New Blotter Case</h2>
+        <p class="text-xs text-blue-300/80 mt-0.5">Complete all required fields to record the blotter entry.</p>
+      </div>
+      <button onclick="closeCreateModal()" class="w-8 h-8 flex items-center justify-center text-white/50 hover:text-white transition rounded-lg hover:bg-white/10">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body-scroll p-6 space-y-7">
+
+      <!-- ── Section 1: Incident Details ── -->
+      <div>
+        <div class="form-section-header"><i class="fa-solid fa-triangle-exclamation mr-1.5 text-amber-500"></i>Section 1 — Incident Details</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="f-label" for="incidentDate">Incident Date<span class="f-req">*</span></label>
+            <input type="date" id="incidentDate" class="f-input" required>
+          </div>
+          <div>
+            <label class="f-label" for="incidentTime">Incident Time<span class="f-req">*</span></label>
+            <input type="time" id="incidentTime" class="f-input" required>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="f-label" for="incidentLocation">Incident Location<span class="f-req">*</span></label>
+            <input type="text" id="incidentLocation" class="f-input" placeholder="e.g. Purok 3, Near Basketball Court" required>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="f-label" for="natureOfComplaint">Nature of Complaint<span class="f-req">*</span></label>
+            <select id="natureOfComplaint" class="f-input" required>
+              <option value="">— Select nature of complaint —</option>
+              <option>Noise Complaint</option>
+              <option>Physical Altercation</option>
+              <option>Property Dispute</option>
+              <option>Domestic Dispute</option>
+              <option>Verbal Abuse / Harassment</option>
+              <option>Trespassing</option>
+              <option>Theft / Robbery</option>
+              <option>Vandalism</option>
+              <option>Animal Nuisance</option>
+              <option>Business Dispute</option>
+              <option>Neighborhood Dispute</option>
+              <option>Threats / Intimidation</option>
+              <option>Others</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="f-label" for="narrative">Narrative / Statement<span class="f-req">*</span></label>
+            <textarea id="narrative" class="f-input" rows="5" maxlength="3000" placeholder="Provide a detailed account of the incident…" oninput="updateCharCounter()" required style="resize:vertical;"></textarea>
+            <div class="char-counter" id="narrativeCounter">0 / 3000 characters</div>
+          </div>
+          <div>
+            <label class="f-label" for="blotterBookPage">Blotter Book Page <span class="text-gray-400 font-normal text-[11px]">(optional)</span></label>
+            <input type="text" id="blotterBookPage" class="f-input" placeholder="e.g. 47">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 2: Complainant ── -->
+      <div>
+        <div class="form-section-header"><i class="fa-solid fa-user mr-1.5 text-blue-500"></i>Section 2 — Complainant Information</div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="f-label" for="cFirstName">First Name<span class="f-req">*</span></label>
+            <input type="text" id="cFirstName" class="f-input" placeholder="Juan" required>
+          </div>
+          <div>
+            <label class="f-label" for="cMiddleName">Middle Name</label>
+            <input type="text" id="cMiddleName" class="f-input" placeholder="Santos">
+          </div>
+          <div>
+            <label class="f-label" for="cLastName">Last Name<span class="f-req">*</span></label>
+            <input type="text" id="cLastName" class="f-input" placeholder="Dela Cruz" required>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="f-label" for="cAddress">Address</label>
+            <input type="text" id="cAddress" class="f-input" placeholder="House No., Street, Purok">
+          </div>
+          <div>
+            <label class="f-label" for="cContact">Contact Number</label>
+            <input type="text" id="cContact" class="f-input" placeholder="09XX XXX XXXX">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="f-label" for="cEmail">Email</label>
+            <input type="email" id="cEmail" class="f-input" placeholder="example@email.com">
+          </div>
+          <div>
+            <label class="f-label" for="cAge">Age</label>
+            <input type="number" id="cAge" class="f-input" placeholder="30" min="1" max="120">
+          </div>
+          <div>
+            <label class="f-label" for="cGender">Gender</label>
+            <select id="cGender" class="f-input">
+              <option value="">— Select —</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="f-label" for="cCivilStatus">Civil Status</label>
+            <select id="cCivilStatus" class="f-input">
+              <option value="">— Select —</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Widowed</option>
+              <option>Separated</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 3: Respondent ── -->
+      <div>
+        <div class="form-section-header"><i class="fa-solid fa-user-slash mr-1.5 text-red-400"></i>Section 3 — Respondent Information</div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="f-label" for="rFirstName">First Name<span class="f-req">*</span></label>
+            <input type="text" id="rFirstName" class="f-input" placeholder="Pedro" required>
+          </div>
+          <div>
+            <label class="f-label" for="rMiddleName">Middle Name</label>
+            <input type="text" id="rMiddleName" class="f-input" placeholder="Reyes">
+          </div>
+          <div>
+            <label class="f-label" for="rLastName">Last Name<span class="f-req">*</span></label>
+            <input type="text" id="rLastName" class="f-input" placeholder="Bautista" required>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="f-label" for="rAddress">Address <span class="text-gray-400 font-normal text-[11px]">(enter "Unknown" if unavailable)</span></label>
+            <input type="text" id="rAddress" class="f-input" placeholder="Address or Unknown">
+          </div>
+          <div>
+            <label class="f-label" for="rContact">Contact Number</label>
+            <input type="text" id="rContact" class="f-input" placeholder="09XX XXX XXXX">
+          </div>
+          <div>
+            <label class="f-label" for="rAge">Age</label>
+            <input type="number" id="rAge" class="f-input" placeholder="30" min="1" max="120">
+          </div>
+          <div>
+            <label class="f-label" for="rGender">Gender</label>
+            <select id="rGender" class="f-input">
+              <option value="">— Select —</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="f-label" for="rCivilStatus">Civil Status</label>
+            <select id="rCivilStatus" class="f-input">
+              <option value="">— Select —</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Widowed</option>
+              <option>Separated</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /modal-body-scroll -->
+
+    <!-- Modal Footer -->
+    <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/60 rounded-b-[20px]">
+      <button onclick="closeCreateModal()" class="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-100 transition">
+        Cancel
+      </button>
+      <button onclick="submitNewCase()" id="submitCaseBtn" class="inline-flex items-center gap-2 bg-[#1e3a5f] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-800 transition disabled:opacity-60">
+        <i class="fa-solid fa-floppy-disk"></i> File Blotter Case
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     DELETE CONFIRM MODAL
+══════════════════════════════════════════════════════ -->
+<div id="deleteModal" class="admin-modal" aria-modal="true" role="dialog">
+  <div class="admin-modal-panel w-full max-w-sm mx-auto">
+    <div class="p-6 text-center">
+      <div class="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-trash text-red-500 text-xl"></i>
+      </div>
+      <h3 class="text-base font-bold text-gray-900 mb-1">Delete Blotter Case?</h3>
+      <p class="text-sm text-gray-500 mb-1">You are about to delete case:</p>
+      <p class="text-sm font-bold text-gray-800 mb-4" id="deleteCaseNumberLabel">—</p>
+      <p class="text-xs text-gray-400 mb-6">This action is irreversible. The record will be removed from the system.</p>
+      <div class="flex gap-3 justify-center">
+        <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
+          Cancel
+        </button>
+        <button onclick="confirmDelete()" id="confirmDeleteBtn" class="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition">
+          <i class="fa-solid fa-trash mr-1"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Scripts ── -->
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/notifications.js"></script>
+<script src="/js/portal.js"></script>
+
+<script>
+  // ══════════════════════════════════════════════════════
+  //  TOASTR CONFIG
+  // ══════════════════════════════════════════════════════
+  toastr.options = {
+    closeButton: true,
+    progressBar: true,
+    positionClass: 'toast-top-right',
+    timeOut: 4000,
+    extendedTimeOut: 1500,
+    preventDuplicates: true
+  };
+
+  // ══════════════════════════════════════════════════════
+  //  STATE
+  // ══════════════════════════════════════════════════════
+  let _pendingDeleteId   = null;
+  let _pendingDeleteCase = null;
+
+  // ══════════════════════════════════════════════════════
+  //  PAGE INIT
+  // ══════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', async () => {
+    AuthService.requireAuth();
+
+    // Populate sidebar & header user info
+    const user = AuthService.getCurrentUser();
+    if (user) {
+      const initials = ((user.displayName || user.email || '?')[0]).toUpperCase();
+      document.getElementById('sidebarAvatar').textContent  = initials;
+      document.getElementById('sidebarName').textContent    = user.displayName || user.email;
+      document.getElementById('sidebarRole').textContent    = (user.role || 'staff').charAt(0).toUpperCase() + (user.role || 'staff').slice(1);
+      document.getElementById('profileAvatar').textContent  = initials;
+      document.getElementById('profileName').textContent    = user.displayName || user.email;
+      document.getElementById('profileRoleTag').textContent = user.role || 'staff';
+      document.getElementById('profileMenuEmail').textContent = user.email || '';
+    }
+
+    renderSkeletons();
+    await Promise.all([loadStats(), loadCases()]);
+  });
+
+  // ══════════════════════════════════════════════════════
+  //  PROFILE DROPDOWN
+  // ══════════════════════════════════════════════════════
+  function toggleProfileDropdown() {
+    const menu    = document.getElementById('profileMenu');
+    const chevron = document.getElementById('profileChevron');
+    menu.classList.toggle('hidden');
+    chevron.style.transform = menu.classList.contains('hidden') ? '' : 'rotate(180deg)';
+  }
+
+  document.addEventListener('click', (e) => {
+    const dd = document.getElementById('profileDropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('profileMenu')?.classList.add('hidden');
+      const chevron = document.getElementById('profileChevron');
+      if (chevron) chevron.style.transform = '';
+    }
+  });
+
+  // ══════════════════════════════════════════════════════
+  //  LOAD STATS
+  // ══════════════════════════════════════════════════════
+  async function loadStats() {
+    try {
+      const data = await get('/api/blotter/stats');
+      document.getElementById('statTotal').textContent     = data.total      ?? 0;
+      document.getElementById('statOpen').textContent      = data.OPEN        ?? 0;
+      document.getElementById('statMediation').textContent = data.UNDER_MEDIATION ?? 0;
+      document.getElementById('statSettled').textContent   = data.SETTLED     ?? 0;
+      document.getElementById('statEscalated').textContent = data.ESCALATED   ?? 0;
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  LOAD CASES (TABLE)
+  // ══════════════════════════════════════════════════════
+  async function loadCases() {
+    const status   = document.getElementById('filterStatus').value;
+    const search   = document.getElementById('filterSearch').value.trim();
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo   = document.getElementById('filterDateTo').value;
+
+    const params = new URLSearchParams();
+    if (status)   params.set('status',   status);
+    if (search)   params.set('search',   search);
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo)   params.set('dateTo',   dateTo);
+
+    const endpoint = '/api/blotter' + (params.toString() ? '?' + params.toString() : '');
+
+    try {
+      const data = await get(endpoint);
+      const cases = Array.isArray(data) ? data : (data.cases || data.data || []);
+      renderTable(cases);
+      document.getElementById('resultCount').textContent =
+        cases.length === 1 ? '1 case found' : `${cases.length} cases found`;
+    } catch (err) {
+      console.error('Failed to load cases:', err);
+      document.getElementById('blotterTableBody').innerHTML = `
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <i class="fa-solid fa-circle-exclamation text-red-300"></i>
+            <p class="font-semibold text-gray-500">Failed to load blotter cases</p>
+            <p class="text-sm mt-1">Check your connection and try again.</p>
+            <button onclick="loadCases()" class="mt-4 px-4 py-2 bg-[#1e3a5f] text-white text-sm rounded-xl hover:bg-blue-800 transition">Retry</button>
+          </div>
+        </td></tr>`;
+      document.getElementById('resultCount').textContent = 'Error loading data';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  RENDER TABLE
+  // ══════════════════════════════════════════════════════
+  function renderTable(cases) {
+    const tbody = document.getElementById('blotterTableBody');
+
+    if (!cases || cases.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <i class="fa-solid fa-book-open"></i>
+            <p class="font-semibold text-gray-500">No blotter cases found</p>
+            <p class="text-sm mt-1">Try adjusting your filters or file a new case.</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = cases.map(c => {
+      const cName = formatName(c.complainant);
+      const rName = formatName(c.respondent);
+      const caseNo  = c.caseNumber || c.id || '—';
+      const nature  = c.natureOfComplaint || '—';
+      const status  = c.status || 'OPEN';
+      const filed   = formatDate(c.createdAt || c.filedAt);
+      const page    = c.blotterBookPage || '—';
+      const id      = c.id || c._id || '';
+
+      return `<tr class="blotter-row border-b border-gray-50 last:border-0">
+        <td class="px-4 py-3 font-mono text-xs font-semibold text-[#1e3a5f] whitespace-nowrap">${escHtml(caseNo)}</td>
+        <td class="px-4 py-3 text-sm text-gray-800 font-medium">${escHtml(cName)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${escHtml(rName)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600 max-w-[180px] truncate" title="${escHtml(nature)}">${escHtml(nature)}</td>
+        <td class="px-4 py-3"><span class="s-pill ${getStatusClass(status)}">${getStatusLabel(status)}</span></td>
+        <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">${escHtml(filed)}</td>
+        <td class="px-4 py-3 text-sm text-gray-500">${escHtml(page)}</td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-1.5">
+            <a href="/admin/blotter-detail.html?id=${encodeURIComponent(id)}"
+               class="inline-flex items-center gap-1 px-3 py-1.5 bg-[#1e3a5f] text-white rounded-lg text-xs font-semibold hover:bg-blue-800 transition">
+              <i class="fa-solid fa-eye text-[10px]"></i> View
+            </a>
+            <button onclick="deleteCase('${escAttr(id)}','${escAttr(caseNo)}')"
+              class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-semibold hover:bg-red-100 transition">
+              <i class="fa-solid fa-trash text-[10px]"></i> Delete
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  SKELETON
+  // ══════════════════════════════════════════════════════
+  function renderSkeletons() {
+    const rows = Array.from({ length: 6 }, () => `
+      <tr class="border-b border-gray-50">
+        ${Array.from({ length: 8 }, () => `<td class="px-4 py-3"><div class="skeleton h-4 rounded-lg"></div></td>`).join('')}
+      </tr>`).join('');
+    document.getElementById('blotterTableBody').innerHTML = rows;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  FILTERS
+  // ══════════════════════════════════════════════════════
+  function applyFilters() {
+    loadCases();
+  }
+
+  function resetFilters() {
+    document.getElementById('filterStatus').value   = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value   = '';
+    document.getElementById('filterSearch').value   = '';
+    loadCases();
+  }
+
+  function setStatusFilter(status) {
+    document.getElementById('filterStatus').value = status;
+    loadCases();
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  CREATE MODAL
+  // ══════════════════════════════════════════════════════
+  function openCreateModal() {
+    resetCreateForm();
+    const modal = document.getElementById('createModal');
+    modal.classList.add('is-open');
+    requestAnimationFrame(() => modal.classList.add('is-visible'));
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCreateModal() {
+    const modal = document.getElementById('createModal');
+    modal.classList.remove('is-visible');
+    setTimeout(() => {
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }, 250);
+  }
+
+  function resetCreateForm() {
+    const ids = [
+      'incidentDate','incidentTime','incidentLocation','natureOfComplaint',
+      'narrative','blotterBookPage',
+      'cFirstName','cMiddleName','cLastName','cAddress','cContact','cEmail','cAge','cGender','cCivilStatus',
+      'rFirstName','rMiddleName','rLastName','rAddress','rContact','rAge','rGender','rCivilStatus'
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+      if (el) el.classList.remove('error');
+    });
+    document.getElementById('narrativeCounter').textContent = '0 / 3000 characters';
+    document.getElementById('narrativeCounter').className = 'char-counter';
+    document.getElementById('submitCaseBtn').disabled = false;
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  CHAR COUNTER
+  // ══════════════════════════════════════════════════════
+  function updateCharCounter() {
+    const el      = document.getElementById('narrative');
+    const counter = document.getElementById('narrativeCounter');
+    const len     = el.value.length;
+    counter.textContent = `${len} / 3000 characters`;
+    counter.className = 'char-counter' + (len >= 3000 ? ' limit' : len >= 2500 ? ' warn' : '');
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  SUBMIT NEW CASE
+  // ══════════════════════════════════════════════════════
+  async function submitNewCase() {
+    // --- Validate required fields ---
+    const required = {
+      incidentDate:       'Incident Date',
+      incidentTime:       'Incident Time',
+      incidentLocation:   'Incident Location',
+      natureOfComplaint:  'Nature of Complaint',
+      narrative:          'Narrative',
+      cFirstName:         'Complainant First Name',
+      cLastName:          'Complainant Last Name',
+      rFirstName:         'Respondent First Name',
+      rLastName:          'Respondent Last Name',
+    };
+
+    let hasError = false;
+    for (const [id, label] of Object.entries(required)) {
+      const el = document.getElementById(id);
+      const val = el ? el.value.trim() : '';
+      if (!val) {
+        if (el) { el.classList.add('error'); el.focus(); }
+        if (!hasError) toastr.warning(`"${label}" is required.`);
+        hasError = true;
+      } else {
+        if (el) el.classList.remove('error');
+      }
+    }
+    if (hasError) return;
+
+    const btn = document.getElementById('submitCaseBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Filing…';
+
+    const body = {
+      incidentDate:      document.getElementById('incidentDate').value,
+      incidentTime:      document.getElementById('incidentTime').value,
+      incidentLocation:  document.getElementById('incidentLocation').value.trim(),
+      natureOfComplaint: document.getElementById('natureOfComplaint').value,
+      narrative:         document.getElementById('narrative').value.trim(),
+      blotterBookPage:   document.getElementById('blotterBookPage').value.trim() || undefined,
+      complainant: {
+        firstName:   document.getElementById('cFirstName').value.trim(),
+        middleName:  document.getElementById('cMiddleName').value.trim() || undefined,
+        lastName:    document.getElementById('cLastName').value.trim(),
+        address:     document.getElementById('cAddress').value.trim() || undefined,
+        contactNumber: document.getElementById('cContact').value.trim() || undefined,
+        email:       document.getElementById('cEmail').value.trim() || undefined,
+        age:         document.getElementById('cAge').value ? parseInt(document.getElementById('cAge').value) : undefined,
+        gender:      document.getElementById('cGender').value || undefined,
+        civilStatus: document.getElementById('cCivilStatus').value || undefined,
+      },
+      respondent: {
+        firstName:   document.getElementById('rFirstName').value.trim(),
+        middleName:  document.getElementById('rMiddleName').value.trim() || undefined,
+        lastName:    document.getElementById('rLastName').value.trim(),
+        address:     document.getElementById('rAddress').value.trim() || undefined,
+        contactNumber: document.getElementById('rContact').value.trim() || undefined,
+        age:         document.getElementById('rAge').value ? parseInt(document.getElementById('rAge').value) : undefined,
+        gender:      document.getElementById('rGender').value || undefined,
+        civilStatus: document.getElementById('rCivilStatus').value || undefined,
+      }
+    };
+
+    try {
+      const result = await post('/api/blotter', body);
+      const caseNumber = result.caseNumber || result.data?.caseNumber || result.id || 'N/A';
+      toastr.success(`Blotter case <strong>${caseNumber}</strong> has been filed successfully.`);
+      closeCreateModal();
+      await Promise.all([loadStats(), loadCases()]);
+    } catch (err) {
+      console.error('Submit failed:', err);
+      const msg = err?.message || err?.error || 'Failed to file blotter case. Please try again.';
+      toastr.error(msg);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> File Blotter Case';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  DELETE CASE
+  // ══════════════════════════════════════════════════════
+  function deleteCase(id, caseNumber) {
+    _pendingDeleteId   = id;
+    _pendingDeleteCase = caseNumber;
+    document.getElementById('deleteCaseNumberLabel').textContent = caseNumber;
+    const modal = document.getElementById('deleteModal');
+    modal.classList.add('is-open');
+    requestAnimationFrame(() => modal.classList.add('is-visible'));
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('is-visible');
+    setTimeout(() => {
+      modal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      _pendingDeleteId   = null;
+      _pendingDeleteCase = null;
+    }, 250);
+  }
+
+  async function confirmDelete() {
+    if (!_pendingDeleteId) return;
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Deleting…';
+
+    try {
+      await del(`/api/blotter/${_pendingDeleteId}`);
+      toastr.success(`Case ${_pendingDeleteCase} has been deleted.`);
+      closeDeleteModal();
+      await Promise.all([loadStats(), loadCases()]);
+    } catch (err) {
+      console.error('Delete failed:', err);
+      const msg = err?.message || err?.error || 'Failed to delete case.';
+      toastr.error(msg);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-trash mr-1"></i> Delete';
+    }
+  }
+
+  // ══════════════════════════════════════════════════════
+  //  CLOSE MODALS ON BACKDROP CLICK
+  // ══════════════════════════════════════════════════════
+  document.getElementById('createModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCreateModal();
+  });
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+  });
+
+  // Close modals on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const cm = document.getElementById('createModal');
+      const dm = document.getElementById('deleteModal');
+      if (cm.classList.contains('is-open')) closeCreateModal();
+      if (dm.classList.contains('is-open')) closeDeleteModal();
+    }
+  });
+
+  // ══════════════════════════════════════════════════════
+  //  HELPERS
+  // ══════════════════════════════════════════════════════
+  function getStatusClass(status) {
+    const map = {
+      OPEN:               's-open',
+      UNDER_MEDIATION:    's-under-mediation',
+      SETTLED:            's-settled',
+      ESCALATED:          's-escalated',
+      ESCALATED_RETURNED: 's-escalated-returned',
+      DISMISSED:          's-dismissed',
+    };
+    return map[status] || 's-open';
+  }
+
+  function getStatusLabel(status) {
+    const map = {
+      OPEN:               'Open',
+      UNDER_MEDIATION:    'Under Mediation',
+      SETTLED:            'Settled',
+      ESCALATED:          'Escalated',
+      ESCALATED_RETURNED: 'Escalated (Returned)',
+      DISMISSED:          'Dismissed',
+    };
+    return map[status] || status;
+  }
+
+  function getStatusBadge(status) {
+    return `<span class="s-pill ${getStatusClass(status)}">${getStatusLabel(status)}</span>`;
+  }
+
+  function formatName(person) {
+    if (!person) return '—';
+    const parts = [person.firstName, person.middleName, person.lastName].filter(Boolean);
+    return parts.join(' ') || '—';
+  }
+
+  function formatDate(isoStr) {
+    if (!isoStr) return '—';
+    try {
+      return new Date(isoStr).toLocaleDateString('en-PH', {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+    } catch {
+      return isoStr;
+    }
+  }
+
+  function escHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function escAttr(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  }
+
+  // ── window.showToast shim ──
+  window.showToast = function(message, type) {
+    if (type === 'success') toastr.success(message);
+    else if (type === 'error') toastr.error(message);
+    else if (type === 'warning') toastr.warning(message);
+    else toastr.info(message);
+  };
+</script>
+</body>
+</html>
