@@ -1,14 +1,18 @@
 import { Router, Response } from 'express';
 import multer from 'multer';
-import { auth } from '../config/firebase';
+import { auth, storage } from '../config/firebase';
 import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth.middleware';
 import path from 'path';
-import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
-const UPLOADS_DIR = path.join(__dirname, '../../../uploads');
+const CONTENT_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.pdf': 'application/pdf',
+};
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -24,13 +28,31 @@ const upload = multer({
   },
 });
 
-function saveLocally(buffer: Buffer, subdir: string, ext: string): { filename: string; url: string } {
+/**
+ * Upload a file to Firebase Cloud Storage and return a permanent download URL.
+ * Uses a Firebase Storage download token so the URL works without public bucket ACLs.
+ */
+async function saveToStorage(buffer: Buffer, subdir: string, ext: string): Promise<{ filename: string; url: string }> {
   const name = `${uuidv4()}${ext}`;
-  const dir = path.join(UPLOADS_DIR, subdir);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, name), buffer);
-  const url = `${process.env.API_BASE_URL || 'http://localhost:3000'}/uploads/${subdir}/${name}`;
-  return { filename: `${subdir}/${name}`, url };
+  const filePath = `${subdir}/${name}`;
+  const bucket = storage();
+  const file = bucket.file(filePath);
+  const contentType = CONTENT_TYPES[ext] || 'application/octet-stream';
+  const downloadToken = uuidv4();
+
+  await file.save(buffer, {
+    metadata: {
+      contentType,
+      metadata: {
+        // Firebase Storage uses this token to build the ?alt=media&token=... URL
+        firebaseStorageDownloadTokens: downloadToken,
+      },
+    },
+  });
+
+  const bucketName = bucket.name;
+  const url = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(filePath)}?alt=media&token=${downloadToken}`;
+  return { filename: filePath, url };
 }
 
 router.post('/id', requireAuth, upload.single('file'), async (req: AuthRequest, res: Response): Promise<void> => {
@@ -40,7 +62,7 @@ router.post('/id', requireAuth, upload.single('file'), async (req: AuthRequest, 
       return;
     }
     const ext = path.extname(req.file.originalname).toLowerCase();
-    const { filename, url } = saveLocally(req.file.buffer, 'ids', ext);
+    const { filename, url } = await saveToStorage(req.file.buffer, 'ids', ext);
     res.json({ success: true, url, filename });
   } catch (err) {
     console.error(err);
@@ -56,7 +78,7 @@ router.post('/official-image', requireAdmin, upload.single('file'), async (req: 
       return;
     }
     const ext = path.extname(req.file.originalname).toLowerCase();
-    const { filename, url } = saveLocally(req.file.buffer, 'officials', ext);
+    const { filename, url } = await saveToStorage(req.file.buffer, 'officials', ext);
     res.json({ success: true, url, filename });
   } catch (err) {
     console.error(err);
@@ -72,8 +94,7 @@ router.post('/profile-image', requireAuth, upload.single('file'), async (req: Au
       return;
     }
     const ext = path.extname(req.file.originalname).toLowerCase();
-    // Use uid as filename so re-uploads overwrite the previous one
-    const { filename, url } = saveLocally(req.file.buffer, 'profiles', ext);
+    const { filename, url } = await saveToStorage(req.file.buffer, 'profiles', ext);
     await auth().updateUser(req.user!.uid, { photoURL: url });
     res.json({ success: true, url, filename });
   } catch (err) {

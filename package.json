@@ -2,12 +2,17 @@
   "name": "barangay-sirangan-portal",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["backend"],
+  "workspaces": [
+    "backend"
+  ],
   "scripts": {
     "dev": "cd backend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "build:backend": "cd backend && npm run build",
     "build": "npm run build:backend",
     "start": "cd backend && npm start"
+  },
+  "dependencies": {
+    "typescript": "^5.1.6"
   }
 }

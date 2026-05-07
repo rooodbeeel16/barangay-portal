@@ -1,0 +1,39 @@
+query ListPublicAnnouncements @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  announcements(where: {priority: {eq: "PUBLIC"}}) {
+    id
+    title
+    content
+    publishedDate
+    expiryDate
+  }
+}
+
+mutation CreateDocumentRequest($documentType: String!, $purpose: String) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  documentRequest_insert(data: {
+    residentId_expr: "auth.uid",
+    documentType: $documentType,
+    requestDate_expr: "request.time",
+    status: "Pending",
+    purpose: $purpose
+  })
+}
+
+mutation UpdateCommunityServiceDescription($id: UUID!, $newDescription: String!) @auth(expr: "auth.token.admin == true") {
+  communityService_update(
+    key: {id: $id},
+    data: {description: $newDescription}
+  )
+}
+
+query GetMyAppointments @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  appointments(where: {residentId: {eq_expr: "auth.uid"}}) {
+    id
+    appointmentDate
+    appointmentTime
+    purpose
+    status
+    official {
+      displayName
+    }
+  }
+}

@@ -1,0 +1,54 @@
+type User @table {
+  displayName: String!
+  email: String!
+  role: String!
+  createdAt: Timestamp!
+  address: String
+  contactNumber: String
+  photoUrl: String
+}
+
+type Resident @table {
+  user: User!
+  firstName: String!
+  lastName: String!
+  birthDate: Date!
+  gender: String!
+  purok: String
+  occupation: String
+}
+
+type DocumentRequest @table {
+  resident: Resident!
+  documentType: String!
+  requestDate: Timestamp!
+  status: String!
+  purpose: String
+  remarks: String
+}
+
+type Appointment @table {
+  resident: Resident!
+  official: User
+  appointmentDate: Date!
+  appointmentTime: String!
+  purpose: String!
+  status: String!
+  officialNotes: String
+}
+
+type Announcement @table {
+  author: User
+  title: String!
+  content: String!
+  publishedDate: Timestamp!
+  expiryDate: Timestamp
+  priority: String
+}
+
+type CommunityService @table {
+  name: String!
+  description: String!
+  contactPerson: String
+  schedule: String
+}

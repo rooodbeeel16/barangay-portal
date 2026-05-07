@@ -29,7 +29,8 @@ const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable for serving static HTML
+  contentSecurityPolicy: false,       // Disable for serving static HTML
+  crossOriginEmbedderPolicy: false,   // Allow loading images/assets from Firebase Storage & other CDNs
 }));
 
 // CORS
@@ -53,8 +54,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Logging
 app.use(morgan('combined'));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+// Serve uploaded files (local dev only – production uses Firebase Cloud Storage)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+}
 
 // Serve static frontend files from ../frontend
 // Disable caching for HTML and JS so auth fixes always take effect

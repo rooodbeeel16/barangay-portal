@@ -1,0 +1,59 @@
+mutation SeedData @transaction @auth(level: USER, insecureReason: "Seed data operations are typically for development or initial setup and often require authenticated access without specific user filtering.") {
+  user1: user_insert(data: {
+    id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    displayName: "Admin User",
+    email: "admin@example.com",
+    role: "Admin",
+    createdAt: "2023-01-01T00:00:00Z"
+  })
+  user2: user_insert(data: {
+    id: "b1cffc00-0d1c-5fe9-cc7e-7cc0ce491b22",
+    displayName: "Resident User",
+    email: "resident@example.com",
+    role: "Resident",
+    createdAt: "2023-01-01T00:00:00Z"
+  })
+  resident1: resident_insert(data: {
+    id: "c2d0dd11-1e2d-6ff0-dd8f-8dd1df5a2c33",
+    userId: "b1cffc00-0d1c-5fe9-cc7e-7cc0ce491b22",
+    firstName: "Juan",
+    lastName: "Dela Cruz",
+    birthDate: "1990-05-15",
+    gender: "Male",
+    purok: "Purok 1",
+    occupation: "Farmer"
+  })
+  announcement1: announcement_insert(data: {
+    id: "d3e1ee22-2f3e-7ff1-ee90-9ee2ef6b3d44",
+    authorId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    title: "Community Meeting",
+    content: "There will be a community meeting on Friday.",
+    publishedDate: "2024-03-10T10:00:00Z",
+    expiryDate: "2024-03-15T17:00:00Z",
+    priority: "High"
+  })
+  communityService1: communityService_insert(data: {
+    id: "e4f2ff33-3g4f-8ff2-ff01-0ff3fg7c4e55",
+    name: "Clean-up Drive",
+    description: "Join us for a community clean-up drive.",
+    contactPerson: "Admin User",
+    schedule: "Saturday, 8:00 AM"
+  })
+  appointment1: appointment_insert(data: {
+    id: "f5g3gg44-4h5g-9gg3-gg12-1gg4gh8d5f66",
+    residentId: "c2d0dd11-1e2d-6ff0-dd8f-8dd1df5a2c33",
+    officialId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+    appointmentDate: "2024-03-20",
+    appointmentTime: "10:00 AM",
+    purpose: "Consultation",
+    status: "Pending"
+  })
+  documentRequest1: documentRequest_insert(data: {
+    id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380f11",
+    residentId: "c2d0dd11-1e2d-6ff0-dd8f-8dd1df5a2c33",
+    documentType: "Barangay Clearance",
+    requestDate: "2024-03-05T14:30:00Z",
+    status: "Pending",
+    purpose: "Job Application"
+  })
+}
