@@ -4,8 +4,8 @@ export const BARANGAY = {
   province: 'Sorsogon',
   code: 'SIR',
   address: 'Barangay Sirangan, Sorsogon City, Sorsogon',
-  phone: '(056) XXX-XXXX',
-  email: 'brgy.sirangan@sorsogon.gov.ph',
+  phone: '0993-054-8154',
+  email: 'barangaysirangan@gmail.com',
 };
 
 export const DOCUMENT_TYPES = {
